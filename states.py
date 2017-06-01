@@ -22,7 +22,7 @@ class State:
 class AI(State):
 	def __init__(self):
 
-		# wonder
+		# wander
 		self.changeDirectionChance = 0.2
 		self.waitChance = 0.3
 		self.dx = 0
@@ -35,9 +35,9 @@ class AI(State):
 			return self.chaseTarget(actor,target)
 
 		else:
-			return self.wonder(actor)
+			return self.wander(actor)
 
-	def wonder(self,actor):
+	def wander(self,actor):
 		if actor._nextCommand != None:
 			return None
 		else:
@@ -60,7 +60,7 @@ class AI(State):
 		libtcod.path_compute(path,actor.x,actor.y,player.x,player.y)
 
 		if libtcod.path_size(path) < 1:
-			command = self.wonder(actor)
+			command = self.wander(actor)
 			return command
 		else:
 			x,y = libtcod.path_get(path,False)
@@ -130,4 +130,4 @@ class AIConfused:
 		elif self.timer > 0:
 			self.timer -= 1
 
-		else: return None
+		else: return None 
