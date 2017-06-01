@@ -130,4 +130,4 @@ class AIConfused:
 		elif self.timer > 0:
 			self.timer -= 1
 
-		else: return None
+		else: return None 
