@@ -109,7 +109,7 @@ class Actor(Object):
 			self.deathState()
 
 	def deathState(self):
-		print self.name + " dies"
+		pass # print self.name + " dies"
 
 class Hero(Actor):
 	pass

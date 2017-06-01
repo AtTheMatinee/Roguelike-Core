@@ -52,7 +52,7 @@ class WalkCommand(Command):
 					success = False
 
 					# Return an AttackCommand alternative
-					if isinstance(object, actors.Monster):
+					if isinstance(object, actors.Actor):
 						alternative = AttackCommand(self.actor,object)
 
 					else: alternative = None
