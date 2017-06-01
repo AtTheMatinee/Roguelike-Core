@@ -31,7 +31,9 @@ class AI(State):
 	def getAICommand(self,actor):
 		fov = actor.game.map.fov_map
 		if libtcod.map_is_in_fov(fov,actor.x,actor.y):
-			return self.chasePlayer(actor)
+			target = actor.game.hero
+			return self.chaseTarget(actor,target)
+
 		else:
 			return self.wonder(actor)
 
@@ -49,16 +51,15 @@ class AI(State):
 				command = commands.WalkCommand(actor,self.dx,self.dy)
 			return command
 
-	def chasePlayer(self,actor):
+	def chaseTarget(self,actor,target):
+		# TODO: replace player with generic target
 		player = actor.game.hero
-
-		# use line of seight to chase player
 
 		# pathfind to the player's location
 		path = actor.game._currentLevel.pathMap
 		libtcod.path_compute(path,actor.x,actor.y,player.x,player.y)
 
-		if libtcod.path_size(path) <= 1:
+		if libtcod.path_size(path) < 1:
 			command = self.wonder(actor)
 			return command
 		else:
@@ -83,7 +84,7 @@ class AI(State):
 
 
 	def hunt(self,actor,target):
-		# search for the player in the player's
+		# search for the player in the target's
 		# last known location.
 		pass
 
