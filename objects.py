@@ -21,7 +21,8 @@ class Object(object):
 		self.blocks = blocks
 
 		self.game.addObject(self)
-		self.game._currentLevel.addObject()
+		self.game._currentLevel.addObject(self)
+		self.renderFirst()
 		if self.blocks == True:
 			self.game._currentLevel.setHasObjectTrue(x,y)
 
@@ -40,3 +41,34 @@ class Object(object):
 		dx = object.x-self.x
 		dy = object.y-self.y
 		return math.sqrt(dx**2 + dy**2)
+
+	def getNearbyActors(self):
+		pass
+
+	def getNearbyObjects(self):
+		pass
+
+	def renderFirst(self):
+		# Useful for making sure that actors render on top of objects
+		self.game._currentLevel._objects.remove(self)
+		self.game._currentLevel._objects.insert(0,self)
+
+class Container(Object):
+	def __init__(self, game, x, y, char, name, color, cache = [], blocks=False):
+		self.game = game
+		self.x = x
+		self.y = y
+		self.char = char
+		self.name = name
+		self.color = color
+		self.cache = cache
+		self.blocks = blocks
+
+		self.game.addObject(self)
+		self.game._currentLevel.addObject(self)
+		self.renderFirst()
+		if self.blocks == True:
+			self.game._currentLevel.setHasObjectTrue(x,y)
+
+class Corpse(Container):
+	pass

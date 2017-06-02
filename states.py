@@ -4,6 +4,7 @@ states.py
 import commands
 import libtcodpy as libtcod
 import random
+import objects
 '''
 ====================
 States
@@ -135,3 +136,22 @@ class AIConfused:
 			self.timer -= 1
 
 		else: return None
+
+class DeathState:
+	def __init__(self,owner):
+		self.owner = owner
+	
+	def process(self):
+		print self.owner.name+" is dead."
+		o = self.owner
+		o.game.removeObject(o)
+		o.game._currentLevel.removeObject(o)
+		o.game._currentLevel.setHasObjectFalse(o.x, o.y)
+		o.game.removeActor(o)
+		o.game._currentLevel.removeActor(o)
+
+		name = "Corpse of "+o.name
+		objects.Corpse(o.game, o.x, o.y, "%",name, libtcod.crimson)
+
+		del self.owner
+		del self

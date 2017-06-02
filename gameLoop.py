@@ -95,10 +95,10 @@ class GameLoop:
 		self._actors.append(actor)
 
 	def removeActor(self,actor):
-		pass
+		self._actors.remove(actor)
 
-	def addObject(self,actor):
-		self._objects.append(actor)
+	def addObject(self,object):
+		self._objects.append(object)
 
-	def removeObject(self,actor):
-		pass
+	def removeObject(self,object):
+		self._objects.remove(object)

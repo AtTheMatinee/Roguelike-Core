@@ -10,9 +10,9 @@ class StatsTable:
 	data = {
 	"None":
 		{
-		"health":10,
+		"healthCurrent":10,
 		"healthMax":10,
-		"magic":0,
+		"magicCurrent":0,
 		"magicMax":0,
 		"speed":6,
 		"attack":[2,0,0,0,0,0,0],
@@ -22,33 +22,33 @@ class StatsTable:
 		},
 	"Hero":
 		{
-		"health":20,
-		"health":20,
-		"magic":10,
+		"healthCurrent":20,
+		"healthMax":20,
+		"magicCurrent":10,
 		"magicMax":10,
 		"speed":6,
 		"attack":[2,0,0,0,0,0,0],
 		"attackSpeed":0,
-		"defense":[0,0,0,0,0,0],
+		"defense":[2,0,0,0,0,0],
 		"critChance":0.05
 		},
 	"Mirehound":
 		{
-		"health":8,
+		"healthCurrent":8,
 		"healthMax":8,
-		"magic":0,
+		"magicCurrent":0,
 		"magicMax":0,
-		"speed":1,#0,
-		"attack":[3,0,0,0,0,0,0],
+		"speed":8,
+		"attack":[2,0,0,0,0,0,0],
 		"attackSpeed":2,
 		"defense":[0,0,0,0,0,0],
 		"critChance":0.05
 		},
 	"Rougarou":
 		{
-		"health":36,
+		"healthCurrent":36,
 		"healthMax":40,
-		"magic":0,
+		"magicCurrent":0,
 		"magicMax":0,
 		"speed":8,
 		"attack":[18,0,0,0,0,0,0],
@@ -58,11 +58,11 @@ class StatsTable:
 		},
 	"Snakeman":
 		{
-		"health":20,
+		"healthCurrent":20,
 		"healthMax":20,
-		"magic":0,
+		"magicCurrent":0,
 		"magicMax":0,
-		"speed":4,
+		"speed":5,
 		"attack":[6,0,0,0,0,0,0],
 		"attackSpeed":-4,
 		"defense":[4,0,0,0,0,0],

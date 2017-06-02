@@ -17,25 +17,38 @@ import gameLoop
 
 import commands
 
-SCREEN_WIDTH = 80
-SCREEN_HEIGHT = 60
+SCREEN_WIDTH = 80 #100 #80
+SCREEN_HEIGHT = 60 #75 #60
 
-MAP_WIDTH = 80 #50
-MAP_HEIGHT = 45 #50
-#LIMIT_FPS = 60  #20 frames-per-second maximum
+MAP_WIDTH = 60 #80 #50
+MAP_HEIGHT = 50 #60 #50
+
+HORIZONTAL_PANEL_HEIGHT = SCREEN_HEIGHT - MAP_HEIGHT
+HORIZONTAL_PANEL_Y = SCREEN_HEIGHT - HORIZONTAL_PANEL_HEIGHT
+H_PANEL_BAR_WIDTH = 20
+
+VIRTICAL_PANEL_WIDTH = SCREEN_WIDTH - MAP_WIDTH
+VIRTICAL_PANEL_W = SCREEN_WIDTH - VIRTICAL_PANEL_WIDTH
+V_PANEL_BAR_WIDTH = VIRTICAL_PANEL_WIDTH - 4
+
 
 '''
 ====================
 User Interface
 ====================
 '''
+#TODO: Option to switch horizontal panel from bottom to top
+#TODO: Option to switch virtical panel from right to left
 
 class UserInterface:
 	def __init__(self):
 		libtcod.console_set_custom_font('arial10x10.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
 		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'python/libtcod tutorial', False) #TODO: Change Game Name
-		self.con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
+		self.con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 		
+		# bottom panel
+		self.horPanel = libtcod.console_new(SCREEN_WIDTH, HORIZONTAL_PANEL_HEIGHT)
+
 		self.setColorScheme(ColorScheme.DEFAULT)
 		self.keyboardIntermediary = KeyboardCommands()
 
@@ -73,43 +86,6 @@ class UserInterface:
 
 			for object in self.game._objects:
 				object.clear()
-
-
-	def handleInput2(self,keyboard):
-		# Non-rebindable Keys
-		if (keyboard.vk	== libtcod.KEY_ESCAPE): return True #Exit Game
-
-		# Rebindable Keys
-		# Check for every key
-		# if that key is pressed, and it is bound, issue the bound command
-		# TODO: Use init file to load in custom and Default keyboard bindings
-		hero = self.game.hero
-		if (keyboard.vk == libtcod.KEY_7):
-			hero.setNextCommand(commands.WalkCommand(hero,-1,-1)) # NORTH WEST
-			self.fovRecompute = True
-		elif (keyboard.vk == libtcod.KEY_UP) or (keyboard.vk == libtcod.KEY_8):
-			hero.setNextCommand(commands.WalkCommand(hero,0,-1)) # NORTH
-			self.fovRecompute = True
-		elif (keyboard.vk == libtcod.KEY_9):
-			hero.setNextCommand(commands.WalkCommand(hero,1,-1)) # NORTH EAST
-			self.fovRecompute = True
-
-		elif (keyboard.vk == libtcod.KEY_LEFT) or (keyboard.c == ord("u")):
-			hero.setNextCommand(commands.WalkCommand(hero,-1,0)) # WEST
-			self.fovRecompute = True
-		elif (keyboard.vk == libtcod.KEY_RIGHT) or (keyboard.c == ord("o")):
-			hero.setNextCommand(commands.WalkCommand(hero,1,0)) # EAST
-			self.fovRecompute = True
-
-		elif (keyboard.c == ord("j")):
-			hero.setNextCommand(commands.WalkCommand(hero,-1,1)) # SOUTH WEST
-			self.fovRecompute = True
-		elif (keyboard.vk == libtcod.KEY_DOWN) or (keyboard.c == ord("k")):
-			hero.setNextCommand(commands.WalkCommand(hero,0,1)) # SOUTH
-			self.fovRecompute = True
-		elif (keyboard.c == ord("l")):
-			hero.setNextCommand(commands.WalkCommand(hero,1,1)) # SOUTH EAST
-			self.fovRecompute = True
 
 	def handleInput(self,keyboard):
 		# Non-rebindable Keys
@@ -232,10 +208,18 @@ class UserInterface:
 						self.game._currentLevel.setHasBeenExploredTrue(x,y)
 
 		# ==== Render Objects ====
-		for object in self.game._objects:
+		for object in self.game._currentLevel._objects:
 			object.draw()
 
+		# ==== Render GUI panels ====
+		libtcod.console_set_default_background(self.horPanel, libtcod.black)
+		libtcod.console_clear(self.horPanel)
+
+		# Health Bar
+		self.renderHealthBar(self.horPanel,1,1,H_PANEL_BAR_WIDTH,self.game.hero)
+
 		# ==== Blit Console to Screen ====
+		libtcod.console_blit(self.horPanel, 0, 0, SCREEN_WIDTH, HORIZONTAL_PANEL_HEIGHT, 0, 0, HORIZONTAL_PANEL_Y)
 		libtcod.console_blit(self.con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
 
 	def setColorScheme(self, colorScheme):
@@ -247,6 +231,29 @@ class UserInterface:
 		self.color_light_wall_back = colorScheme[5]
 		self.color_light_ground_fore = colorScheme[6]
 		self.color_light_ground_back = colorScheme[7]
+
+	def renderStatusBar(self,panel,x, y, total_width, name, value, maxValue, bar_color, back_color):
+		bar_width = int(float(value) / maxValue * total_width)
+
+		# Render the background
+		libtcod.console_set_default_background(panel, back_color)
+		libtcod.console_rect(panel, x, y, total_width, 1, False, libtcod.BKGND_SCREEN)
+
+		# Render the bar on top
+		libtcod.console_set_default_background(panel, bar_color)
+		if bar_width > 0:
+			libtcod.console_rect(panel, x, y, bar_width, 1, False, libtcod.BKGND_SCREEN)
+
+		# Print the name of the bar, centered, over the bar
+		libtcod.console_set_default_foreground(panel, libtcod.white)
+		libtcod.console_print_ex(panel, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER,
+			name + ': ' + str(value) + '/' + str(maxValue))
+
+	def renderHealthBar(self,panel,x, y, width, actor):
+
+		hp = actor.stats.get("healthCurrent")
+		hpMax = actor.stats.get("healthMax")
+		self.renderStatusBar(panel,x,y,width,"HP",hp,hpMax,libtcod.red,libtcod.darker_red)
 
 	def bindKey(self,command,key):
 		pass
@@ -390,6 +397,7 @@ class KeyboardCommands:
 	def Wait(self,ui,hero):
 		hero.setNextCommand(commands.WaitCommand(hero))
 		ui.fovRecompute = False
+
 
 ui = UserInterface()
 ui.mainLoop()
