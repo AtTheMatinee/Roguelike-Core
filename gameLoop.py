@@ -6,11 +6,13 @@ import libtcodpy as libtcod
 
 import worldMap
 
-import objects
+#import objects
 
 #import actors
 
 #import actorStats
+
+import factions
 
 import actorSpawner
 
@@ -40,6 +42,7 @@ class GameLoop:
 		game = self
 
 		self.actorSpawner = actorSpawner.ActorSpawner(self)
+		self.factions = factions.FactionTracker()
 
 		self.map = worldMap.Map(game, mapWidth, mapHeight)
 		mapType = dungeonGeneration.RoomAddition()
@@ -71,7 +74,7 @@ class GameLoop:
 		while (command == None): # cycle through alternatives until one resolves
 			actor = self._actors[self._currentActor]
 
-			if (actor.energy >= self.turnCost) or (actor.gainEnergy):	
+			if (actor.energy >= self.turnCost) or (actor.gainEnergy()):	
 
 				if actor.needsInput(): return
 				command = actor.getCommand()

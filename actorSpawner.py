@@ -43,7 +43,7 @@ class ActorSpawner:
 		pass
 
 	def spawnHero(self,x,y):
-		hero = actors.Hero(self.game,x,y,'@',"Hero",color = libtcod.white,stats = actorStats.Stats("Hero"),playerControlled = True)
+		hero = actors.Hero(self.game,x,y,'@',"Hero",color = libtcod.white,faction = "Hero",stats = actorStats.Stats("Hero"),playerControlled = True)
 		return hero
 
 	def spawnFireElemental(self,x,y):
@@ -65,7 +65,7 @@ class ActorSpawner:
 		pass
 
 	def spawnMirehound(self,x,y):
-		mirehound = actors.Monster(self.game,x,y,'h',"Mirehound",libtcod.light_amber,stats = actorStats.Stats("Mirehound"),state = states.AI())
+		mirehound = actors.Monster(self.game,x,y,'h',"Mirehound",libtcod.light_amber,faction = "Mirehounds",stats = actorStats.Stats("Mirehound"),state = states.AI())
 		return mirehound
 
 	def spawnRougarou(self,x,y):
@@ -73,7 +73,7 @@ class ActorSpawner:
 		return rougarou
 
 	def spawnSnakeman(self,x,y):
-		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman",libtcod.desaturated_sea,stats = actorStats.Stats("Snakeman"),state = states.AI())
+		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman",libtcod.desaturated_sea,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI())
 		return snakeman
 
 	def spawnSwampHag(self,x,y):
