@@ -15,13 +15,14 @@ import actorStats
 # TODO: impliment hostileTo = [] variable 
 
 class Actor(Object):
-	def __init__(self, game, x, y, char, name, color, blocks=True, stats = actorStats.Stats("None"), state = None, playerControlled = False):
+	def __init__(self, game, x, y, char, name, color, faction = None, blocks=True, stats = actorStats.Stats("None"), state = None, playerControlled = False):
 		self.game = game
 		self.x = x
 		self.y = y
 		self.char = char
 		self.name = name
 		self.color = color
+		self.faction = faction
 		self.blocks = blocks
 
 		self.game.addObject(self)
@@ -68,8 +69,8 @@ class Actor(Object):
 		self._nextCommand = command
 
 	def gainEnergy(self):
-		self.energy += self.speed
-		return (self.energy >= game.turnCost)
+		self.energy += self.stats.get("speed")
+		return (self.energy >= self.game.turnCost)
 
 	def needsInput(self):
 		if not self.playerControlled:
@@ -123,6 +124,7 @@ class Elemental(Monster):
 	# heals 100% from their element
 	# have a lot of elemental spells
 	# have a spell that casts their elemental status effect on themself so they heal while it's in effect
+
 
 if __name__ == "__main__":
 

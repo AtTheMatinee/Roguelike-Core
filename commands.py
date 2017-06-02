@@ -44,18 +44,19 @@ class WalkCommand(Command):
 
 		# See if there is another actor at the location
 		if (self.game._currentLevel.getHasObject(x,y)):
-			for object in self.game._currentLevel._objects:
-				if (object.blocks == True and 
-					(object.x == x) and
-					(object.y == y)):
+			for o in self.game._currentLevel._objects:
+				if (o.blocks == True and 
+					(o.x == x) and
+					(o.y == y)):
 					# TODO: alternatives for combat and noncombat
 					success = False
 
 					# Return an AttackCommand alternative
-					if isinstance(object, actors.Actor):
-						alternative = AttackCommand(self.actor,object)
+					if (isinstance(o, actors.Actor) and
+						self.game.factions.getRelationship(self.actor.faction, o.faction) == self.game.factions._hostile):
+						alternative = AttackCommand(self.actor,o)
 
-					else: alternative = None
+					else: alternative = WaitCommand(self.actor)
 
 					return success, alternative
 
@@ -127,14 +128,16 @@ class AttackCommand(Command):
 			attack[0] += random.randint(1,attack[0])
 
 		self.target.takeDamage(attack)
+		self.target.mostRecentAttacker = self.actor
 
 		if self.actor == self.actor.game.hero or self.target == self.actor.game.hero:
 			print ("The " + self.actor.name + " attacks the " + self.target.name)
+
 		self.actor.energy -= self.energyCost
 		success = True
 		alternative = None
 		return success, alternative
-		#crit
+		
 
 
 class CastSpell(Command):

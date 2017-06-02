@@ -34,14 +34,14 @@ class StatsTable:
 		},
 	"Mirehound":
 		{
-		"health":12,
-		"healthMax":12,
+		"health":8,
+		"healthMax":8,
 		"magic":0,
 		"magicMax":0,
-		"speed":9,
+		"speed":1,#0,
 		"attack":[3,0,0,0,0,0,0],
 		"attackSpeed":2,
-		"defense":[4,0,0,0,0,0],
+		"defense":[0,0,0,0,0,0],
 		"critChance":0.05
 		},
 	"Rougarou":
