@@ -15,7 +15,7 @@ import actorStats
 # TODO: impliment hostileTo = [] variable 
 
 class Actor(Object):
-	def __init__(self, game, x, y, char, name, color, faction = None, blocks=True, stats = actorStats.Stats("None"), state = None, playerControlled = False):
+	def __init__(self, game, x, y, char, name, color, faction = None, blocks=True, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, playerControlled = False):
 		self.game = game
 		self.x = x
 		self.y = y
@@ -24,6 +24,8 @@ class Actor(Object):
 		self.color = color
 		self.faction = faction
 		self.blocks = blocks
+		self.surviveMortalWound = surviveMortalWound
+		self.mortalWound = False
 
 		self.game.addObject(self)
 		self.game._currentLevel.addObject(self)
@@ -36,6 +38,7 @@ class Actor(Object):
 		self.playerControlled = playerControlled
 		self.state = state
 		self._defaultState = state
+		self.deathState = deathState
 		self.statusEffects = []
 
 		self.game.addActor(self)
@@ -99,18 +102,32 @@ class Actor(Object):
 
 		totalDam = (physicalDam + fireDam + frostDam + poisonDam + holyDam + unholyDam + damage[6])
 
-		health = self.stats.get("health")
+		health = self.stats.get("healthCurrent")
 		health -= totalDam
-		self.stats.setBaseStat("health",health)
+		self.stats.setBaseStat("healthCurrent",health)
 		self.checkDeath()
 
-
 	def checkDeath(self):
-		if (self.stats.get("health") <= 0):
-			self.deathState()
+		if (self.stats.get("healthCurrent") <= 0):
+			self.stats.setBaseStat("healthCurrent",0)
+			if (self.mortalWound == True) or (self.surviveMortalWound == False):
+				self.death()
+			else:
+				self.mortalWound = True
+				print self.name+" is mortally wounded."
 
-	def deathState(self):
-		pass # print self.name + " dies"
+	def death(self):
+		if self.deathState != None:
+			self.deathState.process()
+		else:
+			self.game.removeObject(self)
+			self.game._currentLevel.removeObject(self)
+			self.game._currentLevel.setHasObjectFalse(self.x,self.y)
+			self.game.removeActor(self)
+			self.game._currentLevel.removeActor(self)
+
+			del self
+
 
 class Hero(Actor):
 	pass
@@ -129,32 +146,32 @@ class Elemental(Monster):
 if __name__ == "__main__":
 
 
-	herostats = Stats(0)
-	print herostats.get("health")
+	herostats = actorStats.Stats(0)
+	print herostats.get("healthMax")
 
 	class MagicRing:
 		def __init__(self):
 			self.id = 1
-			self.modifier = {'add':{"health":5}}
+			self.modifier = {'add':{"healthMax":5}}
 
 	class MagicRobe:
 		def __init__(self):
 			self.id = 2
-			self.modifier = {'mult':{'health':0.2}}
+			self.modifier = {'mult':{'healthMax':0.2}}
 
 	class MagicHat:
 		def __init__(self):
 			self.id = 3
-			self.modifier = {'add':{'health':5}}	
+			self.modifier = {'add':{'healthMax':5}}	
 
 	ring = MagicRing()
 	herostats.addModifier(ring.id,ring.modifier)
-	print herostats.get("health")
+	print herostats.get("healthMax")
 
 	robe = MagicRobe()
 	herostats.addModifier(robe.id,robe.modifier)
-	print herostats.get("health")
+	print herostats.get("healthMax")
 
 	hat = MagicHat()
 	herostats.addModifier(hat.id,hat.modifier)
-	print herostats.get("health")
+	print herostats.get("healthMax")

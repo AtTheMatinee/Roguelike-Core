@@ -17,7 +17,7 @@ FOV_ALGORITHM = 0
 FOV_LIGHT_WALLS = True
 FOV_RADIUS = 10
 
-ROOM_DIFICULTY_BASE = 2 # The base multiplier for the total max difficulty of the monsters in a room,
+ROOM_DIFICULTY_BASE = 1 # The base multiplier for the total max difficulty of the monsters in a room,
 # using the formula maxRoomDifficulty = ROOM_DIFICULTY_BASE + ROOM_DIFICULTY_BASE*levelDepth/2
 EMPTY_ROOM_CHANCE = 0.3 # Probability of a room containing 0 monsters
 
@@ -237,19 +237,19 @@ class Level:
 		self._objects.append(object)
 
 	def removeObject(self, object):
-		pass
+		self._objects.remove(object)
 
 	def addItem(self, item):
 		self._items.append(item)
 
 	def removeItem(self, item):
-		pass
+		self._items.remove(item)
 
 	def addActor(self, actor):
 		self._actors.append(actor)
 
 	def removeActor(self, actor):
-		pass
+		self._actors.remove(actor)
 
 '''class MonsterList:
 	Boar = 

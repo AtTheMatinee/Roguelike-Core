@@ -43,7 +43,8 @@ class ActorSpawner:
 		pass
 
 	def spawnHero(self,x,y):
-		hero = actors.Hero(self.game,x,y,'@',"Hero",color = libtcod.white,faction = "Hero",stats = actorStats.Stats("Hero"),playerControlled = True)
+		hero = actors.Hero(self.game,x,y,'@',"Hero",color = libtcod.white,faction = "Hero",stats = actorStats.Stats("Hero"),surviveMortalWound = True, playerControlled = True)
+		hero.deathState = states.DeathState(hero)
 		return hero
 
 	def spawnFireElemental(self,x,y):
@@ -66,6 +67,7 @@ class ActorSpawner:
 
 	def spawnMirehound(self,x,y):
 		mirehound = actors.Monster(self.game,x,y,'h',"Mirehound",libtcod.light_amber,faction = "Mirehounds",stats = actorStats.Stats("Mirehound"),state = states.AI())
+		mirehound.deathState = states.DeathState(mirehound)
 		return mirehound
 
 	def spawnRougarou(self,x,y):
@@ -74,6 +76,7 @@ class ActorSpawner:
 
 	def spawnSnakeman(self,x,y):
 		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman",libtcod.desaturated_sea,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI())
+		snakeman.deathState = states.DeathState(snakeman)
 		return snakeman
 
 	def spawnSwampHag(self,x,y):
