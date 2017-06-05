@@ -12,7 +12,7 @@ import random
 
 import actorStats
 
-# TODO: impliment hostileTo = [] variable 
+import libtcodpy as libtcod
 
 class Actor(Object):
 	def __init__(self, game, x, y, char, name, color, faction = None, blocks=True, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, playerControlled = False):
@@ -24,8 +24,11 @@ class Actor(Object):
 		self.color = color
 		self.faction = faction
 		self.blocks = blocks
+		
 		self.surviveMortalWound = surviveMortalWound
 		self.mortalWound = False
+		self.hadLastChance = False
+		self.canBePushed = True
 
 		self.game.addObject(self)
 		self.game._currentLevel.addObject(self)
@@ -94,11 +97,11 @@ class Actor(Object):
 		physicalDam = max(0,(damage[0] - random.randint(0,defense[0])))
 
 		# I have these seperated out so I can implement additional modifiers in the future
-		fireDam = damage[1]*defense[1]
-		frostDam = damage[2]*defense[2]
-		poisonDam = damage[3]*defense[3]
-		holyDam = damage[4]*defense[4]
-		unholyDam = damage[5]*defense[5]
+		fireDam = damage[1] - damage[1]*defense[1]
+		frostDam = damage[2] - damage[2]*defense[2]
+		poisonDam = damage[3] - damage[3]*defense[3]
+		holyDam = damage[4] - damage[4]*defense[4]
+		unholyDam = damage[5] - damage[5]*defense[5]
 
 		totalDam = (physicalDam + fireDam + frostDam + poisonDam + holyDam + unholyDam + damage[6])
 
@@ -110,11 +113,11 @@ class Actor(Object):
 	def checkDeath(self):
 		if (self.stats.get("healthCurrent") <= 0):
 			self.stats.setBaseStat("healthCurrent",0)
-			if (self.mortalWound == True) or (self.surviveMortalWound == False):
+			if (self.surviveMortalWound == False) or ((self.mortalWound == True) and (self.hadLastChance)):
 				self.death()
 			else:
 				self.mortalWound = True
-				print self.name+" is mortally wounded."
+				self.game.message(self.name+" is mortally wounded.",libtcod.red)
 
 	def death(self):
 		if self.deathState != None:
@@ -128,8 +131,16 @@ class Actor(Object):
 
 			del self
 
+	def addComponent(self,component,timer):
+		statusEffect = component(self,timer)
+		self.statusEffects.append(statusEffect)
+
+	def removeComponent(self,component):
+		self.statusEffects.remove(component)
 
 class Hero(Actor):
+	# TODO: Overwrite getNearbyActors and getNearbyObjects from Object
+	# so that, for the player, they use FOV instead of distance
 	pass
 
 class Monster(Actor):

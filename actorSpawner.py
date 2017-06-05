@@ -25,6 +25,7 @@ class ActorSpawner:
 			'SwampHag':self.spawnSwampHag,
 			'Mirehound':self.spawnMirehound,
 			'Mimic':self.spawnChest,
+			'Plague Rat':self.spawnPlagueRat,
 			'Rougarou':self.spawnRougarou,
 			'Snakeman':self.spawnSnakeman,
 			'Wyrm':self.spawnWyrm,
@@ -70,6 +71,11 @@ class ActorSpawner:
 		mirehound.deathState = states.DeathState(mirehound)
 		return mirehound
 
+	def spawnPlagueRat(self,x,y):
+		plagueRat = actors.Monster(self.game,x,y,'r',"Plague Rat",libtcod.light_amber,faction = "Plague Rats",stats = actorStats.Stats("Plague Rat"),state = states.AI())
+		plagueRat.deathState = states.DeathState(plagueRat)
+		return plagueRat
+
 	def spawnRougarou(self,x,y):
 		rougarou = actors.Monster(self.game,x,y,'R',"Rougarou",libtcod.grey,stats = actorStats.Stats("Rougarou"),state = states.AI())
 		return rougarou
@@ -85,3 +91,8 @@ class ActorSpawner:
 	def spawnWyrm(self,x,y):
 		pass
 		# Wyrms can be fire, frost, or plague elementals
+
+class MobSpawner:
+	def __init__(self,game):
+		self.game = game
+		self.actorSpawner = ActorSpawner(game)

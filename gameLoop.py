@@ -6,11 +6,15 @@ import libtcodpy as libtcod
 
 import worldMap
 
+from config import *
+
 #import objects
 
 #import actors
 
 #import actorStats
+
+import textwrap
 
 import factions
 
@@ -19,6 +23,8 @@ import actorSpawner
 import dungeonGeneration
 
 import commands
+
+import components
 
 '''
 ====================
@@ -34,6 +40,8 @@ class GameLoop:
 		self._currentActor = 0
 		self._objects = []
 		self._currentLevel = None
+
+		self._messages = []
 
 		self.turnCost = 12
 		self.spendEnergyOnFailure = False
@@ -54,6 +62,7 @@ class GameLoop:
 		#self.hero = actors.Hero(game,heroX,heroY,'@',heroName,color = libtcod.white,stats = actorStats.Stats("Hero"),playerControlled = True)
 		self.hero = self.actorSpawner.spawn(heroX,heroY,"Hero")
 		self.hero.name = heroName
+		self.hero.addComponent(components.Component,10)
 
 
 	def process(self):
@@ -102,3 +111,15 @@ class GameLoop:
 
 	def removeObject(self,object):
 		self._objects.remove(object)
+
+	def message(self,newMsg,color = UI_PRIMARY_COLOR):
+		# split the message if the line is too long
+		newMsgLines = textwrap.wrap(newMsg,MSG_WIDTH)
+
+		for line in newMsgLines:
+			# if the buffer is full, remove the first line to make room for the new one
+			if len(self._messages) == MSG_HEIGHT:
+				del self._messages[0]
+
+			# add the new line as a tuple with the text and the color
+			self._messages.append((line,color))

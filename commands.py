@@ -70,6 +70,10 @@ class WalkCommand(Command):
 
 		# consume energy
 		self.actor.energy -= self.energyCost
+		# set flags that change when a turn is taken
+		self.actor.canBePushed = True
+		if (self.actor.mortalWound == True):
+			self.actor.hadLastChance = True
 
 		success = True
 		alternative = None
@@ -84,6 +88,11 @@ class WaitCommand(Command):
 
 	def perform(self):
 		self.actor.energy -= self.energyCost
+		# set flags that change when a turn is taken
+		self.actor.canBePushed = True
+		if (self.actor.mortalWound == True):
+			self.actor.hadLastChance = True
+
 		success = True
 		alternative = None
 		return success, alternative
@@ -124,21 +133,39 @@ class AttackCommand(Command):
 		critChance = self.actor.stats.get('critChance')
 
 		# calculate Critical Damage (for physical damage only)
-		if random.random() <= critChance:
+		if ((random.random() <= critChance) and
+			(attack[0] > 0)):
 			attack[0] += random.randint(1,attack[0])
+
+		if self.actor == self.actor.game.hero or self.target == self.actor.game.hero:
+			self.actor.game.message("The " + self.actor.name + " attacks the " + self.target.name)
 
 		self.target.takeDamage(attack)
 		self.target.mostRecentAttacker = self.actor
 
-		if self.actor == self.actor.game.hero or self.target == self.actor.game.hero:
-			print ("The " + self.actor.name + " attacks the " + self.target.name)
-
 		self.actor.energy -= self.energyCost
+		# set flags that change when a turn is taken
+		self.actor.canBePushed = True
+		if (self.actor.mortalWound == True):
+			self.actor.hadLastChance = True
+
 		success = True
 		alternative = None
 		return success, alternative
 		
 
 
-class CastSpell(Command):
+class CastSpellCommand(Command):
+	pass
+
+class FireRangedWeaponCommand(Command):
+	pass
+
+class UseCommand(Command):
+	pass
+
+class EquipCommandCommand(Command):
+	pass
+
+class ThrowCommand(Command):
 	pass

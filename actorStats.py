@@ -32,10 +32,22 @@ class StatsTable:
 		"defense":[2,0,0,0,0,0],
 		"critChance":0.05
 		},
+	"Plague Rat":
+		{
+		"healthCurrent":10,
+		"healthMax":10,
+		"magicCurrent":0,
+		"magicMax":0,
+		"speed":5,
+		"attack":[0,0,0,2,0,0,0],
+		"attackSpeed":0,
+		"defense":[1,0,0,.5,0,0],
+		"critChance":1
+		},
 	"Mirehound":
 		{
-		"healthCurrent":8,
-		"healthMax":8,
+		"healthCurrent":6,
+		"healthMax":6,
 		"magicCurrent":0,
 		"magicMax":0,
 		"speed":8,

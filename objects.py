@@ -43,10 +43,18 @@ class Object(object):
 		return math.sqrt(dx**2 + dy**2)
 
 	def getNearbyActors(self):
-		pass
+		nearbyActors = []
+		for actor in self.game._currentLevel._actors:
+			if distanceTo(actor) <= 10:
+				nearbyActors.append(actor)
+		return nearbyActors
 
 	def getNearbyObjects(self):
-		pass
+		nearbyObjects = []
+		for obj in self.game._currentLevel._objects:
+			if distanceTo(obj) <= 10:
+				nearbyObjects.append(obj)
+		return nearbyObjects
 
 	def renderFirst(self):
 		# Useful for making sure that actors render on top of objects

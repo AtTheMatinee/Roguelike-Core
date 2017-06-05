@@ -17,18 +17,28 @@ class FactionTracker:
 				{
 				"Hero": self._friendly,
 				"Snakemen": self._hostile,
+				"Plague Rats": self._hostile,
 				"Mirehounds":self._hostile
+				},
+			"Plague Rats":
+				{
+				"Hero": self._hostile,
+				"Snakemen": self._hostile,
+				"Mirehounds":self._hostile,
+				"Plague Rats": self._friendly
 				},
 			"Snakemen":
 				{
 				"Hero": self._hostile,
 				"Snakemen": self._friendly,
+				"Plague Rats": self._hostile,
 				"Mirehounds": self._friendly
 				},
 			"Mirehounds":
 				{
 				"Hero": self._hostile,
 				"Snakemen": self._friendly,
+				"Plague Rats": self._hostile,
 				"Mirehounds": self._friendly
 				}
 			}

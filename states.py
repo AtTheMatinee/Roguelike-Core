@@ -142,13 +142,14 @@ class DeathState:
 		self.owner = owner
 	
 	def process(self):
-		print self.owner.name+" is dead."
 		o = self.owner
 		o.game.removeObject(o)
 		o.game._currentLevel.removeObject(o)
 		o.game._currentLevel.setHasObjectFalse(o.x, o.y)
 		o.game.removeActor(o)
 		o.game._currentLevel.removeActor(o)
+
+		o.game.message(o.name+" is dead.",libtcod.crimson)
 
 		name = "Corpse of "+o.name
 		objects.Corpse(o.game, o.x, o.y, "%",name, libtcod.crimson)
