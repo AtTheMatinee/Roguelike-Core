@@ -5,6 +5,8 @@ import libtcodpy as libtcod
 
 import random
 
+from config import *
+
 import gameLoop
 
 #import objects
@@ -17,21 +19,6 @@ import gameLoop
 
 import commands
 
-SCREEN_WIDTH = 80 #100 #80
-SCREEN_HEIGHT = 60 #75 #60
-
-MAP_WIDTH = 60 #80 #50
-MAP_HEIGHT = 50 #60 #50
-
-HORIZONTAL_PANEL_HEIGHT = SCREEN_HEIGHT - MAP_HEIGHT
-HORIZONTAL_PANEL_Y = SCREEN_HEIGHT - HORIZONTAL_PANEL_HEIGHT
-H_PANEL_BAR_WIDTH = 20
-
-VIRTICAL_PANEL_WIDTH = SCREEN_WIDTH - MAP_WIDTH
-VIRTICAL_PANEL_W = SCREEN_WIDTH - VIRTICAL_PANEL_WIDTH
-V_PANEL_BAR_WIDTH = VIRTICAL_PANEL_WIDTH - 4
-
-
 '''
 ====================
 User Interface
@@ -39,6 +26,14 @@ User Interface
 '''
 #TODO: Option to switch horizontal panel from bottom to top
 #TODO: Option to switch virtical panel from right to left
+#TODO: spell hoykeys (Should be easy after key rebinding is implemented)
+#TODO: Virtical panel shows nearby enemy information
+#TODO: Virtical panel shows player stats and hotkeys (if bound)
+#TODO: Shows stats in the form of stat: value (baseValue) e.g.
+#		ATK: 14 (5)
+#		DEF: 8  (4)
+#		SPD: 10 (6)
+#		attackSpeed and critChance are hidden stats
 
 class UserInterface:
 	def __init__(self):
@@ -47,7 +42,16 @@ class UserInterface:
 		self.con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 		
 		# bottom panel
-		self.horPanel = libtcod.console_new(SCREEN_WIDTH, HORIZONTAL_PANEL_HEIGHT)
+		self.horPanel = libtcod.console_new(HORIZONTAL_PANEL_WIDTH, HORIZONTAL_PANEL_HEIGHT)
+		# side panel
+		self.virPanel = libtcod.console_new(VIRTICAL_PANEL_WIDTH, VIRTICAL_PANEL_HEIGHT)
+		# panel text alignments
+		self._leftAlign = -1
+		self._centerAlign = 0
+		self._rightAlign = 1
+		self._topAlign = -1
+		self._bottomAlign = 1
+
 
 		self.setColorScheme(ColorScheme.DEFAULT)
 		self.keyboardIntermediary = KeyboardCommands()
@@ -212,14 +216,25 @@ class UserInterface:
 			object.draw()
 
 		# ==== Render GUI panels ====
+		# ==== Horizontal Panel ====
 		libtcod.console_set_default_background(self.horPanel, libtcod.black)
 		libtcod.console_clear(self.horPanel)
+		self.renderBoarderAroundConsole(self.horPanel,HORIZONTAL_PANEL_WIDTH, HORIZONTAL_PANEL_HEIGHT,UI_PRIMARY_COLOR)
+		lable = " L O G " #chr(libtcod.CHAR_TEEW)+" L O G "+chr(libtcod.CHAR_TEEE)
+		self.lableConsole(self.horPanel,HORIZONTAL_PANEL_WIDTH, HORIZONTAL_PANEL_HEIGHT,UI_PRIMARY_COLOR,self._centerAlign,self._topAlign,lable)
+		self.printGameMessages()
+
+		# ==== Virtical Panel ====
+		libtcod.console_set_default_background(self.virPanel, libtcod.black)
+		libtcod.console_clear(self.virPanel)
+		self.renderBoarderAroundConsole(self.virPanel,VIRTICAL_PANEL_WIDTH, VIRTICAL_PANEL_HEIGHT, UI_PRIMARY_COLOR)
 
 		# Health Bar
-		self.renderHealthBar(self.horPanel,1,1,H_PANEL_BAR_WIDTH,self.game.hero)
+		self.renderHealthBar(self.virPanel,2,2,V_PANEL_BAR_WIDTH,self.game.hero)
 
-		# ==== Blit Console to Screen ====
-		libtcod.console_blit(self.horPanel, 0, 0, SCREEN_WIDTH, HORIZONTAL_PANEL_HEIGHT, 0, 0, HORIZONTAL_PANEL_Y)
+		# ==== Blit Consoles to Screen ====
+		libtcod.console_blit(self.horPanel, 0, 0, HORIZONTAL_PANEL_WIDTH, HORIZONTAL_PANEL_HEIGHT, 0, 0, HORIZONTAL_PANEL_Y)
+		libtcod.console_blit(self.virPanel, 0, 0, VIRTICAL_PANEL_WIDTH, VIRTICAL_PANEL_HEIGHT, 0, VIRTICAL_PANEL_X, 0)
 		libtcod.console_blit(self.con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
 
 	def setColorScheme(self, colorScheme):
@@ -254,6 +269,62 @@ class UserInterface:
 		hp = actor.stats.get("healthCurrent")
 		hpMax = actor.stats.get("healthMax")
 		self.renderStatusBar(panel,x,y,width,"HP",hp,hpMax,libtcod.red,libtcod.darker_red)
+
+	def renderBoarderAroundConsole(self,console,width,height,color):
+		'''
+		Draws a simple, single line boarder around the perimeter of the console.
+		The numbers in the console_put_char_ex() call can be changed to draw different
+		boarders.
+		'''
+		# Horizontal lines (196)
+		for y in [0,height-1]:
+			for x in xrange(1,width-1):
+				libtcod.console_put_char_ex(console, x, y, 196, color, libtcod.BKGND_NONE)
+
+		# Virtical lines (179)
+		for x in [0, width-1]:
+			for y in xrange(1,height-1):
+				libtcod.console_put_char_ex(console, x, y, 179, color, libtcod.BKGND_NONE)
+
+		# Draw corners
+		libtcod.console_put_char_ex(console, 0, 0, 218, color, libtcod.BKGND_NONE)
+		libtcod.console_put_char_ex(console, width-1, 0, 191, color, libtcod.BKGND_NONE)
+		libtcod.console_put_char_ex(console, 0, height-1, 192, color, libtcod.BKGND_NONE)
+		libtcod.console_put_char_ex(console, width-1, height-1, 217, color, libtcod.BKGND_NONE)
+
+	def lableConsole(self,console,width,height,color,xAlignment,yAlignment,lable):
+		'''
+		Use this to label the individual console panels with their names
+		and with any hotkeys that effect them.
+		'''
+		lableLength = len(lable)
+
+		if xAlignment == self._leftAlign:
+			xStart = 2
+		elif xAlignment == self._centerAlign:
+			xStart = (width-lableLength)/2
+		elif xAlignment == self._rightAlign:
+			xStart = width - 2 - lableLength
+		else: return
+
+		if yAlignment == self._topAlign:
+			y = 0
+		elif yAlignment == self._bottomAlign:
+			y = height-1
+		else: return
+
+		for i in range(lableLength):
+			x = xStart + i
+			c = lable[i]
+			libtcod.console_put_char_ex(console, x, y, c, color, libtcod.BKGND_NONE)
+
+	def printGameMessages(self):
+		# print the game messages
+		y = 1
+		for (line,color) in self.game._messages:
+			libtcod.console_set_default_foreground(self.horPanel, color)
+			libtcod.console_print_ex(self.horPanel, MSG_X, y, libtcod.BKGND_NONE, libtcod.LEFT, line)
+			y += 1
 
 	def bindKey(self,command,key):
 		pass
@@ -398,9 +469,9 @@ class KeyboardCommands:
 		hero.setNextCommand(commands.WaitCommand(hero))
 		ui.fovRecompute = False
 
-
-ui = UserInterface()
-ui.mainLoop()
+if __name__ == "__main__":
+	ui = UserInterface()
+	ui.mainLoop()
 
 '''
 TODO:
@@ -408,10 +479,10 @@ NAME = Mire
 AI class
 	monsters sometimes attack other monsters
 Gough Ghast - boss
-Sir Kalgrain - boss, Knight
+Sir Kalagrain - boss, Knight
 Deacon Deleto - boss, Occultist 
 Wyrm - "W"
-Kalgrain Knights - attack together
+Kalagrain Knights - attack together
 Snakemen - generic enemy "S"
 Angels and Demons - special enemies
 	drop Angel feathers and demon ribs
@@ -437,12 +508,12 @@ Potions
 Pick Up - command
 Throw - command
 Use - command
+"Leveling Up" with special items that perminantly increase a single stat
 
 LONG TERM TODO:
 Spells
 	Spells that you don't have the magic for drain health instead
 	Spell Upgrades
-		Dropped by bosses
 Traps "^" or "*"
 	groups of traps:
 		single

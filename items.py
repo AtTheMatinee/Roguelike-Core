@@ -19,7 +19,7 @@ class Equipment(Item):
 	def unequip (self,actor):
 		pass
 
-'''
+''' 
 Gauntlet
 Sword
 Staff

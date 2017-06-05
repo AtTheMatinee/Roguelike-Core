@@ -17,9 +17,9 @@ FOV_ALGORITHM = 0
 FOV_LIGHT_WALLS = True
 FOV_RADIUS = 10
 
-ROOM_DIFICULTY_BASE = 1 # The base multiplier for the total max difficulty of the monsters in a room,
+ROOM_DIFICULTY_BASE = 2 # The base multiplier for the total max difficulty of the monsters in a room,
 # using the formula maxRoomDifficulty = ROOM_DIFICULTY_BASE + ROOM_DIFICULTY_BASE*levelDepth/2
-EMPTY_ROOM_CHANCE = 0.3 # Probability of a room containing 0 monsters
+EMPTY_ROOM_CHANCE = 0.5 # Probability of a room containing 0 monsters
 
 '''
 ====================
@@ -71,6 +71,13 @@ class Map:
 		libtcod.map_compute_fov(self.fov_map, x, y, FOV_RADIUS, FOV_LIGHT_WALLS, FOV_ALGORITHM)
 
 class Level:
+	'''
+	TODO: Have the level divide the terrain into different environments.
+	then have each level generate a color map, reflecting different types 
+	of environments. replace the tile color in the GameUI object with the 
+	GameUI's noisemap multiplied by the coresponding cell in the level's
+	color map.
+	'''
 	def __init__(self, map, mapWidth, mapHeight):
 		self.map = map # points to the map object that stores every level
 		self.game = self.map.game
@@ -89,19 +96,14 @@ class Level:
 		Level._hasObject = 4 # bitwise map flag
 		Level._hasBeenExplored = 8 # bitwise map flag
 
+		self.game.message("Welcome. Prepare to die in the new completely unbalanced roguelike engine prototype from AtTheMatinee.")
+
 	def generateLevel(self,mapType):
 		# Creates an empty 2D array
 		
 		self.terrain = [[0
 			for y in range(self.mapHeight)]
 				for x in range(self.mapWidth)]
-		'''
-		#Test Code
-		self.setBlocksMovementTrue(30,22)
-		self.setBlocksSightTrue(30,22)
-		self.setBlocksMovementTrue(50,22)
-		self.setBlocksSightTrue(50,22)
-		'''
 
 		mapType.generateLevel(self, self.mapWidth, self.mapHeight)
 		self.pathMap = libtcod.path_new_using_map(self.map.fov_map,1)
@@ -133,8 +135,11 @@ class Level:
 
 				# placeholder Monster Spawn
 				#monster = actors.Monster(self.game,x,y,'S',"Snakeman",libtcod.desaturated_green,stats = actorStats.Stats("Snakeman"),state = states.AIWonder())
-				if random.random() <= 0.66:
+				choice = random.random()
+				if choice <= 0.40:
 					self.game.actorSpawner.spawn(x,y,"Mirehound")
+				elif 0.40 < choice <= 0.8:
+					self.game.actorSpawner.spawn(x,y,"Plague Rat")
 				else: self.game.actorSpawner.spawn(x,y,"Snakeman")
 
 	'''
