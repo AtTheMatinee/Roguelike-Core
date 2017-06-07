@@ -37,6 +37,9 @@ class Object(object):
 		if libtcod.map_is_in_fov(self.game.map.fov_map, self.x, self.y):
 			libtcod.console_put_char_ex(self.game.ui.con, self.x, self.y, '.', self.game.ui.color_light_ground_fore, self.game.ui.color_light_ground_back)
 
+	def getName(self):
+		return self.name
+
 	def distanceTo(self,object):
 		dx = object.x-self.x
 		dy = object.y-self.y
@@ -45,14 +48,14 @@ class Object(object):
 	def getNearbyActors(self):
 		nearbyActors = []
 		for actor in self.game._currentLevel._actors:
-			if distanceTo(actor) <= 10:
+			if (actor != self) and (self.distanceTo(actor) <= 10):
 				nearbyActors.append(actor)
 		return nearbyActors
 
 	def getNearbyObjects(self):
 		nearbyObjects = []
 		for obj in self.game._currentLevel._objects:
-			if distanceTo(obj) <= 10:
+			if (obj != self) and (self.distanceTo(obj) <= 10):
 				nearbyObjects.append(obj)
 		return nearbyObjects
 

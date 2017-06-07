@@ -6,6 +6,8 @@ actorStats.py
 Stats
 ====================
 '''
+# attack = [physical, armorPenetration, fire, frost, poison, bleed, holy, unholy, unblockable]
+# defense = [physical, fire, frost, poison, bleed, holy, unholy]
 class StatsTable:
 	data = {
 	"None":
@@ -15,9 +17,9 @@ class StatsTable:
 		"magicCurrent":0,
 		"magicMax":0,
 		"speed":6,
-		"attack":[2,0,0,0,0,0,0],
+		"attack":[2,0,0,0,0,0,0,0,0],
 		"attackSpeed":0,
-		"defense":[0,0,0,0,0,0],
+		"defense":[0,0,0,0,0,0,0],
 		"critChance":0
 		},
 	"Hero":
@@ -27,9 +29,9 @@ class StatsTable:
 		"magicCurrent":10,
 		"magicMax":10,
 		"speed":6,
-		"attack":[2,0,0,0,0,0,0],
+		"attack":[2,0,0,0,0,0,0,0,0],
 		"attackSpeed":0,
-		"defense":[2,0,0,0,0,0],
+		"defense":[2,0,0,0,0,0,0],
 		"critChance":0.05
 		},
 	"Plague Rat":
@@ -39,10 +41,10 @@ class StatsTable:
 		"magicCurrent":0,
 		"magicMax":0,
 		"speed":5,
-		"attack":[0,0,0,2,0,0,0],
+		"attack":[0,0,0,0,2,0,0,0,0],
 		"attackSpeed":0,
-		"defense":[1,0,0,.5,0,0],
-		"critChance":1
+		"defense":[1,0,0,.5,0,0,0],
+		"critChance":0.05
 		},
 	"Mirehound":
 		{
@@ -51,9 +53,9 @@ class StatsTable:
 		"magicCurrent":0,
 		"magicMax":0,
 		"speed":8,
-		"attack":[2,0,0,0,0,0,0],
+		"attack":[2,0,0,0,0,0.1,0,0,0],
 		"attackSpeed":2,
-		"defense":[0,0,0,0,0,0],
+		"defense":[0,0,0,0,0,0,0],
 		"critChance":0.05
 		},
 	"Rougarou":
@@ -63,9 +65,9 @@ class StatsTable:
 		"magicCurrent":0,
 		"magicMax":0,
 		"speed":8,
-		"attack":[18,0,0,0,0,0,0],
+		"attack":[18,6,0,0,0,0.1,0,0,0],
 		"attackSpeed":2,
-		"defense":[6,0,0,0,0,0],
+		"defense":[6,0,0,0,0,0,0],
 		"critChance":0.1
 		},
 	"Snakeman":
@@ -75,9 +77,9 @@ class StatsTable:
 		"magicCurrent":0,
 		"magicMax":0,
 		"speed":5,
-		"attack":[6,0,0,0,0,0,0],
+		"attack":[6,0,0,0,0,0,0,0,0],
 		"attackSpeed":-4,
-		"defense":[4,0,0,0,0,0],
+		"defense":[4,0,0,.5,0,0,0],
 		"critChance":0.05
 		}
 	}

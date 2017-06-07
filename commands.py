@@ -71,9 +71,7 @@ class WalkCommand(Command):
 		# consume energy
 		self.actor.energy -= self.energyCost
 		# set flags that change when a turn is taken
-		self.actor.canBePushed = True
-		if (self.actor.mortalWound == True):
-			self.actor.hadLastChance = True
+		self.actor.hasTakenTurn()
 
 		success = True
 		alternative = None
@@ -89,10 +87,8 @@ class WaitCommand(Command):
 	def perform(self):
 		self.actor.energy -= self.energyCost
 		# set flags that change when a turn is taken
-		self.actor.canBePushed = True
-		if (self.actor.mortalWound == True):
-			self.actor.hadLastChance = True
-
+		self.actor.hasTakenTurn()
+		
 		success = True
 		alternative = None
 		return success, alternative
@@ -138,16 +134,14 @@ class AttackCommand(Command):
 			attack[0] += random.randint(1,attack[0])
 
 		if self.actor == self.actor.game.hero or self.target == self.actor.game.hero:
-			self.actor.game.message("The " + self.actor.name + " attacks the " + self.target.name)
+			self.actor.game.message("The " + self.actor.getName() + " attacks the " + self.target.getName())
 
 		self.target.takeDamage(attack)
 		self.target.mostRecentAttacker = self.actor
 
 		self.actor.energy -= self.energyCost
 		# set flags that change when a turn is taken
-		self.actor.canBePushed = True
-		if (self.actor.mortalWound == True):
-			self.actor.hadLastChance = True
+		self.actor.hasTakenTurn()
 
 		success = True
 		alternative = None
@@ -162,10 +156,78 @@ class FireRangedWeaponCommand(Command):
 	pass
 
 class UseCommand(Command):
-	pass
+	def __init__(self, actor, item):
+		self.actor = actor
+		self.game = actor.game
+		self.item = item
 
-class EquipCommandCommand(Command):
-	pass
+		self.energyCost = 12
+
+	def perform(self):
+		if self.item.use(self.actor) == True:
+
+			self.actor.energy -= self.energyCost
+			# set flags that change when a turn is taken
+			self.actor.hasTakenTurn()
+			
+			success = True
+			alternative = None
+
+		else:
+			success = False
+			alternative = None
+
+		return success, alternative
+
+
+class PickUpCommand(Command):
+	def __init__(self, actor,x,y):
+		self.actor = actor
+		self.game = actor.game
+		self.x = x
+		self.y = y
+
+		self.energyCost = 8
+
+	def perform(self):
+		success = False
+		alternative = None
+		# Check to see if there is an item at that location
+		for item in self.game._currentLevel._items:
+			if (item.x == self.x) and (item.y == self.y):
+
+				# Check to see if the actors inventory has space
+				if self.actor.inventorySize - len(self.actor.inventory) < 1:
+					if self.actor == self.game.hero:
+						self.game.message("You cannot carry the "+item.getName())
+					success = False
+					alternative = None
+					return success, alternative
+
+				# otherwise add the item to the actor's inventory
+				# and remove it from the level
+				else:
+					item.moveToInventory(self.actor)
+
+					self.actor.energy -= self.energyCost
+					# set flags that change when a turn is taken
+					self.actor.hasTakenTurn()
+					
+
+					success = True
+					alternative = None
+
+		return success, alternative
+
+class DropCommand(Command):
+	def __init__(self,actor,item):
+		self.actor = actor
+		self.item = item
+
+		self.energyCost = 8
+
+	def process(self):
+		self.item.dropFromInventory(self.item,self.actor)
 
 class ThrowCommand(Command):
 	pass

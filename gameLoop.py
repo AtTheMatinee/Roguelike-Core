@@ -20,6 +20,8 @@ import factions
 
 import actorSpawner
 
+import itemSpawner
+
 import dungeonGeneration
 
 import commands
@@ -40,6 +42,7 @@ class GameLoop:
 		self._currentActor = 0
 		self._objects = []
 		self._currentLevel = None
+		self._items = []
 
 		self._messages = []
 
@@ -50,6 +53,7 @@ class GameLoop:
 		game = self
 
 		self.actorSpawner = actorSpawner.ActorSpawner(self)
+		self.itemSpawner = itemSpawner.ItemSpawner(self)
 		self.factions = factions.FactionTracker()
 
 		self.map = worldMap.Map(game, mapWidth, mapHeight)
@@ -59,10 +63,11 @@ class GameLoop:
 		heroName = "Hero"
 		heroX = mapWidth/2#self._currentLevel.tempX
 		heroY = mapHeight/2#self._currentLevel.tempY
-		#self.hero = actors.Hero(game,heroX,heroY,'@',heroName,color = libtcod.white,stats = actorStats.Stats("Hero"),playerControlled = True)
+
 		self.hero = self.actorSpawner.spawn(heroX,heroY,"Hero")
 		self.hero.name = heroName
 		self.hero.addComponent(components.Component,10)
+
 
 
 	def process(self):
@@ -105,6 +110,12 @@ class GameLoop:
 
 	def removeActor(self,actor):
 		self._actors.remove(actor)
+
+	def addItem(self,item):
+		self._items.append(item)
+
+	def removeItem(self,item):
+		self._items.remove(item)
 
 	def addObject(self,object):
 		self._objects.append(object)

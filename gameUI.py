@@ -19,6 +19,8 @@ import gameLoop
 
 import commands
 
+INVENTORY_WIDTH = 30
+
 '''
 ====================
 User Interface
@@ -28,6 +30,7 @@ User Interface
 #TODO: Option to switch virtical panel from right to left
 #TODO: spell hoykeys (Should be easy after key rebinding is implemented)
 #TODO: Virtical panel shows nearby enemy information
+#TODO: Mouselook on an enemy pops it to the top of the enemy information panel
 #TODO: Virtical panel shows player stats and hotkeys (if bound)
 #TODO: Shows stats in the form of stat: value (baseValue) e.g.
 #		ATK: 14 (5)
@@ -59,12 +62,18 @@ class UserInterface:
 
 		self.keyboard = libtcod.Key()
 		self.mouse = libtcod.Mouse()
-		self.paused = False
 
 		self.game = gameLoop.GameLoop(self,MAP_WIDTH,MAP_HEIGHT)
 
 		self.fovRecompute = True
 		self.generateNoiseMap()
+
+		# Overlay
+
+		# Menu
+		self._playing = 0
+		self._inventoryMenu = 1
+		self._gameState = self._playing
 
 	def mainLoop(self):
 		'''
@@ -79,12 +88,24 @@ class UserInterface:
 			exit = self.handleInput(self.keyboard)
 			if (exit): break
 
-			if not self.paused:
+			if self._gameState == self._playing:
 				#Update
 				self.game.process()
 
+			'''
+			# Overlay
+			# Menus
+			elif self._gameState == self._inventoryMenu:
+				self.inventoryMenu('Press the key next to an item to use it, or any other key to cancel.\n')
+			'''
+
 			#Render
 			self.renderAll()
+
+			# Overlay
+			# Menus
+			if self._gameState == self._inventoryMenu:
+				self.inventoryMenu('Press the key next to an item to use it, or any other key to cancel.\n')
 
 			libtcod.console_flush()
 
@@ -92,95 +113,106 @@ class UserInterface:
 				object.clear()
 
 	def handleInput(self,keyboard):
-		# Non-rebindable Keys
-		if (keyboard.vk	== libtcod.KEY_ESCAPE): return True #Exit Game	
+		if self._gameState == self._playing:
+			# Non-rebindable Keys
+			if (keyboard.vk	== libtcod.KEY_ESCAPE): return True #Exit Game	
 
-		# Rebindable Keys
-		# Check for every key
-		# if that key is pressed, and it is bound, issue the bound command
-		# TODO: Use init file to load in custom and Default keyboard bindings
-		hero = self.game.hero
-		keycode = None
+			# Rebindable Keys
+			# Check for every key
+			# if that key is pressed, and it is bound, issue the bound command
 
-		if (keyboard.vk == libtcod.KEY_0):
-			keycode = '0'
-		elif (keyboard.vk == libtcod.KEY_1):
-			keycode = '1'
-		elif (keyboard.vk == libtcod.KEY_2):
-			keycode = '2'
-		elif (keyboard.vk == libtcod.KEY_3):
-			keycode = '3'
-		elif (keyboard.vk == libtcod.KEY_4):
-			keycode = '4'
-		elif (keyboard.vk == libtcod.KEY_5):
-			keycode = '5'
-		elif (keyboard.vk == libtcod.KEY_6):
-			keycode = '6'
-		elif (keyboard.vk == libtcod.KEY_7):
-			keycode = '7'
-		elif (keyboard.vk == libtcod.KEY_8):
-			keycode = '8'
-		elif (keyboard.vk == libtcod.KEY_9):
-			keycode = '9'
+			hero = self.game.hero
+			keycode = None
 
-		elif (keyboard.vk == libtcod.KEY_KP0):
-			keycode = 'KP0'
-		elif (keyboard.vk == libtcod.KEY_KP1):
-			keycode = 'KP1'
-		elif (keyboard.vk == libtcod.KEY_KP2):
-			keycode = 'KP2'
-		elif (keyboard.vk == libtcod.KEY_KP3):
-			keycode = 'KP3'
-		elif (keyboard.vk == libtcod.KEY_KP4):
-			keycode = 'KP4'
-		elif (keyboard.vk == libtcod.KEY_KP5):
-			keycode = 'KP5'
-		elif (keyboard.vk == libtcod.KEY_KP6):
-			keycode = 'KP6'
-		elif (keyboard.vk == libtcod.KEY_KP7):
-			keycode = 'KP7'
-		elif (keyboard.vk == libtcod.KEY_KP8):
-			keycode = 'KP8'
-		elif (keyboard.vk == libtcod.KEY_KP9):
-			keycode = 'KP9'
+			if (keyboard.vk == libtcod.KEY_0):
+				keycode = '0'
+			elif (keyboard.vk == libtcod.KEY_1):
+				keycode = '1'
+			elif (keyboard.vk == libtcod.KEY_2):
+				keycode = '2'
+			elif (keyboard.vk == libtcod.KEY_3):
+				keycode = '3'
+			elif (keyboard.vk == libtcod.KEY_4):
+				keycode = '4'
+			elif (keyboard.vk == libtcod.KEY_5):
+				keycode = '5'
+			elif (keyboard.vk == libtcod.KEY_6):
+				keycode = '6'
+			elif (keyboard.vk == libtcod.KEY_7):
+				keycode = '7'
+			elif (keyboard.vk == libtcod.KEY_8):
+				keycode = '8'
+			elif (keyboard.vk == libtcod.KEY_9):
+				keycode = '9'
 
-		elif (keyboard.vk == libtcod.KEY_UP):
-			keycode = 'UP'
-		elif (keyboard.vk == libtcod.KEY_DOWN):
-			keycode = 'DOWN'
-		elif (keyboard.vk == libtcod.KEY_LEFT):
-			keycode = 'LEFT'
-		elif (keyboard.vk == libtcod.KEY_RIGHT):
-			keycode = 'RIGHT'
+			elif (keyboard.vk == libtcod.KEY_KP0):
+				keycode = 'KP0'
+			elif (keyboard.vk == libtcod.KEY_KP1):
+				keycode = 'KP1'
+			elif (keyboard.vk == libtcod.KEY_KP2):
+				keycode = 'KP2'
+			elif (keyboard.vk == libtcod.KEY_KP3):
+				keycode = 'KP3'
+			elif (keyboard.vk == libtcod.KEY_KP4):
+				keycode = 'KP4'
+			elif (keyboard.vk == libtcod.KEY_KP5):
+				keycode = 'KP5'
+			elif (keyboard.vk == libtcod.KEY_KP6):
+				keycode = 'KP6'
+			elif (keyboard.vk == libtcod.KEY_KP7):
+				keycode = 'KP7'
+			elif (keyboard.vk == libtcod.KEY_KP8):
+				keycode = 'KP8'
+			elif (keyboard.vk == libtcod.KEY_KP9):
+				keycode = 'KP9'
 
-		elif keyboard.c:
-			for c in "abcdefghijklmnopqrstuvwxyz":
-				if keyboard.c == ord(str(c)):
-					keycode = c.capitalize()
-					break
+			elif (keyboard.vk == libtcod.KEY_UP):
+				keycode = 'UP'
+			elif (keyboard.vk == libtcod.KEY_DOWN):
+				keycode = 'DOWN'
+			elif (keyboard.vk == libtcod.KEY_LEFT):
+				keycode = 'LEFT'
+			elif (keyboard.vk == libtcod.KEY_RIGHT):
+				keycode = 'RIGHT'
 
-			if (keyboard.c == ord(",")):
-				keycode = ','
-			elif (keyboard.c == ord(".")):
-				keycode = '.'
-			elif (keyboard.c == ord(";")):
-				keycode = ';'
-			elif (keyboard.c == ord("'")):
-				keycode = "'"
-			elif (keyboard.c == ord("[")):
-				keycode = '['
-			elif (keyboard.c == ord("]")):
-				keycode = ']'
-			elif (keyboard.c == ord("-")):
-				keycode = '-'
-			elif (keyboard.c == ord("+")):
-				keycode = '+'
+			elif keyboard.c:
+				for c in "abcdefghijklmnopqrstuvwxyz":
+					if keyboard.c == ord(str(c)):
+						keycode = c.capitalize()
+						break
 
-		if keycode != None:
-			# TODO: if SHIFT: keycode = "SHIFT_" + keycode
-			# TODO: if CTRL: keycode = "CTRL_" + keycode
-			# TODO: if ALT: keycode = "ALT_" + keycode
-			self.keyboardIntermediary.dispatch(self,keycode,hero)
+				if (keyboard.c == ord(",")):
+					keycode = ','
+				elif (keyboard.c == ord(".")):
+					keycode = '.'
+				elif (keyboard.c == ord(";")):
+					keycode = ';'
+				elif (keyboard.c == ord("'")):
+					keycode = "'"
+				elif (keyboard.c == ord("[")):
+					keycode = '['
+				elif (keyboard.c == ord("]")):
+					keycode = ']'
+				elif (keyboard.c == ord("-")):
+					keycode = '-'
+				elif (keyboard.c == ord("+")):
+					keycode = '+'
+
+			if keycode != None:
+				# TODO: if SHIFT: keycode = "SHIFT_" + keycode
+				# TODO: if CTRL: keycode = "CTRL_" + keycode
+				# TODO: if ALT: keycode = "ALT_" + keycode
+				self.keyboardIntermediary.dispatch(self,keycode,hero)
+
+	def getNamesUnderMouse(self):
+		#get the names of all objects at the mouse's coordinates
+		(x,y) = (self.mouse.cx,self.mouse.cy)
+		names = [obj.getName() for obj in self.game.hero.nearbyObjects
+		if obj.x == x and obj.y == y]
+
+		#combine the names, separated by a comma and space
+		names = ', '.join(names)
+		return names.capitalize()
 
 	def renderAll(self):
 		if self.fovRecompute:
@@ -188,7 +220,6 @@ class UserInterface:
 			self.game.map.fovRecompute(self.game.hero.x, self.game.hero.y)
 
 			# ==== Render Level ====
-			# TODO: use noiseMap to alter color values of tiles
 			for y in range(MAP_HEIGHT):
 				for x in range(MAP_WIDTH):
 					visible = libtcod.map_is_in_fov(self.game.map.fov_map, x, y)
@@ -228,9 +259,32 @@ class UserInterface:
 		libtcod.console_set_default_background(self.virPanel, libtcod.black)
 		libtcod.console_clear(self.virPanel)
 		self.renderBoarderAroundConsole(self.virPanel,VIRTICAL_PANEL_WIDTH, VIRTICAL_PANEL_HEIGHT, UI_PRIMARY_COLOR)
+		self.renderMonsterPanel(self.virPanel,VIRTICAL_PANEL_WIDTH,VIRTICAL_PANEL_HEIGHT)
 
 		# Health Bar
 		self.renderHealthBar(self.virPanel,2,2,V_PANEL_BAR_WIDTH,self.game.hero)
+
+		'''
+		# My failed attemp at a look command
+		# Names of objects under mouse
+		if (self.game.hero.nearbyObjects != None):
+			names = self.getNamesUnderMouse()
+			if names != None:
+				
+				# TODO: Change x, y, and alignment depending on how long the name is
+				# and how close it is to the edge of the console.
+				x = self.mouse.cx + 1
+				y = self.mouse.cy
+				alignment = libtcod.LEFT
+				libtcod.console_set_default_foreground(self.con,UI_PRIMARY_COLOR)
+				libtcod.console_print_ex(self.con, x, y, libtcod.black, alignment, names)
+				self.flag_printedNames = True
+				
+			elif self.flag_printedNames == True:
+				# TODO: clean up map outside of fov (might barrow code from the menu methods)
+				self.fovRecompute = True
+				self.flag_printedNames = False
+		'''
 
 		# ==== Blit Consoles to Screen ====
 		libtcod.console_blit(self.horPanel, 0, 0, HORIZONTAL_PANEL_WIDTH, HORIZONTAL_PANEL_HEIGHT, 0, 0, HORIZONTAL_PANEL_Y)
@@ -262,13 +316,58 @@ class UserInterface:
 		# Print the name of the bar, centered, over the bar
 		libtcod.console_set_default_foreground(panel, libtcod.white)
 		libtcod.console_print_ex(panel, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER,
-			name + ': ' + str(value) + '/' + str(maxValue))
+			name + ': ' + str(int(value)) + '/' + str(int(maxValue)))
 
 	def renderHealthBar(self,panel,x, y, width, actor):
 
 		hp = actor.stats.get("healthCurrent")
 		hpMax = actor.stats.get("healthMax")
 		self.renderStatusBar(panel,x,y,width,"HP",hp,hpMax,libtcod.red,libtcod.darker_red)
+
+	def menu(self,width,header,options):
+		if len(options) > 26: raise ValueError('Limit options to 26')
+
+		headerHeight = libtcod.console_get_height_rect(self.con, 0, 0, width, MAP_HEIGHT, header)
+		height = len(options) + headerHeight
+
+		# Create off screen console
+		self.window = libtcod.console_new(width,height)
+
+		# Print the header
+		libtcod.console_set_default_foreground(self.window, libtcod.white)
+		libtcod.console_print_rect_ex(self.window, 0, 0, width, height, libtcod.BKGND_NONE, libtcod.LEFT, header)
+
+		# Print options
+		y = headerHeight
+		letterIndex = ord('a')
+		for optionText in options:
+			text = '('+chr(letterIndex)+')'+optionText
+			libtcod.console_print_ex(self.window, 0, y, libtcod.BKGND_NONE, libtcod.LEFT, text)
+			y += 1
+			letterIndex += 1
+
+		# blit the window to the root
+		x = SCREEN_WIDTH/2 - width/2
+		y = SCREEN_HEIGHT/2 - height/2
+		libtcod.console_blit(self.window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
+
+		if self.keyboard.c:
+			self._gameState = self._playing
+			return self.keyboard.c - ord('a')
+
+	def inventoryMenu(self,header):
+		inventory = self.game.hero.inventory
+		if len(inventory) <= 0:
+			options = ['Inventory is empty']
+
+		else:
+			options = [item.getName() for item in inventory]
+
+		index = self.menu(INVENTORY_WIDTH,header,options)
+
+		if 0 <= index < len(options):
+			item = inventory[index]
+			self.game.hero.setNextCommand(commands.UseCommand(self.game.hero,item))
 
 	def renderBoarderAroundConsole(self,console,width,height,color):
 		'''
@@ -326,6 +425,31 @@ class UserInterface:
 			libtcod.console_print_ex(self.horPanel, MSG_X, y, libtcod.BKGND_NONE, libtcod.LEFT, line)
 			y += 1
 
+	def renderMonsterPanel(self,panel,width,height):
+		listLength = len(self.game.hero.nearbyActors)
+		if listLength > 0:
+			i = 0
+			for actor in self.game.hero.nearbyActors: #TODO: calculate how many monsters I can fit here
+				y = 15+i*6
+				if y >= height - 6: break
+				if self.game.factions.getRelationship(self.game.hero.faction, actor.faction) == self.game.factions._hostile:
+					self.renderMonsterInformation(panel,width,y,actor)
+					i += 1
+
+	def renderMonsterInformation(self,panel,width,y,actor):
+		'''
+		   ==== Mirehound ====  
+		 ####HP:#11/15####
+		 ATK: 2  DEF: 0  SPD: 8
+		'''
+		name = actor.getName()
+		bannerSides = max(0, (width-len(name)-4) / 2 )
+		nameBanner = bannerSides*'=' + ' ' + name + ' ' + bannerSides*'='
+		libtcod.console_set_default_foreground(panel,libtcod.white)
+		libtcod.console_print_ex(panel, 1, y, libtcod.BKGND_NONE, libtcod.LEFT, nameBanner)
+		
+		self.renderHealthBar(panel,2,y+1,width-4,actor)
+
 	def bindKey(self,command,key):
 		pass
 
@@ -367,9 +491,9 @@ class KeyboardCommands:
 		'D':None,
 		'E':None,
 		'F':None,
-		'G':None,
+		'G':self.PickUpItem,
 		'H':self.WalkWest,
-		'I':None,
+		'I':self.OpenInventory,
 		'J':self.WalkSouth,
 		'K':self.WalkNorth,
 		'L':self.WalkEast,
@@ -469,6 +593,13 @@ class KeyboardCommands:
 		hero.setNextCommand(commands.WaitCommand(hero))
 		ui.fovRecompute = False
 
+	def PickUpItem(self,ui,hero):
+		hero.setNextCommand(commands.PickUpCommand(hero, hero.x, hero.y))
+
+	def OpenInventory(self,ui,hero):
+		ui._gameState = ui._inventoryMenu
+		ui.keyboard.c = libtcod.KEY_NONE
+
 if __name__ == "__main__":
 	ui = UserInterface()
 	ui.mainLoop()
@@ -504,8 +635,8 @@ Special Map Tiles:
 Level difficulty = Dungeon difficulty + floor
 Doors - object "+" when closed, "D" when open
 Special Door - object "="
-Potions
-Pick Up - command
+Talismans
+
 Throw - command
 Use - command
 "Leveling Up" with special items that perminantly increase a single stat
@@ -535,6 +666,8 @@ Character Classes - only really effect beginning
 		Starts with some potions identified
 	Magi
 		Starts with some spells and highest Magic
+	???
+		Starts with some monsters as nonhostiles
 
 Crafting
 vision cones

@@ -149,9 +149,11 @@ class DeathState:
 		o.game.removeActor(o)
 		o.game._currentLevel.removeActor(o)
 
-		o.game.message(o.name+" is dead.",libtcod.crimson)
+		o.game.message(o.getName()+" is dead.",libtcod.crimson)
 
-		name = "Corpse of "+o.name
+		self.owner.dropLoot()
+
+		name = "Corpse of "+o.getName()
 		objects.Corpse(o.game, o.x, o.y, "%",name, libtcod.crimson)
 
 		del self.owner
