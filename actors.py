@@ -15,7 +15,7 @@ import actorStats
 import libtcodpy as libtcod
 
 class Actor(Object):
-	def __init__(self, game, x, y, char, name, color, faction = None, blocks=True, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, playerControlled = False):
+	def __init__(self, game, x, y, char, name, color, faction = None, blocks=True, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, playerControlled = False):
 		self.game = game
 		self.x = x
 		self.y = y
@@ -24,6 +24,9 @@ class Actor(Object):
 		self.color = color
 		self.faction = faction
 		self.blocks = blocks
+
+		self.nearbyActors = self.getNearbyActors()
+		self.nearbyObjects = self.getNearbyObjects()
 		
 		self.surviveMortalWound = surviveMortalWound
 		self.mortalWound = False
@@ -38,6 +41,10 @@ class Actor(Object):
 
 		self.stats = stats
 
+		self.inventorySize = inventorySize
+		self.inventory = []
+		self.drops = drops
+
 		self.playerControlled = playerControlled
 		self.state = state
 		self._defaultState = state
@@ -50,6 +57,7 @@ class Actor(Object):
 		self._nextCommand = None
 
 	def getCommand(self):
+		# process status effects
 		if self.statusEffects:
 			for statusEffect in self.statusEffects:
 				statusEffect.effect()
@@ -58,7 +66,6 @@ class Actor(Object):
 
 		if self.state:
 			#AI states
-			#knockback
 			#confused
 			#autowalk
 			#asleep
@@ -84,31 +91,47 @@ class Actor(Object):
 		else:
 			return (self._nextCommand == None)
 
+	def hasTakenTurn(self):
+		# Reset Once per turn flags
+		self.canBePushed = True
+
+		if (self.mortalWound == True):
+			self.hadLastChance = True
+
+		self.nearbyActors = self.getNearbyActors()
+
+
 	def takeDamage(self, damage):
 		'''
-		damage = [physical, fire, frost, poison, holy, unholy, unblockable]
-		defense = [n,%,%,%,%,%]
+		damage = [physical, armorPenetration, fire, frost, poison, bleed, holy, unholy, unblockable]
+		defense = [physical, fire, frost, poison, bleed, holy, unholy]
 		TODO: instead of dying when your health reaches 0,
 		health being at 0 puts the actor in a near death state,
 		in which the next damage taken is fatal
 		'''
 		defense = self.stats.get("defense")
 
-		physicalDam = max(0,(damage[0] - random.randint(0,defense[0])))
+		armor = max(0,(random.randint(0,defense[0]) - damage[1])) # physicalDefense - armorPenetration
+		physicalDam = max(0,(damage[0] - armor))
 
 		# I have these seperated out so I can implement additional modifiers in the future
-		fireDam = damage[1] - damage[1]*defense[1]
-		frostDam = damage[2] - damage[2]*defense[2]
-		poisonDam = damage[3] - damage[3]*defense[3]
-		holyDam = damage[4] - damage[4]*defense[4]
-		unholyDam = damage[5] - damage[5]*defense[5]
+		fireDam = damage[2] - damage[2]*defense[1] # inflicts inflamed
+		frostDam = damage[3] - damage[3]*defense[2] # inflicts frozen
+		poisonDam = damage[4] - damage[4]*defense[3] # inflicts poison
+		bleedDam = damage[5] - damage[5]*defense[4] # does not do damage, only inflicts bleed status
+		holyDam = damage[6] - damage[6]*defense[5]
+		unholyDam = damage[7] - damage[7]*defense[6]
 
 		totalDam = (physicalDam + fireDam + frostDam + poisonDam + holyDam + unholyDam + damage[6])
 
 		health = self.stats.get("healthCurrent")
-		health -= totalDam
+		health = min(health-totalDam,self.stats.get("healthMax"))
 		self.stats.setBaseStat("healthCurrent",health)
 		self.checkDeath()
+
+	def heal(self,healValue):
+		health =  min((self.stats.get("healthCurrent") + healValue), self.stats.get('healthMax'))
+		self.stats.setBaseStat("healthCurrent",health)
 
 	def checkDeath(self):
 		if (self.stats.get("healthCurrent") <= 0):
@@ -117,7 +140,11 @@ class Actor(Object):
 				self.death()
 			else:
 				self.mortalWound = True
-				self.game.message(self.name+" is mortally wounded.",libtcod.red)
+				self.game.message(self.getName()+" is mortally wounded.",libtcod.red)
+
+		elif (self.mortalWound == True) or (self.hadLastChance == True):
+			self.mortalWound = False
+			self.hadLastChance = False
 
 	def death(self):
 		if self.deathState != None:
@@ -131,6 +158,18 @@ class Actor(Object):
 
 			del self
 
+	def dropLoot(self):
+		# Drop Inventory and Equipment
+
+		# Random Drop { itemKey : odds=1/n }
+		level = 0
+		if self.drops:
+			for item,odds in self.drops.items():
+				if random.random() <= 1/odds:
+					self.game.itemSpawner.spawn(self.x,self.y,item,level)
+
+
+
 	def addComponent(self,component,timer):
 		statusEffect = component(self,timer)
 		self.statusEffects.append(statusEffect)
@@ -139,9 +178,32 @@ class Actor(Object):
 		self.statusEffects.remove(component)
 
 class Hero(Actor):
-	# TODO: Overwrite getNearbyActors and getNearbyObjects from Object
-	# so that, for the player, they use FOV instead of distance
-	pass
+
+	def getNearbyActors(self):
+		nearbyActors = []
+		for actor in self.game._currentLevel._actors:
+			if (actor != self) and (libtcod.map_is_in_fov(self.game.map.fov_map, actor.x, actor.y)):
+				nearbyActors.append(actor)
+		return nearbyActors
+
+	def getNearbyObjects(self):
+		nearbyObjects = []
+		for obj in self.game._currentLevel._objects:
+			if (obj != self) and (libtcod.map_is_in_fov(self.game.map.fov_map, obj.x, obj.y)):
+				nearbyObjects.append(obj)
+		return nearbyObjects
+
+		libtcod.map_is_in_fov(self.game.map.fov_map, x, y)
+
+	def hasTakenTurn(self):
+		# Reset Once per turn flags
+		self.canBePushed = True
+
+		if (self.mortalWound == True):
+			self.hadLastChance = True
+
+		self.nearbyActors = self.getNearbyActors()
+		self.nearbyObjects = self.getNearbyObjects()
 
 class Monster(Actor):
 	pass

@@ -8,16 +8,74 @@ Items
 ====================
 '''
 class Item(Object):
-	def useItem(self,actor):
+	identified = False
+	unidentifiedName = "Mysterious Item"
+	def __init__(self, game, x, y, char, name, color, level, blocks=False):		
+		self.game = game
+		self.x = x
+		self.y = y
+		self.char = char
+		self.name = name
+		self.color = color
+		self.level = level
+		self.blocks = blocks
+
+		self.game.addObject(self)
+		self.game._currentLevel.addObject(self)
+		self.game.addItem(self)
+		self.game._currentLevel.addItem(self)
+
+		self.renderFirst()
+		if self.blocks == True:
+			self.game._currentLevel.setHasObjectTrue(x,y)
+
+	def getName(self):
+		if self.__class__.identified == True:
+			return self.name
+		else: return self.__class__.unidentifiedName
+
+	def moveToInventory(self,actor):
+		self.game._currentLevel.removeItem(self)
+		self.game._currentLevel.removeObject(self)
+		actor.inventory.append(self)
+
+	def dropFromInventory(self,actor):
+		if self in actor.inventory:
+			actor.inventory.remove(self)
+			# Drop the item on the ground
+
+	def use(self,actor):
+		if self in actor.inventory:
+			actor.inventory.remove(self)
+			actor.game.message(actor.name +" uses the "+self.getName())
+		return True
+
+	def upgrade(self,level):
 		pass
 
 class Equipment(Item):
+	identified = True
+	def __init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False):
+		Item.__init__(self, game, x, y, char, name, color, level, blocks=False)
+		self.equipSlot = equipSlot
+		self.modifier = modifier
+
 	def useItem(self,actor):
 		self.equip(actor)
+
 	def equip(self,actor):
+		# TODO: move to commands
+		actor.stats.addModifier(self,self.modifier)
+
+	def unequip(self,actor):
+		# TODO: move to commands
+		actor.stats.removeModifier(self)
+
+	def upgrade(self,level):
 		pass
-	def unequip (self,actor):
-		pass
+
+class Armor(Equipment):
+	unidentifiedName = "Mysterious Armor"
 
 ''' 
 Gauntlet

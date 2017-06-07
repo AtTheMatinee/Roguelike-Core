@@ -117,7 +117,7 @@ class Level:
 
 		if random.random() >= EMPTY_ROOM_CHANCE:
 			# populate monsters
-			difficulty = random.randint(0,maxRoomDifficulty)
+			difficulty = random.randint(1,maxRoomDifficulty)
 			for i in xrange(difficulty):
 				# TODO: Give monsters individual difficulty values
 				x = 0
@@ -244,10 +244,10 @@ class Level:
 	def removeObject(self, object):
 		self._objects.remove(object)
 
-	def addItem(self, item):
+	def addItem(self,item):
 		self._items.append(item)
 
-	def removeItem(self, item):
+	def removeItem(self,item):
 		self._items.remove(item)
 
 	def addActor(self, actor):

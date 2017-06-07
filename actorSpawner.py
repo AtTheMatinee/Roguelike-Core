@@ -10,6 +10,9 @@ import libtcodpy as libtcod
 Actor Spawner
 ====================
 '''
+
+# TODO: Actors with inventorySize > 0 will sometimes spawn with items
+
 class ActorSpawner:
 	def __init__(self,game):
 		self.game = game
@@ -20,9 +23,9 @@ class ActorSpawner:
 			'Golem':self.spawnGolem,
 			'Angel':self.spawnAngel,
 			'Demon':self.spawnDemon,
-			'FireElemental':self.spawnFireElemental,
-			'FrostElemental':self.spawnFrostElemental,
-			'SwampHag':self.spawnSwampHag,
+			'Fire Elemental':self.spawnFireElemental,
+			'Frost Elemental':self.spawnFrostElemental,
+			'Swamp Hag':self.spawnSwampHag,
 			'Mirehound':self.spawnMirehound,
 			'Mimic':self.spawnChest,
 			'Plague Rat':self.spawnPlagueRat,
@@ -44,8 +47,13 @@ class ActorSpawner:
 		pass
 
 	def spawnHero(self,x,y):
-		hero = actors.Hero(self.game,x,y,'@',"Hero",color = libtcod.white,faction = "Hero",stats = actorStats.Stats("Hero"),surviveMortalWound = True, playerControlled = True)
+		hero = actors.Hero(self.game,x,y,'@',"Hero",color = libtcod.white,faction = "Hero",stats = actorStats.Stats("Hero"),surviveMortalWound = True, inventorySize = 12, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
+		# Spawn gear
+		for gear,level in {"Health Potion":0}.items():
+			g = self.game.itemSpawner.spawn(x,y,gear,level)
+			g.moveToInventory(hero)
+
 		return hero
 
 	def spawnFireElemental(self,x,y):
@@ -67,7 +75,8 @@ class ActorSpawner:
 		pass
 
 	def spawnMirehound(self,x,y):
-		mirehound = actors.Monster(self.game,x,y,'h',"Mirehound",libtcod.light_amber,faction = "Mirehounds",stats = actorStats.Stats("Mirehound"),state = states.AI())
+		lootDrops = {'Health Potion':2}
+		mirehound = actors.Monster(self.game,x,y,'h',"Mirehound",libtcod.light_amber,faction = "Mirehounds",stats = actorStats.Stats("Mirehound"),state = states.AI(),drops = lootDrops)
 		mirehound.deathState = states.DeathState(mirehound)
 		return mirehound
 
@@ -81,7 +90,8 @@ class ActorSpawner:
 		return rougarou
 
 	def spawnSnakeman(self,x,y):
-		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman",libtcod.desaturated_sea,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI())
+		lootDrops = {'Sword':5,'Health Potion':2}
+		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman",libtcod.desaturated_sea,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI(),drops = lootDrops)
 		snakeman.deathState = states.DeathState(snakeman)
 		return snakeman
 
