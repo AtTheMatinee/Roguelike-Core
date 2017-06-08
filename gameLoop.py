@@ -26,7 +26,7 @@ import dungeonGeneration
 
 import commands
 
-import components
+import statusEffects
 
 '''
 ====================
@@ -66,7 +66,7 @@ class GameLoop:
 
 		self.hero = self.actorSpawner.spawn(heroX,heroY,"Hero")
 		self.hero.name = heroName
-		self.hero.addComponent(components.Component,10)
+		self.hero.addStatusEffect(statusEffects.StatusEffect,10)
 
 
 

@@ -4,6 +4,8 @@ commands.py
 import random
 
 import actors
+
+from items import Equipment
 '''
 ====================
 Commands
@@ -226,8 +228,99 @@ class DropCommand(Command):
 
 		self.energyCost = 8
 
-	def process(self):
+	def perform(self):
 		self.item.dropFromInventory(self.item,self.actor)
 
 class ThrowCommand(Command):
 	pass
+
+class EquipCommand(Command):
+	def __init__(self,actor,item):
+		self.actor = actor
+		self.item = item
+
+		self.energyCost = 12
+	def perform(self):
+		# Check to see if the actor is allowed to equip this
+		if isinstance(self.item, Equipment):
+			if ((self.item.equipSlot == 0) and (self.actor.canEquipArmor == False) or
+				(self.item.equipSlot == 1) and (self.actor.canEquipWeapons == False)):
+				self.actor.game.message(self.actor.getName()+" cannot equip the "+self.item.getName())
+				success = False
+				alternative = None
+				return success,alternative
+
+			# Remove the item from the actor's inventory 
+			if self.item in self.actor.inventory:
+				self.actor.inventory.remove(self.item)
+
+			# see if the equip slot is empty
+			#if ( (self.item.equipSlot > len(self.actor.equipSlots)) or
+			#	(self.actor.equipSlots[self.item.equipSlot] == None) ):
+			#if (self.item.equipSlot > len(self.actor.equipSlots)):
+			if (self.actor.equipSlots[self.item.equipSlot] == None):
+
+				# The list is empty, equip the item in its slot
+				self.actor.equipSlots[self.item.equipSlot] = self.item
+				self.actor.stats.addModifier(self.item,self.item.modifier)
+
+			else:
+				# Unequip the item in the taken slot
+				itemToUnequip = self.actor.equipSlots[self.item.equipSlot]
+				unequip = UnequipCommand(self.actor, itemToUnequip)
+				success, alternative = unequip.perform()
+
+				if success == False:
+					# If it fails, re-add the item to the player's inventory and return False
+					self.actor.inventory.append(self.item)
+					return success, alternative
+				
+				# Equip the new item
+				self.actor.equipSlots[self.item.equipSlot] = self.item
+				self.actor.stats.addModifier(self.item,self.item.modifier)
+
+			self.actor.game.message(self.actor.getName()+" has equipped a "+self.item.getName())
+			self.actor.energy -= self.energyCost
+			# set flags that change when a turn is taken
+			self.actor.hasTakenTurn()
+			
+			success = True
+			alternative = None
+
+		else:
+			success = False
+			alternative = None
+
+		return success, alternative
+
+
+class UnequipCommand(Command):
+	def __init__(self,actor,item):
+		self.actor = actor
+		self.item = item
+
+		self.energyCost = 0
+
+	def perform(self):
+		# see if item can be unequipped
+		if self.item.canBeUnequipped == True:
+			# remove it from the appropriate equip slot
+			self.actor.equipSlots[self.item.equipSlot] = None
+			self.actor.stats.removeModifier(self.item)
+
+			# See if the item will fit in the actor's inventory
+			if (len(self.actor.inventory)+1 <= self.actor.inventorySize):
+				self.actor.inventory.append(self.item)
+			else:
+				# If inventory is full, drop the item on the ground
+				self.item.dropFromInventory(self.actor)
+
+			success = True
+			alternative = False
+
+		else:
+			self.actor.game.message("The "+self.item.getName()+" cannot be unequipped")
+			success = False
+			alternative = None
+
+		return success,alternative

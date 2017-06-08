@@ -136,9 +136,9 @@ class Level:
 				# placeholder Monster Spawn
 				#monster = actors.Monster(self.game,x,y,'S',"Snakeman",libtcod.desaturated_green,stats = actorStats.Stats("Snakeman"),state = states.AIWonder())
 				choice = random.random()
-				if choice <= 0.40:
+				if choice <= 0.45:
 					self.game.actorSpawner.spawn(x,y,"Mirehound")
-				elif 0.40 < choice <= 0.8:
+				elif 0.40 < choice <= 0.9:
 					self.game.actorSpawner.spawn(x,y,"Plague Rat")
 				else: self.game.actorSpawner.spawn(x,y,"Snakeman")
 

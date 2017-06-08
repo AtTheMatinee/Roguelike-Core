@@ -127,20 +127,53 @@ class Stats:
 			del self.statMod[id]
 
 	def get(self,stat):
-		# returns the modified version of a stat
-		if stat in self.statBase:
-			total = self.statBase[stat]
+		# attack and defense require special processes
+		if (stat == 'attack') or (stat == 'defense'):
+			# returns the modified version of a stat
+			total = list(self.statBase[stat]) #list() creates a copy of self.statBase[stat]. if it is omitted, you accidently copy the reference to the list instead of its values
+			
+			multiplier = [0]*len(total)
+
+			# Get the total of each kind of modifier
+			for key,value in self.statMod.items():
+				if stat in value['add']:
+					if len(total) == len(value['add'][stat]):
+						# total the values
+						for i in xrange(len(total)):
+							total[i] += value['add'][stat][i]
+
+					else: print "stat modifier has an incorrect number of items"
+
+				if stat in value['mult']:
+					if len(total) == len(value['mult'][stat]):
+						# total the values
+						for i in xrange(len(total)):
+							multiplier[i] += value['mult'][stat][i]
+
+					else: print "stat modifier has an incorrect number of items"
+
+			# add total and total*multiplier
+			for i in xrange(len(total)):
+				total[i] += total[i]*multiplier[i]
+			return total
+
+
+		# Do normal Stats
 		else:
-			total = 0
-			print "Error: base stat "+str(stat)+" was not found."
-		
-		multiplier = 0
+			# returns the modified version of a stat
+			if stat in self.statBase:
+				total = self.statBase[stat]
+			else:
+				total = 0
+				print "Error: base stat "+str(stat)+" was not found."
+			
+			multiplier = 0
 
-		# Get the total of each kind of modifier
-		for key,value in self.statMod.items():
-			if stat in value['add']:
-				total += value['add'][stat]
-			if stat in value['mult']:
-				multiplier += value['mult'][stat]
+			# Get the total of each kind of modifier
+			for key,value in self.statMod.items():
+				if stat in value['add']:
+					total += value['add'][stat]
+				if stat in value['mult']:
+					multiplier += value['mult'][stat]
 
-		return total + (total * multiplier)
+			return total + (total * multiplier)
