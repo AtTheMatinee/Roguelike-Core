@@ -39,27 +39,46 @@ class Weapon(Equipment):
 	def __init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False):
 		Equipment.__init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False)
 		self.equipSlot = 1
+		'''
+		Set default upgrade values for all stats for weapons, in case a weapon somehow gets a unusual modifier.
+		'''
 
 
 class Sword(Weapon):
 	def __init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False):
+		Weapon.__init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False)
 
-		pass 
+		'''
+		attack[
+		physical damage
+		armor penetration
+		fire damage
+		frost damage
+		poison damage
+		bleed chance
+		holy damage
+		unholy damage
+		unblockable damage
+		]
+		attackSpeed
+		critChance
+		''' 
 
 class Mace(Weapon):
 	def __init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False):
+		Weapon.__init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False)
 
-		pass
 
 class Spear(Weapon):
 	def __init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False):
+		Weapon.__init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False)
 
-		pass
 
 class Dagger(Weapon):
 	def __init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False):
+		Weapon.__init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False)
 
-		pass
+
 
 
 

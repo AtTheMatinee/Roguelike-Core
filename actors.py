@@ -15,7 +15,7 @@ import actorStats
 import libtcodpy as libtcod
 
 class Actor(Object):
-	def __init__(self, game, x, y, char, name, color, faction = None, blocks=True, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, playerControlled = False):
+	def __init__(self, game, x, y, char, name, color, faction = None, blocks=True, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, canEquipArmor = False, canEquipWeapons = False, playerControlled = False):
 		self.game = game
 		self.x = x
 		self.y = y
@@ -44,6 +44,10 @@ class Actor(Object):
 		self.inventorySize = inventorySize
 		self.inventory = []
 		self.drops = drops
+
+		self.equipSlots = [None]*6
+		self.canEquipArmor = canEquipArmor
+		self.canEquipWeapons = canEquipWeapons
 
 		self.playerControlled = playerControlled
 		self.state = state
@@ -165,17 +169,17 @@ class Actor(Object):
 		level = 0
 		if self.drops:
 			for item,odds in self.drops.items():
-				if random.random() <= 1/odds:
+				if random.random() <= 1.0/odds:
 					self.game.itemSpawner.spawn(self.x,self.y,item,level)
 
 
 
-	def addComponent(self,component,timer):
-		statusEffect = component(self,timer)
+	def addStatusEffect(self,statusEffect,timer):
+		statusEffect = statusEffect(self,timer)
 		self.statusEffects.append(statusEffect)
 
-	def removeComponent(self,component):
-		self.statusEffects.remove(component)
+	def removeStatusEffect(self,statusEffect):
+		self.statusEffects.remove(statusEffect)
 
 class Hero(Actor):
 
@@ -237,6 +241,11 @@ if __name__ == "__main__":
 			self.id = 3
 			self.modifier = {'add':{'healthMax':5}}	
 
+	class MagicStaff:
+		def __init__(self):
+			self.id = 4
+			self.modifier = {'add':{'attack':[1,0,0,0,0,0,0,0,0]}}	
+
 	ring = MagicRing()
 	herostats.addModifier(ring.id,ring.modifier)
 	print herostats.get("healthMax")
@@ -247,4 +256,10 @@ if __name__ == "__main__":
 
 	hat = MagicHat()
 	herostats.addModifier(hat.id,hat.modifier)
-	print herostats.get("healthMax")
+	for i in xrange(10):
+		print herostats.get("healthMax")
+
+	staff = MagicStaff()
+	herostats.addModifier(staff.id,staff.modifier)
+	for i in xrange(10):
+		print herostats.get("attack")

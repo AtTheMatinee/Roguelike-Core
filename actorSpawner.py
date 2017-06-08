@@ -47,10 +47,10 @@ class ActorSpawner:
 		pass
 
 	def spawnHero(self,x,y):
-		hero = actors.Hero(self.game,x,y,'@',"Hero",color = libtcod.white,faction = "Hero",stats = actorStats.Stats("Hero"),surviveMortalWound = True, inventorySize = 12, playerControlled = True)
+		hero = actors.Hero(self.game,x,y,'@',"Hero",color = libtcod.white,faction = "Hero",stats = actorStats.Stats("Hero"),surviveMortalWound = True, inventorySize = 12, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
-		# Spawn gear
-		for gear,level in {"Health Potion":0}.items():
+		# Spawn gearcanEquipArmor = True, canEquipWeapons = True,
+		for gear,level in {"Health Potion":0,"Sword":0,"Mace":0}.items():
 			g = self.game.itemSpawner.spawn(x,y,gear,level)
 			g.moveToInventory(hero)
 
@@ -81,6 +81,7 @@ class ActorSpawner:
 		return mirehound
 
 	def spawnPlagueRat(self,x,y):
+		lootDrops = {'Health Potion':4} # antidote
 		plagueRat = actors.Monster(self.game,x,y,'r',"Plague Rat",libtcod.light_amber,faction = "Plague Rats",stats = actorStats.Stats("Plague Rat"),state = states.AI())
 		plagueRat.deathState = states.DeathState(plagueRat)
 		return plagueRat
@@ -91,7 +92,7 @@ class ActorSpawner:
 
 	def spawnSnakeman(self,x,y):
 		lootDrops = {'Sword':5,'Health Potion':2}
-		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman",libtcod.desaturated_sea,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI(),drops = lootDrops)
+		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman",libtcod.desaturated_sea,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI(),drops = lootDrops, canEquipArmor = True, canEquipWeapons = True)
 		snakeman.deathState = states.DeathState(snakeman)
 		return snakeman
 

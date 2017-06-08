@@ -14,7 +14,7 @@ class ItemSpawner:
 	def __init__(self,game):
 		self.game = game
 		self.itemType = None
-		self.itemChangeChance = .5
+		self.itemChangeChance = .2
 
 		'''
 		The loot heirarchy is a dictionary of lists of every item's parent and children classes.
@@ -40,17 +40,17 @@ class ItemSpawner:
 
 		self.spawnMethods = {
 		'Health Potion':self.spawnHealthPotion,
-		'Dagger':self.spawnHealthPotion,
-		'Mace':self.spawnHealthPotion,
-		'Spear':self.spawnHealthPotion,
-		'Armor':self.spawnHealthPotion,
+		'Dagger':self.spawnDagger,
+		'Mace':self.spawnMace,
+		'Spear':self.spawnSpear,
+		'Sword':self.spawnSword,
 		'Hauberk':self.spawnHealthPotion,
 		}
 	
 	def getRandomLoot(self,item):
 		# small chance to generate items of a different type
 		self.itemType = item
-		print self.itemType
+
 		# move up the hierarchy
 		while self.itemType != 'Item':
 			if (random.random() <= self.itemChangeChance):
@@ -62,7 +62,7 @@ class ItemSpawner:
 		children = self.getChildren(self.itemType)
 		while children:
 			self.itemType = children[random.randint(0,len(children)-1) ]
-			#print 'c '+self.itemType
+
 			children = self.getChildren(self.itemType)
 
 		return self.itemType
@@ -85,16 +85,33 @@ class ItemSpawner:
 
 		else: print "CHILD ERROR"
 
+	def spawnDagger(self,x,y,level):
+		modifier = {
+		'add':{'attack':[2.0,0,0,0,0,0,0,0,0], 'attackSpeed':4},
+		'mult':{'critChance':.5}
+		}
+		item = Items.weapons.Dagger(self.game, x, y, chr(24), "Dagger", libtcod.azure, level, 1, modifier)
+		return item
+
 	def spawnHealthPotion(self,x,y,level):
 		item = Items.potions.HealthPotion(self.game, x, y, '!', "Health Potion", libtcod.azure, level, blocks=False)
+		return item
+
+	def spawnMace(self,x,y,level):
+		modifier = {
+		'add':{'attack':[3.0,2,0,0,0,0,0,0,0], 'attackSpeed':-2},
+		}
+		item = Items.weapons.Mace(self.game, x, y, chr(24), "Mace", libtcod.azure, level, 1, modifier)
+		return item
+
+	def spawnSpear(self,x,y,level):
+		modifier = {'add':{'attack':[4.0,1,0,0,0,0,0,0,0]}}
+		item = Items.weapons.Spear(self.game, x, y, chr(24), "Spear", libtcod.azure, level, 1, modifier)
 		return item
 
 	def spawnSword(self,x,y,level):
-		item = Items.weapons.Sword(self.game, x, y, '!', "Sword", libtcod.azure, level, blocks=False)
-		return item
-
-	def spawnHealthPotion(self,x,y,level):
-		item = Items.potions.HealthPotion(self.game, x, y, '!', "Health Potion", libtcod.azure, level, blocks=False)
+		modifier = {'add':{'attack':[3.0,0,0,0,0,0.1,0,0,0]}}
+		item = Items.weapons.Sword(self.game, x, y, chr(24), "Sword", libtcod.azure, level, 1, modifier)
 		return item
 
 '''

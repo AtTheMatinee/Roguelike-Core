@@ -2,6 +2,7 @@
 items.py
 '''
 from objects import Object
+import commands
 '''
 ====================
 Items
@@ -43,6 +44,11 @@ class Item(Object):
 		if self in actor.inventory:
 			actor.inventory.remove(self)
 			# Drop the item on the ground
+			self.game._currentLevel.addItem(self)
+			self.game._currentLevel.addObject(self)
+			self.x = actor.x
+			self.y = actor.y
+
 
 	def use(self,actor):
 		if self in actor.inventory:
@@ -55,21 +61,22 @@ class Item(Object):
 
 class Equipment(Item):
 	identified = True
-	def __init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False):
+	def __init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False, canBeUnequipped = True):
 		Item.__init__(self, game, x, y, char, name, color, level, blocks=False)
 		self.equipSlot = equipSlot
 		self.modifier = modifier
+		self.canBeUnequipped = canBeUnequipped
 
-	def useItem(self,actor):
-		self.equip(actor)
+	def use(self,actor):
+		# create equip command
+		equip = commands.EquipCommand(actor,self)
+		# set equip command's energyCost to 0, since you are already paying for UseCommand's cost
+		equip.energyCost = 0
+		# process equip command
+		success,alternative = equip.perform()
 
-	def equip(self,actor):
-		# TODO: move to commands
-		actor.stats.addModifier(self,self.modifier)
-
-	def unequip(self,actor):
-		# TODO: move to commands
-		actor.stats.removeModifier(self)
+		# if the item was equipped, return true, else return false
+		return success
 
 	def upgrade(self,level):
 		pass

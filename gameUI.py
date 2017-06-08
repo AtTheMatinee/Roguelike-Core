@@ -262,7 +262,8 @@ class UserInterface:
 		self.renderMonsterPanel(self.virPanel,VIRTICAL_PANEL_WIDTH,VIRTICAL_PANEL_HEIGHT)
 
 		# Health Bar
-		self.renderHealthBar(self.virPanel,2,2,V_PANEL_BAR_WIDTH,self.game.hero)
+		#self.renderHealthBar(self.virPanel,2,2,V_PANEL_BAR_WIDTH,self.game.hero)
+		self.renderHeroPanel(self.virPanel,VIRTICAL_PANEL_WIDTH)
 
 		'''
 		# My failed attemp at a look command
@@ -433,10 +434,35 @@ class UserInterface:
 				y = 15+i*6
 				if y >= height - 6: break
 				if self.game.factions.getRelationship(self.game.hero.faction, actor.faction) == self.game.factions._hostile:
-					self.renderMonsterInformation(panel,width,y,actor)
+					self.renderMonsterInformation(panel,width,y,actor,False)
 					i += 1
 
-	def renderMonsterInformation(self,panel,width,y,actor):
+	def renderHeroPanel(self,panel,width):
+		hero = self.game.hero
+		libtcod.console_set_default_foreground(panel,libtcod.white)
+		# Hero Name
+		libtcod.console_print_ex(panel, width/2, 2, libtcod.BKGND_NONE, libtcod.CENTER, hero.name)
+		# Health Bar
+		self.renderHealthBar(panel,2,4,width-4, hero)
+		# Magic Bar
+
+		# Stats
+		
+		attack = int(hero.stats.get('attack')[0])
+		attackBase = hero.stats.getBaseStat('attack')[0]
+		libtcod.console_print_ex(panel, 3, 6, libtcod.BKGND_NONE, libtcod.LEFT, 'ATK: '+str(attack)+' ('+str(attackBase)+')')
+		
+		defense = int(hero.stats.get('defense')[0])
+		defenseBase = hero.stats.getBaseStat('defense')[0]
+		libtcod.console_print_ex(panel, 3, 7, libtcod.BKGND_NONE, libtcod.LEFT, 'DEF: '+str(defense)+' ('+str(defenseBase)+')')
+		
+		speed = int(hero.stats.get('speed'))
+		speedBase = hero.stats.getBaseStat('speed')
+		libtcod.console_print_ex(panel, 3, 8, libtcod.BKGND_NONE, libtcod.LEFT, 'SPD: '+str(speed)+' ('+str(speedBase)+')')
+		
+		
+
+	def renderMonsterInformation(self,panel,width,y,actor,displayStats):
 		'''
 		   ==== Mirehound ====  
 		 ####HP:#11/15####
@@ -449,6 +475,21 @@ class UserInterface:
 		libtcod.console_print_ex(panel, 1, y, libtcod.BKGND_NONE, libtcod.LEFT, nameBanner)
 		
 		self.renderHealthBar(panel,2,y+1,width-4,actor)
+		
+		# Stats
+		if displayStats == True:
+			attack = actor.stats.get('attack')[0]
+			attackBase = actor.stats.getBaseStat('attack')[0]
+			libtcod.console_print_ex(panel, 3, y+2, libtcod.BKGND_NONE, libtcod.LEFT, 'ATK: '+str(attack)+' ('+str(attackBase)+')')
+			
+			defense = actor.stats.get('defense')[0]
+			defenseBase = actor.stats.getBaseStat('defense')[0]
+			libtcod.console_print_ex(panel, 3, y+3, libtcod.BKGND_NONE, libtcod.LEFT, 'DEF: '+str(defense)+' ('+str(defenseBase)+')')
+			
+			speed = actor.stats.get('speed')
+			speedBase = actor.stats.getBaseStat('speed')
+			libtcod.console_print_ex(panel, 3, y+4, libtcod.BKGND_NONE, libtcod.LEFT, 'SPD: '+str(speed)+' ('+str(speedBase)+')')
+			
 
 	def bindKey(self,command,key):
 		pass
