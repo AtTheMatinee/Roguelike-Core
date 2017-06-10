@@ -136,7 +136,7 @@ class AttackCommand(Command):
 			attack[0] += random.randint(1,attack[0])
 
 		if self.actor == self.actor.game.hero or self.target == self.actor.game.hero:
-			self.actor.game.message("The " + self.actor.getName() + " attacks the " + self.target.getName())
+			self.actor.game.message(self.actor.getName(True).capitalize() + " attacks " + self.target.getName(True))
 
 		self.target.takeDamage(attack)
 		self.target.mostRecentAttacker = self.actor
@@ -201,7 +201,7 @@ class PickUpCommand(Command):
 				# Check to see if the actors inventory has space
 				if self.actor.inventorySize - len(self.actor.inventory) < 1:
 					if self.actor == self.game.hero:
-						self.game.message("You cannot carry the "+item.getName())
+						self.game.message("You cannot carry "+item.getName(True))
 					success = False
 					alternative = None
 					return success, alternative
@@ -243,26 +243,24 @@ class EquipCommand(Command):
 	def perform(self):
 		# Check to see if the actor is allowed to equip this
 		if isinstance(self.item, Equipment):
+			# Actor cannot equip equipment
 			if ((self.item.equipSlot == 0) and (self.actor.canEquipArmor == False) or
 				(self.item.equipSlot == 1) and (self.actor.canEquipWeapons == False)):
-				self.actor.game.message(self.actor.getName()+" cannot equip the "+self.item.getName())
+				self.actor.game.message(self.actor.getName(True)+" cannot equip "+self.item.getName(True))
 				success = False
 				alternative = None
 				return success,alternative
 
 			# Remove the item from the actor's inventory 
-			if self.item in self.actor.inventory:
-				self.actor.inventory.remove(self.item)
+			#if self.item in self.actor.inventory:
+				#self.actor.inventory.remove(self.item)
 
-			# see if the equip slot is empty
-			#if ( (self.item.equipSlot > len(self.actor.equipSlots)) or
-			#	(self.actor.equipSlots[self.item.equipSlot] == None) ):
-			#if (self.item.equipSlot > len(self.actor.equipSlots)):
 			if (self.actor.equipSlots[self.item.equipSlot] == None):
 
-				# The list is empty, equip the item in its slot
-				self.actor.equipSlots[self.item.equipSlot] = self.item
-				self.actor.stats.addModifier(self.item,self.item.modifier)
+				# The slot is empty, equip the item in its slot
+				#self.actor.equipSlots[self.item.equipSlot] = self.item
+				#self.actor.stats.addModifier(self.item,self.item.modifier)
+				self.actor.equipItem(self.item)
 
 			else:
 				# Unequip the item in the taken slot
@@ -272,14 +270,15 @@ class EquipCommand(Command):
 
 				if success == False:
 					# If it fails, re-add the item to the player's inventory and return False
-					self.actor.inventory.append(self.item)
+					#self.actor.inventory.append(self.item)
 					return success, alternative
 				
 				# Equip the new item
-				self.actor.equipSlots[self.item.equipSlot] = self.item
-				self.actor.stats.addModifier(self.item,self.item.modifier)
+				#self.actor.equipSlots[self.item.equipSlot] = self.item
+				#self.actor.stats.addModifier(self.item,self.item.modifier)
+				self.actor.equipItem(self.item)
 
-			self.actor.game.message(self.actor.getName()+" has equipped a "+self.item.getName())
+			self.actor.game.message(self.actor.getName(True)+" has equipped a "+self.item.getName(False))
 			self.actor.energy -= self.energyCost
 			# set flags that change when a turn is taken
 			self.actor.hasTakenTurn()
@@ -319,7 +318,7 @@ class UnequipCommand(Command):
 			alternative = False
 
 		else:
-			self.actor.game.message("The "+self.item.getName()+" cannot be unequipped")
+			self.actor.game.message(self.item.getName(True).capitalize()+" cannot be unequipped.")
 			success = False
 			alternative = None
 

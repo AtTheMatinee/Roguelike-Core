@@ -143,17 +143,17 @@ class DeathState:
 	
 	def process(self):
 		o = self.owner
-		o.game.removeObject(o)
+		#o.game.removeObject(o)
 		o.game._currentLevel.removeObject(o)
 		o.game._currentLevel.setHasObjectFalse(o.x, o.y)
-		o.game.removeActor(o)
+		#o.game.removeActor(o)
 		o.game._currentLevel.removeActor(o)
 
-		o.game.message(o.getName()+" is dead.",libtcod.crimson)
+		o.game.message(o.getName(True).capitalize()+" is dead.",libtcod.crimson)
 
 		self.owner.dropLoot()
 
-		name = "Corpse of "+o.getName()
+		name = "Corpse of "+o.getName(True)
 		objects.Corpse(o.game, o.x, o.y, "%",name, libtcod.crimson)
 
 		del self.owner

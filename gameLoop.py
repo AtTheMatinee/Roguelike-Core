@@ -36,7 +36,12 @@ Game Engine
 
 class GameLoop:
 	def __init__(self,ui,mapWidth,mapHeight):
+		# ====================
+		# Initialization
+		# ====================
 		self.ui = ui
+		self.mapWidth = mapWidth
+		self.mapHeight = mapHeight
 
 		self._actors = []
 		self._currentActor = 0
@@ -50,25 +55,13 @@ class GameLoop:
 		self.spendEnergyOnFailure = False
 		self.stopAfterEveryProcess = False
 
-		game = self
-
 		self.actorSpawner = actorSpawner.ActorSpawner(self)
 		self.itemSpawner = itemSpawner.ItemSpawner(self)
 		self.factions = factions.FactionTracker()
+		# !!! When I continue an old game, load saved game.factions._factions
 
-		self.map = worldMap.Map(game, mapWidth, mapHeight)
-		mapType = dungeonGeneration.RoomAddition()
-		self.map.createNewLevel(mapType) #the location of this will probably change
-
-		heroName = "Hero"
-		heroX = mapWidth/2#self._currentLevel.tempX
-		heroY = mapHeight/2#self._currentLevel.tempY
-
-		self.hero = self.actorSpawner.spawn(heroX,heroY,"Hero")
-		self.hero.name = heroName
-		self.hero.addStatusEffect(statusEffects.StatusEffect,10)
-
-
+		self.map = worldMap.Map(self, self.mapWidth, self.mapHeight)
+		# !!! When I continue an old game, load saved game.map._levels and overwright new map._levels
 
 	def process(self):
 		'''
@@ -105,24 +98,6 @@ class GameLoop:
 		if (self.spendEnergyOnFailure == True) or (success == True):
 			self._currentActor = (self._currentActor + 1) % len(self._actors)
 
-	def addActor(self,actor):
-		self._actors.append(actor)
-
-	def removeActor(self,actor):
-		self._actors.remove(actor)
-
-	def addItem(self,item):
-		self._items.append(item)
-
-	def removeItem(self,item):
-		self._items.remove(item)
-
-	def addObject(self,object):
-		self._objects.append(object)
-
-	def removeObject(self,object):
-		self._objects.remove(object)
-
 	def message(self,newMsg,color = UI_PRIMARY_COLOR):
 		# split the message if the line is too long
 		newMsgLines = textwrap.wrap(newMsg,MSG_WIDTH)
@@ -134,3 +109,18 @@ class GameLoop:
 
 			# add the new line as a tuple with the text and the color
 			self._messages.append((line,color))
+
+	def newGame(self):
+		# TODO: Pregenerate all levels at the beginning
+		mapType = dungeonGeneration.RoomAddition()
+		self.map.createNewLevel(mapType) #the location of this will probably change
+
+		heroName = "Hero"
+		heroX = self.mapWidth/2#self._currentLevel.tempX
+		heroY = self.mapHeight/2#self._currentLevel.tempY
+		self.hero = self.actorSpawner.spawn(heroX,heroY,"Hero")
+		self.hero.name = heroName
+		self.hero.addStatusEffect(statusEffects.StatusEffect,10)
+
+	def loadGame(self,saveFile):
+		pass

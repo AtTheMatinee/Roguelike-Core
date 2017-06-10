@@ -11,7 +11,7 @@ import libtcodpy as libtcod
 import math
 
 class Object(object):
-	def __init__(self, game, x, y, char, name, color, blocks=False):
+	def __init__(self, game, x, y, char, name, color, blocks=False,properNoun = False):
 		self.game = game
 		self.x = x
 		self.y = y
@@ -19,8 +19,9 @@ class Object(object):
 		self.name = name
 		self.color = color
 		self.blocks = blocks
+		self.properNoun = properNoun
 
-		self.game.addObject(self)
+		#self.game.addObject(self)
 		self.game._currentLevel.addObject(self)
 		self.renderFirst()
 		if self.blocks == True:
@@ -37,7 +38,9 @@ class Object(object):
 		if libtcod.map_is_in_fov(self.game.map.fov_map, self.x, self.y):
 			libtcod.console_put_char_ex(self.game.ui.con, self.x, self.y, '.', self.game.ui.color_light_ground_fore, self.game.ui.color_light_ground_back)
 
-	def getName(self):
+	def getName(self,useDefiniteArticle):
+		if useDefiniteArticle == True and self.properNoun == False:
+			return "the "+self.name
 		return self.name
 
 	def distanceTo(self,object):
@@ -66,20 +69,8 @@ class Object(object):
 
 class Container(Object):
 	def __init__(self, game, x, y, char, name, color, cache = [], blocks=False):
-		self.game = game
-		self.x = x
-		self.y = y
-		self.char = char
-		self.name = name
-		self.color = color
+		Object.__init__(self, game, x, y, char, name, color, blocks=False)
 		self.cache = cache
-		self.blocks = blocks
-
-		self.game.addObject(self)
-		self.game._currentLevel.addObject(self)
-		self.renderFirst()
-		if self.blocks == True:
-			self.game._currentLevel.setHasObjectTrue(x,y)
 
 class Corpse(Container):
 	pass
