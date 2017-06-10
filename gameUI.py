@@ -26,20 +26,24 @@ INVENTORY_WIDTH = 30
 User Interface
 ====================
 '''
-#TODO: Option to switch horizontal panel from bottom to top
-#TODO: Option to switch virtical panel from right to left
-#TODO: spell hoykeys (Should be easy after key rebinding is implemented)
-#TODO: Virtical panel shows nearby enemy information
-#TODO: Mouselook on an enemy pops it to the top of the enemy information panel
-#TODO: Virtical panel shows player stats and hotkeys (if bound)
-#TODO: Shows stats in the form of stat: value (baseValue) e.g.
-#		ATK: 14 (5)
-#		DEF: 8  (4)
-#		SPD: 10 (6)
-#		attackSpeed and critChance are hidden stats
+'''
+TODO: Option to switch horizontal panel from bottom to top
+TODO: Option to switch virtical panel from right to left
+TODO: spell hoykeys (Should be easy after key rebinding is implemented)
+TODO: Mouselook on an enemy pops it to the top of the enemy information panel
+TODO: Virtical panel shows player stats, equipment, and hotkeys (if bound)
+TODO: Opening Menu Structure
+	(C)ontinue (Greyed out if there are no saved games)
+	(N)ew Game
+	(O)ptions
+	(E)xit
+'''
 
 class UserInterface:
 	def __init__(self):
+		# =====================
+		# System Initialization
+		# =====================
 		libtcod.console_set_custom_font('arial10x10.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
 		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'python/libtcod tutorial', False) #TODO: Change Game Name
 		self.con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
@@ -63,24 +67,13 @@ class UserInterface:
 		self.keyboard = libtcod.Key()
 		self.mouse = libtcod.Mouse()
 
-		self.game = gameLoop.GameLoop(self,MAP_WIDTH,MAP_HEIGHT)
-
-		self.fovRecompute = True
-		self.generateNoiseMap()
-
-		# Overlay
+		# ====================
+		# ====================
 
 		# Menu
-		self._playing = 0
-		self._inventoryMenu = 1
-		self._gameState = self._playing
+		self.mainMenu()
 
 	def mainLoop(self):
-		'''
-		TODO: When I implement menus, I will need to isolate the
-		parts of this loop that pertain to the game loop from the 
-		parts that render changes to the console
-		'''
 		while not libtcod.console_is_window_closed():
 
 			#Input
@@ -92,17 +85,11 @@ class UserInterface:
 				#Update
 				self.game.process()
 
-			'''
-			# Overlay
-			# Menus
-			elif self._gameState == self._inventoryMenu:
-				self.inventoryMenu('Press the key next to an item to use it, or any other key to cancel.\n')
-			'''
-
 			#Render
 			self.renderAll()
 
-			# Overlay
+			# Overlays
+
 			# Menus
 			if self._gameState == self._inventoryMenu:
 				self.inventoryMenu('Press the key next to an item to use it, or any other key to cancel.\n')
@@ -112,6 +99,12 @@ class UserInterface:
 			for object in self.game._objects:
 				object.clear()
 
+		libtcod.console_clear(self.con)
+		libtcod.console_clear(self.horPanel)
+		libtcod.console_clear(self.virPanel)
+		libtcod.console_clear(0)
+		libtcod.console_flush()
+			
 	def handleInput(self,keyboard):
 		if self._gameState == self._playing:
 			# Non-rebindable Keys
@@ -207,7 +200,7 @@ class UserInterface:
 	def getNamesUnderMouse(self):
 		#get the names of all objects at the mouse's coordinates
 		(x,y) = (self.mouse.cx,self.mouse.cy)
-		names = [obj.getName() for obj in self.game.hero.nearbyObjects
+		names = [obj.getName(False) for obj in self.game.hero.nearbyObjects
 		if obj.x == x and obj.y == y]
 
 		#combine the names, separated by a comma and space
@@ -302,6 +295,92 @@ class UserInterface:
 		self.color_light_ground_fore = colorScheme[6]
 		self.color_light_ground_back = colorScheme[7]
 
+	def mainMenu(self):
+		options = ['(C)ontinue','(N)ew Game','(O)ptions','(E)xit']
+
+		width = 24
+		height = len(options)+2
+
+		logoLength = len(LOGO[0])
+
+		while not libtcod.console_is_window_closed():
+			# Print LOGO
+			logo = libtcod.console_new(logoLength,20)
+			
+			y=0
+			for line in LOGO:
+				libtcod.console_print_ex(logo, 0, y, libtcod.BKGND_NONE, libtcod.LEFT, line)
+				y += 1
+
+			logoX = (SCREEN_WIDTH-logoLength)/2
+			libtcod.console_blit(logo,0,0,logoLength,20,0,logoX,10,1,0)
+			libtcod.console_delete(logo)
+			
+			# ====================	
+
+			# Print options
+			self.window = libtcod.console_new(width,height)
+
+			libtcod.console_set_default_foreground(self.window, libtcod.white)
+
+			y = 1
+			for text in options:
+
+				libtcod.console_print_ex(self.window, width/2-6, y, libtcod.BKGND_NONE, libtcod.LEFT, text)
+				y += 1
+
+			# blit the window to the root
+			x = SCREEN_WIDTH/2 - width/2
+			y = (SCREEN_HEIGHT - height)*2/3
+			libtcod.console_blit(self.window, 0, 0, width, height, 0, x, y, 1.0, 0.6)
+			libtcod.console_delete(self.window)
+
+			libtcod.console_flush()
+
+			libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, self.keyboard, self.mouse)
+
+
+			if self.keyboard.c:
+				if self.keyboard.c == ord('c'):
+					pass
+
+				elif self.keyboard.c == ord('n'):
+					self.newGame()
+					self.mainLoop()
+					#break
+
+				elif self.keyboard.c == ord('o'):
+					pass
+
+				elif self.keyboard.c == ord('e'):
+					break
+
+	def newGame(self):
+		self._playing = 0
+		self._inventoryMenu = 1
+		self._gameState = self._playing
+
+		self.game = gameLoop.GameLoop(self,MAP_WIDTH,MAP_HEIGHT)
+		self.game.newGame()
+
+		self.fovRecompute = True
+		self.generateNoiseMap()
+
+	def loadGame(self):
+		self._playing = 0
+		self._inventoryMenu = 1
+		self._gameState = self._playing
+
+		self.game = gameLoop.GameLoop(self,MAP_WIDTH,MAP_HEIGHT)
+
+		self.fovRecompute = True
+		self.generateNoiseMap()
+
+		# Load old game._messages
+		# Load old game.hero
+		# Load old game._currentLevel
+		# Load old game._currentActor
+
 	def renderStatusBar(self,panel,x, y, total_width, name, value, maxValue, bar_color, back_color):
 		bar_width = int(float(value) / maxValue * total_width)
 
@@ -351,6 +430,7 @@ class UserInterface:
 		x = SCREEN_WIDTH/2 - width/2
 		y = SCREEN_HEIGHT/2 - height/2
 		libtcod.console_blit(self.window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
+		libtcod.console_delete(self.window)
 
 		if self.keyboard.c:
 			self._gameState = self._playing
@@ -362,7 +442,7 @@ class UserInterface:
 			options = ['Inventory is empty']
 
 		else:
-			options = [item.getName() for item in inventory]
+			options = [item.getName(False) for item in inventory]
 
 		index = self.menu(INVENTORY_WIDTH,header,options)
 
@@ -468,7 +548,7 @@ class UserInterface:
 		 ####HP:#11/15####
 		 ATK: 2  DEF: 0  SPD: 8
 		'''
-		name = actor.getName()
+		name = actor.getName(False)
 		bannerSides = max(0, (width-len(name)-4) / 2 )
 		nameBanner = bannerSides*'=' + ' ' + name + ' ' + bannerSides*'='
 		libtcod.console_set_default_foreground(panel,libtcod.white)

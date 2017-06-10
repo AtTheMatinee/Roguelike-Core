@@ -45,6 +45,9 @@ class Map:
 		self._levels.append(newLevel)
 		if self.game._currentLevel == None:
 			self.game._currentLevel = newLevel
+			self.game._actors = newLevel._actors
+			self.game._objects = newLevel._objects
+			self.game._items = newLevel._items
 
 
 		# Set the depth of newLevel
@@ -57,7 +60,6 @@ class Map:
 
 	def loadLevel(self):
 		#set game._currentLevel to loaded level
-		#set game._objects to level._objects
 		pass
 
 	def initializeFOV(self,level):
@@ -95,8 +97,6 @@ class Level:
 		Level._blocksSight = 2 # bitwise map flag
 		Level._hasObject = 4 # bitwise map flag
 		Level._hasBeenExplored = 8 # bitwise map flag
-
-		self.game.message("Welcome. Prepare to die in the new completely unbalanced roguelike engine prototype from AtTheMatinee.")
 
 	def generateLevel(self,mapType):
 		# Creates an empty 2D array

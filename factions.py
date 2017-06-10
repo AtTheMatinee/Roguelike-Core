@@ -12,7 +12,7 @@ class FactionTracker:
 		self._neutral = 2
 		self._friendly = 3
 
-		self.factions = {
+		self._factions = {
 			"Hero":
 				{
 				"Hero": self._friendly,
@@ -44,17 +44,17 @@ class FactionTracker:
 			}
 
 	def getRelationship(self,faction,other):
-		if faction in self.factions:
-			if other not in self.factions[faction]:
+		if faction in self._factions:
+			if other not in self._factions[faction]:
 				# other faction does not exist, create it
-				self.factions[faction][other] = self._neutral
+				self._factions[faction][other] = self._neutral
 
 		else:
 			#faction does not exist, create it
-			self.factions[faction] = {}
-			self.factions[faction][other] = self._neutral
+			self._factions[faction] = {}
+			self._factions[faction][other] = self._neutral
 
-		return self.factions[faction][other]
+		return self._factions[faction][other]
 
 	def setRelationship(self,faction,other,value):
 		if value not in [
@@ -66,7 +66,7 @@ class FactionTracker:
 			return
 
 		if self.getRelationship(faction,other) != value:
-			self.factions[faction][other] = value
+			self._factions[faction][other] = value
 
 
 if __name__ == "__main__":

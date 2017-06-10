@@ -20,6 +20,7 @@ class ActorSpawner:
 		self.spawnMethods = {
 			'Hero':self.spawnHero,
 			'Gargoyle':self.spawnGargoyle,
+			'Ghost':self.spawnGhost,
 			'Golem':self.spawnGolem,
 			'Angel':self.spawnAngel,
 			'Demon':self.spawnDemon,
@@ -49,9 +50,14 @@ class ActorSpawner:
 	def spawnHero(self,x,y):
 		hero = actors.Hero(self.game,x,y,'@',"Hero",color = libtcod.white,faction = "Hero",stats = actorStats.Stats("Hero"),surviveMortalWound = True, inventorySize = 12, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
-		# Spawn gearcanEquipArmor = True, canEquipWeapons = True,
-		for gear,level in {"Health Potion":0,"Sword":0,"Mace":0}.items():
-			g = self.game.itemSpawner.spawn(x,y,gear,level)
+		
+		# add equipment
+		weapon = self.game.itemSpawner.spawn(x,y,'Mace',0,False)
+		hero.equipItem(weapon)
+
+		# add items to inventory
+		for gear,level in {"Potion":0}.items():
+			g = self.game.itemSpawner.spawn(x,y,gear,level,False)
 			g.moveToInventory(hero)
 
 		return hero
@@ -63,6 +69,9 @@ class ActorSpawner:
 		pass
 
 	def spawnGargoyle(self,x,y):
+		pass
+
+	def spawnGhost(self,x,y):
 		pass
 
 	def spawnGolem(self,x,y):

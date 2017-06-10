@@ -15,7 +15,7 @@ import actorStats
 import libtcodpy as libtcod
 
 class Actor(Object):
-	def __init__(self, game, x, y, char, name, color, faction = None, blocks=True, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, canEquipArmor = False, canEquipWeapons = False, playerControlled = False):
+	def __init__(self, game, x, y, char, name, color, faction = None, blocks=True, properNoun = False, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, canEquipArmor = False, canEquipWeapons = False, playerControlled = False):
 		self.game = game
 		self.x = x
 		self.y = y
@@ -24,6 +24,7 @@ class Actor(Object):
 		self.color = color
 		self.faction = faction
 		self.blocks = blocks
+		self.properNoun = properNoun
 
 		self.nearbyActors = self.getNearbyActors()
 		self.nearbyObjects = self.getNearbyObjects()
@@ -33,7 +34,7 @@ class Actor(Object):
 		self.hadLastChance = False
 		self.canBePushed = True
 
-		self.game.addObject(self)
+		#self.game.addObject(self)
 		self.game._currentLevel.addObject(self)
 		self.game._currentLevel.setHasObjectTrue(x,y)
 
@@ -55,7 +56,7 @@ class Actor(Object):
 		self.deathState = deathState
 		self.statusEffects = []
 
-		self.game.addActor(self)
+		#self.game.addActor(self)
 		self.game._currentLevel.addActor(self)
 
 		self._nextCommand = None
@@ -144,7 +145,8 @@ class Actor(Object):
 				self.death()
 			else:
 				self.mortalWound = True
-				self.game.message(self.getName()+" is mortally wounded.",libtcod.red)
+				self.game.message(self.getName(True)+" is mortally wounded.",libtcod.red)
+				# TODO: Implement mortal wound status effect debuff
 
 		elif (self.mortalWound == True) or (self.hadLastChance == True):
 			self.mortalWound = False
@@ -154,10 +156,10 @@ class Actor(Object):
 		if self.deathState != None:
 			self.deathState.process()
 		else:
-			self.game.removeObject(self)
+			#self.game.removeObject(self)
 			self.game._currentLevel.removeObject(self)
 			self.game._currentLevel.setHasObjectFalse(self.x,self.y)
-			self.game.removeActor(self)
+			#self.game.removeActor(self)
 			self.game._currentLevel.removeActor(self)
 
 			del self
@@ -170,7 +172,7 @@ class Actor(Object):
 		if self.drops:
 			for item,odds in self.drops.items():
 				if random.random() <= 1.0/odds:
-					self.game.itemSpawner.spawn(self.x,self.y,item,level)
+					self.game.itemSpawner.spawn(self.x,self.y,item,level,True)
 
 
 
@@ -180,6 +182,13 @@ class Actor(Object):
 
 	def removeStatusEffect(self,statusEffect):
 		self.statusEffects.remove(statusEffect)
+
+	def equipItem(self,item):
+		if item in self.inventory:
+			self.inventory.remove(item)
+
+		self.equipSlots[item.equipSlot] = item
+		self.stats.addModifier(item,item.modifier)
 
 class Hero(Actor):
 

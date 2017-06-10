@@ -47,16 +47,16 @@ class ItemSpawner:
 		'Hauberk':self.spawnHealthPotion,
 		}
 	
-	def getRandomLoot(self,item):
+	def getRandomLoot(self,item,canRandomize):
 		# small chance to generate items of a different type
 		self.itemType = item
 
-		# move up the hierarchy
-		while self.itemType != 'Item':
-			if (random.random() <= self.itemChangeChance):
-				self.itemType = self.getParent(self.itemType)
-				#print 'p '+ self.itemType
-			else: break
+		if canRandomize == True:
+			# move up the hierarchy
+			while self.itemType != 'Item':
+				if (random.random() <= self.itemChangeChance):
+					self.itemType = self.getParent(self.itemType)
+				else: break
 
 		# move down the hierarchy
 		children = self.getChildren(self.itemType)
@@ -67,8 +67,8 @@ class ItemSpawner:
 
 		return self.itemType
 
-	def spawn(self,x,y,itemKey,level):
-		itemKey = self.getRandomLoot(itemKey)
+	def spawn(self,x,y,itemKey,level,randomize):
+		itemKey = self.getRandomLoot(itemKey,randomize)
 		
 		if itemKey in self.spawnMethods:
 			item = self.spawnMethods[itemKey](x,y,level)

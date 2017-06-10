@@ -30,3 +30,21 @@ V_PANEL_BAR_WIDTH = VIRTICAL_PANEL_WIDTH - 4
 MSG_X = 2
 MSG_WIDTH = HORIZONTAL_PANEL_WIDTH - 4
 MSG_HEIGHT = HORIZONTAL_PANEL_HEIGHT - 2
+
+LOGO = [
+'----  ----      --    --              -----     ',
+'==  ==  ==    ====    ==========    =========   ',
+'xx  xx  xx    xxxx    xx      xx    xxx      xx ',
+'XX  XX  XX    XXXX    XX    XX      XX          ',
+'XX      XX    XXXX    XXXXXXX       XXX         ',
+'XX  XX  XX    XXXX    XX    X       XXXXXXX     ',
+'XX      XX     XXX    XX    XX      XX          ',
+' x      xx     xxx    xx    xx      xxx      xx ',
+'       ==        =         ==       =========   ',
+'      --         -        --          -----     ',
+'    --                  --                      '
+]
+
+if __name__ == '__main__':
+	for line in LOGO:
+		print line
