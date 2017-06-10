@@ -186,6 +186,10 @@ class Actor(Object):
 	def equipItem(self,item):
 		if item in self.inventory:
 			self.inventory.remove(item)
+		if item in self.game._currentLevel._objects:
+			self.game._currentLevel._objects.remove(item)
+		if item in self.game._currentLevel._items:
+			self.game._currentLevel._items.remove(item)
 
 		self.equipSlots[item.equipSlot] = item
 		self.stats.addModifier(item,item.modifier)
