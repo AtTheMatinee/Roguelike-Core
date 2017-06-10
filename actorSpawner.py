@@ -55,11 +55,13 @@ class ActorSpawner:
 		# add equipment
 		weapon = self.game.itemSpawner.spawn(x,y,'Mace',0,False)
 		hero.equipItem(weapon)
+		print "hero.equipItem"
 
 		# add items to inventory
 		for gear,itemLevel in {"Potion":0}.items():
 			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
 			g.moveToInventory(hero)
+		print "hero item.moveToInventory(hero)"
 
 		return hero
 

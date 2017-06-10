@@ -121,6 +121,7 @@ class GameLoop:
 		self.hero = self.actorSpawner.spawn(heroX,heroY,"Hero")
 		self.hero.name = heroName
 		self.hero.addStatusEffect(statusEffects.StatusEffect,10)
+		print "gameLoop 123"
 
 	def loadGame(self,saveFile):
 		pass

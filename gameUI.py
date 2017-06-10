@@ -70,6 +70,7 @@ class UserInterface:
 		self.mainMenu()
 
 	def mainLoop(self):
+		print "gameUI.mainLoop()"
 		while not libtcod.console_is_window_closed():
 
 			#Input

@@ -61,6 +61,8 @@ class Actor(Object):
 
 		self._nextCommand = None
 
+		print self.name
+
 	def getCommand(self):
 		# process status effects
 		if self.statusEffects:
