@@ -2,6 +2,7 @@
 potions.py
 '''
 from items import Item
+import libtcodpy as libtcod
 '''
 ====================
 Potions
@@ -13,11 +14,6 @@ class Potion(Item):
 	unidentifiedName = "Mysterious Potion"
 	def __init__(self, game, x, y, char, name, color, level, blocks=False):
 		Item.__init__(self, game, x, y, char, name, color, level, blocks=False)
-
-	def getName(self):
-		if self.__class__.identified == True:
-			return self.name
-		else: return self.__class__.unidentifiedName
 
 
 class HealthPotion(Potion):
@@ -32,10 +28,10 @@ class HealthPotion(Potion):
 
 		if self in actor.inventory:
 			actor.inventory.remove(self)
-			actor.game.message(actor.name+" drinks a "+self.getName())
+			actor.game.message(actor.name+" drinks a "+self.getName(False))
 
 		if self.__class__.identified == False:
 			self.__class__.identified = True
-			actor.game.message("You have identified the "+self.getName())
+			actor.game.message("You have identified "+self.getName(True),libtcod.cyan)
 
 		return True

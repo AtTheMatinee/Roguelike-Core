@@ -22,6 +22,18 @@ class StatsTable:
 		"defense":[0,0,0,0,0,0,0],
 		"critChance":0
 		},
+	"Ghost":
+		{
+		"healthCurrent":10,
+		"healthMax":10,
+		"magicCurrent":0,
+		"magicMax":20,
+		"speed":6,
+		"attack":[6.0,0,0,0,0,0,0,6,0],
+		"attackSpeed":0,
+		"defense":[0,0,0,0,0,-1,1],
+		"critChance":0
+		},
 	"Hero":
 		{
 		"healthCurrent":20,
