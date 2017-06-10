@@ -223,7 +223,11 @@ class Hero(Actor):
 		self.nearbyObjects = self.getNearbyObjects()
 
 class Monster(Actor):
-	pass
+	def __init__(self, game, x, y, char, name, color, level, faction = None, blocks=True, properNoun = False, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, canEquipArmor = False, canEquipWeapons = False, playerControlled = False):
+		Actor.__init__(self, game, x, y, char, name, color, faction = None, blocks=True, properNoun = False, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, canEquipArmor = False, canEquipWeapons = False, playerControlled = False)
+		self.level = level
+	def upgrade(self, level):
+		pass
 
 class Elemental(Monster):
 	pass

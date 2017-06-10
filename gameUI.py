@@ -32,11 +32,7 @@ TODO: Option to switch virtical panel from right to left
 TODO: spell hoykeys (Should be easy after key rebinding is implemented)
 TODO: Mouselook on an enemy pops it to the top of the enemy information panel
 TODO: Virtical panel shows player stats, equipment, and hotkeys (if bound)
-TODO: Opening Menu Structure
-	(C)ontinue (Greyed out if there are no saved games)
-	(N)ew Game
-	(O)ptions
-	(E)xit
+
 '''
 
 class UserInterface:
