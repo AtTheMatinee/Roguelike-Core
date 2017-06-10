@@ -13,18 +13,18 @@ class Item(Object):
 	unidentifiedName = "Mysterious Item"
 	def __init__(self, game, x, y, char, name, color, level, blocks=False, properNoun = False):
 		Object.__init__(self, game, x, y, char, name, color, blocks=False, properNoun = False)	
-		self.game = game
-		self.x = x
-		self.y = y
-		self.char = char
-		self.name = name
-		self.color = color
+		#self.game = game
+		#self.x = x
+		#self.y = y
+		#self.char = char
+		#self.name = name
+		#self.color = color
 		self.level = level
-		self.blocks = blocks
-		self.properNoun = properNoun
+		#self.blocks = blocks
+		#self.properNoun = properNoun
 
 		#self.game.addObject(self)
-		self.game._currentLevel.addObject(self)
+		#self.game._currentLevel.addObject(self)
 		#self.game.addItem(self)
 		self.game._currentLevel.addItem(self)
 
