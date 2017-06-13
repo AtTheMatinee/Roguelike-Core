@@ -49,19 +49,17 @@ class ActorSpawner:
 		pass
 
 	def spawnHero(self,x,y,level):
-		hero = actors.Hero(self.game,x,y,'@',"Hero",color = libtcod.white,faction = "Hero",stats = actorStats.Stats("Hero"),surviveMortalWound = True, inventorySize = 12, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
+		hero = actors.Hero(self.game,x,y,'@',"Hero",libtcod.white,level,faction = "Hero",stats = actorStats.Stats("Hero"),surviveMortalWound = True, inventorySize = 12, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
 		
 		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Mace',0,False)
+		weapon = self.game.itemSpawner.spawn(x,y,'Weapon',8,False)
 		hero.equipItem(weapon)
-		print "hero.equipItem"
 
 		# add items to inventory
 		for gear,itemLevel in {"Potion":0}.items():
 			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
 			g.moveToInventory(hero)
-		print "hero item.moveToInventory(hero)"
 
 		return hero
 
@@ -111,9 +109,13 @@ class ActorSpawner:
 	def spawnSwampHag(self,x,y,level):
 		pass
 
+	def spawnWitch(self,x,y,level):
+		pass
+
 	def spawnWyrm(self,x,y,level):
 		pass
-		# Wyrms can be fire, frost, or plague elementals
+		# Wyrms can be fire or frost elementals
+
 
 class MobSpawner:
 	def __init__(self,game):

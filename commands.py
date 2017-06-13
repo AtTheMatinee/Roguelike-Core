@@ -25,6 +25,7 @@ class Command:
 		alternative = None
 		return success, alternative
 
+
 class WalkCommand(Command):
 	def __init__(self, actor, dx, dy):
 		self.actor = actor
@@ -79,6 +80,7 @@ class WalkCommand(Command):
 		alternative = None
 		return success, alternative
 
+
 class WaitCommand(Command):
 	def __init__(self, actor):
 		self.actor = actor
@@ -95,12 +97,14 @@ class WaitCommand(Command):
 		alternative = None
 		return success, alternative
 
+
 class OpenDoorCommand(Command):
 	def __init__(self, door):
 		pass
 
 	def perform(self):
 		pass
+
 
 class CloseDoorCommand(Command):
 	def __init__(self, door):
@@ -109,6 +113,7 @@ class CloseDoorCommand(Command):
 	def perform(self):
 		pass
 
+
 class AttackCommand(Command):
 	def __init__(self,actor,target):
 		self.actor = actor
@@ -116,15 +121,17 @@ class AttackCommand(Command):
 		'''
 		[
 		physical,
+		armour penetration,
 		fire,
 		frost,
 		poison,
+		bleed,
 		holy,
 		unholy,
 		unblockable
 		]
 		'''
-		self.energyCost = 20 - actor.stats.get("attackSpeed")
+		self.energyCost = 20 - int(actor.stats.get("attackSpeed"))
 
 	def perform(self):
 		attack = self.actor.stats.get('attack')
@@ -133,10 +140,10 @@ class AttackCommand(Command):
 		# calculate Critical Damage (for physical damage only)
 		if ((random.random() <= critChance) and
 			(attack[0] > 0)):
-			attack[0] += random.randint(1,attack[0])
+			attack[0] += random.randint(1,int(attack[0]))
 
 		if self.actor == self.actor.game.hero or self.target == self.actor.game.hero:
-			self.actor.game.message(self.actor.getName(True).capitalize() + " attacks " + self.target.getName(True))
+			self.actor.game.message(self.actor.getName(True).title() + " attacks " + self.target.getName(True))
 
 		self.target.takeDamage(attack)
 		self.target.mostRecentAttacker = self.actor
@@ -318,7 +325,7 @@ class UnequipCommand(Command):
 			alternative = False
 
 		else:
-			self.actor.game.message(self.item.getName(True).capitalize()+" cannot be unequipped.")
+			self.actor.game.message(self.item.getName(True).title()+" cannot be unequipped.")
 			success = False
 			alternative = None
 

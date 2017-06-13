@@ -15,13 +15,14 @@ import actorStats
 import libtcodpy as libtcod
 
 class Actor(Object):
-	def __init__(self, game, x, y, char, name, color, faction = None, blocks=True, properNoun = False, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, canEquipArmor = False, canEquipWeapons = False, playerControlled = False):
+	def __init__(self, game, x, y, char, name, color, level, faction = None, blocks=True, properNoun = False, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, canEquipArmor = False, canEquipWeapons = False, playerControlled = False):
 		self.game = game
 		self.x = x
 		self.y = y
 		self.char = char
 		self.name = name
 		self.color = color
+		self.level = level
 		self.faction = faction
 		self.blocks = blocks
 		self.properNoun = properNoun
@@ -34,7 +35,7 @@ class Actor(Object):
 		self.hadLastChance = False
 		self.canBePushed = True
 
-		#self.game.addObject(self)
+		self.game.addObject(self)
 		self.game._currentLevel.addObject(self)
 		self.game._currentLevel.setHasObjectTrue(x,y)
 
@@ -60,8 +61,6 @@ class Actor(Object):
 		self.game._currentLevel.addActor(self)
 
 		self._nextCommand = None
-
-		print self.name
 
 	def getCommand(self):
 		# process status effects
@@ -118,16 +117,20 @@ class Actor(Object):
 		'''
 		defense = self.stats.get("defense")
 
-		armor = max(0,(random.randint(0,defense[0]) - damage[1])) # physicalDefense - armorPenetration
+		armor = max(0,(random.randint(0,int(defense[0])) - int(damage[1]))) # physicalDefense - armorPenetration
 		physicalDam = max(0,(damage[0] - armor))
 
+		# ==========
+		# !!! look for status effect flags with: if any(isinstance(instance,statusEffect)) for instance in self.statusEffects
+		# ==========
+
 		# I have these seperated out so I can implement additional modifiers in the future
-		fireDam = damage[2] - damage[2]*defense[1] # inflicts inflamed
-		frostDam = damage[3] - damage[3]*defense[2] # inflicts frozen
-		poisonDam = damage[4] - damage[4]*defense[3] # inflicts poison
-		bleedDam = damage[5] - damage[5]*defense[4] # does not do damage, only inflicts bleed status
-		holyDam = damage[6] - damage[6]*defense[5]
-		unholyDam = damage[7] - damage[7]*defense[6]
+		fireDam = damage[2] - float(damage[2]*defense[1]) # inflicts inflamed
+		frostDam = damage[3] - float(damage[3]*defense[2]) # inflicts frozen
+		poisonDam = damage[4] - float(damage[4]*defense[3]) # inflicts poison
+		bleedDam = damage[5] - float(damage[5]*defense[4]) # does not do damage, only inflicts bleed status
+		holyDam = damage[6] - float(damage[6]*defense[5])
+		unholyDam = damage[7] - float(damage[7]*defense[6])
 
 		totalDam = (physicalDam + fireDam + frostDam + poisonDam + holyDam + unholyDam + damage[6])
 
@@ -225,11 +228,7 @@ class Hero(Actor):
 		self.nearbyObjects = self.getNearbyObjects()
 
 class Monster(Actor):
-	def __init__(self, game, x, y, char, name, color, level, faction = None, blocks=True, properNoun = False, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, canEquipArmor = False, canEquipWeapons = False, playerControlled = False):
-		Actor.__init__(self, game, x, y, char, name, color, faction = None, blocks=True, properNoun = False, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, canEquipArmor = False, canEquipWeapons = False, playerControlled = False)
-		self.level = level
-	def upgrade(self, level):
-		pass
+	pass
 
 class Elemental(Monster):
 	pass

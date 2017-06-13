@@ -149,7 +149,7 @@ class DeathState:
 		#o.game.removeActor(o)
 		o.game._currentLevel.removeActor(o)
 
-		o.game.message(o.getName(True).capitalize()+" is dead.",libtcod.crimson)
+		o.game.message(o.getName(True).title()+" is dead.",libtcod.crimson)
 
 		self.owner.dropLoot()
 

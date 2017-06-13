@@ -70,8 +70,17 @@ class ItemSpawner:
 	def spawn(self,x,y,itemKey,level,randomize):
 		itemKey = self.getRandomLoot(itemKey,randomize)
 		
+		# items have a slight chance of spawning at a higher or lower level
+		if randomize == True:
+			chance = random.random()
+			if (chance <= 0.1) and (level > 0):
+				level -= 1
+			elif (chance >= 0.9):
+				level += 1
+
 		if itemKey in self.spawnMethods:
 			item = self.spawnMethods[itemKey](x,y,level)
+			item.upgrade(level)
 			return item
 
 	def getParent(self,item):
@@ -88,7 +97,7 @@ class ItemSpawner:
 	def spawnDagger(self,x,y,level):
 		modifier = {
 		'add':{'attack':[2.0,0,0,0,0,0,0,0,0], 'attackSpeed':4},
-		'mult':{'critChance':.5}
+		'mult':{'critChance':0.5}
 		}
 		item = Items.weapons.Dagger(self.game, x, y, chr(24), "Dagger", libtcod.azure, level, 1, modifier)
 		return item
@@ -105,7 +114,7 @@ class ItemSpawner:
 		return item
 
 	def spawnSpear(self,x,y,level):
-		modifier = {'add':{'attack':[4.0,1,0,0,0,0,0,0,0]}}
+		modifier = {'add':{'attack':[5.0,0,0,0,0,0.1,0,0,0]}}
 		item = Items.weapons.Spear(self.game, x, y, chr(24), "Spear", libtcod.azure, level, 1, modifier)
 		return item
 
@@ -113,13 +122,7 @@ class ItemSpawner:
 		modifier = {'add':{'attack':[3.0,0,0,0,0,0.1,0,0,0]}}
 		item = Items.weapons.Sword(self.game, x, y, chr(24), "Sword", libtcod.azure, level, 1, modifier)
 		return item
-
-'''
-for i in xrange(level):
-	pick an item stat to level up at random
-	each item will have it's own values that determine how much each stat is increased by
-
-'''
+		
 
 if __name__ == '__main__':
 	spawner = ItemSpawner(None)

@@ -28,6 +28,10 @@ import commands
 
 import statusEffects
 
+import shelve
+
+import random
+
 '''
 ====================
 Game Engine
@@ -35,7 +39,7 @@ Game Engine
 '''
 
 class GameLoop:
-	def __init__(self,ui,mapWidth,mapHeight):
+	def __init__(self,ui,mapWidth,mapHeight,seed):
 		# ====================
 		# Initialization
 		# ====================
@@ -43,11 +47,11 @@ class GameLoop:
 		self.mapWidth = mapWidth
 		self.mapHeight = mapHeight
 
-		self._actors = []
+		self.globalSeed = seed
+
 		self._currentActor = 0
-		self._objects = []
 		self._currentLevel = None
-		self._items = []
+		self._objects = []
 
 		self._messages = []
 
@@ -72,14 +76,14 @@ class GameLoop:
 		the method gives up and tries again on the next frame.
 		'''
 		#import pdb; pdb.set_trace()
-		actor = self._actors[self._currentActor]
+		actor = self._currentLevel._actors[self._currentActor]
 
 		# Prevent the loop from skipping an actor if they havn't taken their turn E.G. the player
 		if (actor.energy >= self.turnCost) and (actor.needsInput()): return
 
 		command = None
 		while (command == None): # cycle through alternatives until one resolves
-			actor = self._actors[self._currentActor]
+			actor = self._currentLevel._actors[self._currentActor]
 
 			if (actor.energy >= self.turnCost) or (actor.gainEnergy()):	
 
@@ -87,7 +91,7 @@ class GameLoop:
 				command = actor.getCommand()
 
 			else:
-				self._currentActor = (self._currentActor + 1) % len(self._actors)
+				self._currentActor = (self._currentActor + 1) % len(self._currentLevel._actors)
 				if self.stopAfterEveryProcess == True: return
 
 		success,alternative = command.perform()
@@ -96,7 +100,7 @@ class GameLoop:
 			success,alternative = command.perform()
 
 		if (self.spendEnergyOnFailure == True) or (success == True):
-			self._currentActor = (self._currentActor + 1) % len(self._actors)
+			self._currentActor = (self._currentActor + 1) % len(self._currentLevel._actors)
 
 	def message(self,newMsg,color = UI_PRIMARY_COLOR):
 		# split the message if the line is too long
@@ -112,6 +116,7 @@ class GameLoop:
 
 	def newGame(self):
 		# TODO: Pregenerate all levels at the beginning
+
 		mapType = dungeonGeneration.RoomAddition()
 		self.map.createNewLevel(mapType) #the location of this will probably change
 
@@ -121,7 +126,23 @@ class GameLoop:
 		self.hero = self.actorSpawner.spawn(heroX,heroY,"Hero")
 		self.hero.name = heroName
 		self.hero.addStatusEffect(statusEffects.StatusEffect,10)
-		print "gameLoop 123"
+
+	def saveGame(self):
+		print self._objects
+		pass
 
 	def loadGame(self,saveFile):
 		pass
+
+	def getSeeds(self):
+		random.seed(self.globalSeed)
+		seeds = []
+		for i in xrange(20):
+			seeds.append(random.random())
+		return seeds
+
+	def addObject(self, object):
+		self._objects.append(object)
+
+	def removeObject(self, object):
+		self._objects.remove(object)

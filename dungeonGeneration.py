@@ -42,7 +42,11 @@ class RoomAddition:
 		self.shortcutLength = 5
 		self.minPathfindingDistance = 50
 
-	def generateLevel(self,level,mapWidth,mapHeight):
+	def generateLevel(self,level,mapWidth,mapHeight,seed):
+		# set the seed
+		if seed != None:
+			random.seed(seed)
+
 		self.rooms = []
 		self.level = level
 

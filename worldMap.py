@@ -32,6 +32,9 @@ class Map:
 		self.game = game
 		self.mapWidth = mapWidth
 		self.mapHeight = mapHeight
+
+		self.levelSeeds = game.getSeeds()
+
 		self._levels = [] #stores lookup to every level object
 
 		# Initialize the Field of View map object
@@ -45,16 +48,18 @@ class Map:
 		self._levels.append(newLevel)
 		if self.game._currentLevel == None:
 			self.game._currentLevel = newLevel
-			self.game._actors = newLevel._actors
-			self.game._objects = newLevel._objects
-			self.game._items = newLevel._items
+			#self.game._actors = newLevel._actors
+			#self.game._objects = newLevel._objects
+			#self.game._items = newLevel._items
 
 
 		# Set the depth of newLevel
-		newLevel.levelDepth = len(self._levels)
+		levelDepth = len(self._levels)
+		newLevel.levelDepth = levelDepth
 
 		# Generate the layout of newLevel
-		newLevel.generateLevel(mapType)
+		seed = self.levelSeeds[levelDepth]
+		newLevel.generateLevel(mapType,seed)
 
 		self.initializeFOV(newLevel)
 
@@ -98,14 +103,14 @@ class Level:
 		Level._hasObject = 4 # bitwise map flag
 		Level._hasBeenExplored = 8 # bitwise map flag
 
-	def generateLevel(self,mapType):
+	def generateLevel(self,mapType,seed):
 		# Creates an empty 2D array
 		
 		self.terrain = [[0
 			for y in range(self.mapHeight)]
 				for x in range(self.mapWidth)]
 
-		mapType.generateLevel(self, self.mapWidth, self.mapHeight)
+		mapType.generateLevel(self, self.mapWidth, self.mapHeight,seed)
 		self.pathMap = libtcod.path_new_using_map(self.map.fov_map,1)
 		self.placeStairs()
 

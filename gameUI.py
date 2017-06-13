@@ -70,7 +70,6 @@ class UserInterface:
 		self.mainMenu()
 
 	def mainLoop(self):
-		print "gameUI.mainLoop()"
 		while not libtcod.console_is_window_closed():
 
 			#Input
@@ -93,7 +92,7 @@ class UserInterface:
 
 			libtcod.console_flush()
 
-			for object in self.game._objects:
+			for object in self.game._currentLevel._objects:
 				object.clear()
 
 		libtcod.console_clear(self.con)
@@ -101,6 +100,8 @@ class UserInterface:
 		libtcod.console_clear(self.virPanel)
 		libtcod.console_clear(0)
 		libtcod.console_flush()
+
+		self.game.saveGame()
 			
 	def handleInput(self,keyboard):
 		if self._gameState == self._playing:
@@ -202,7 +203,7 @@ class UserInterface:
 
 		#combine the names, separated by a comma and space
 		names = ', '.join(names)
-		return names.capitalize()
+		return names.title()
 
 	def renderAll(self):
 		if self.fovRecompute:
@@ -318,7 +319,7 @@ class UserInterface:
 			# Print options
 			self.window = libtcod.console_new(width,height)
 
-			libtcod.console_set_default_foreground(self.window, libtcod.white)
+			libtcod.console_set_default_foreground(self.window, UI_PRIMARY_COLOR)
 
 			y = 1
 			for text in options:
@@ -357,7 +358,8 @@ class UserInterface:
 		self._inventoryMenu = 1
 		self._gameState = self._playing
 
-		self.game = gameLoop.GameLoop(self,MAP_WIDTH,MAP_HEIGHT)
+		seed = random.random()
+		self.game = gameLoop.GameLoop(self,MAP_WIDTH,MAP_HEIGHT,seed)
 		self.game.newGame()
 
 		self.fovRecompute = True
@@ -368,7 +370,7 @@ class UserInterface:
 		self._inventoryMenu = 1
 		self._gameState = self._playing
 
-		self.game = gameLoop.GameLoop(self,MAP_WIDTH,MAP_HEIGHT)
+		self.game = gameLoop.GameLoop(self,MAP_WIDTH,MAP_HEIGHT,seed)
 
 		self.fovRecompute = True
 		self.generateNoiseMap()
@@ -525,7 +527,9 @@ class UserInterface:
 
 		# Stats
 		
-		attack = int(hero.stats.get('attack')[0])
+		attack = int(hero.stats.get('attack')[0] + hero.stats.get('attack')[3] +
+			hero.stats.get('attack')[4] + hero.stats.get('attack')[5] +
+			hero.stats.get('attack')[7] + hero.stats.get('attack')[8])
 		attackBase = hero.stats.getBaseStat('attack')[0]
 		libtcod.console_print_ex(panel, 3, 6, libtcod.BKGND_NONE, libtcod.LEFT, 'ATK: '+str(attack)+' ('+str(attackBase)+')')
 		
@@ -536,7 +540,20 @@ class UserInterface:
 		speed = int(hero.stats.get('speed'))
 		speedBase = hero.stats.getBaseStat('speed')
 		libtcod.console_print_ex(panel, 3, 8, libtcod.BKGND_NONE, libtcod.LEFT, 'SPD: '+str(speed)+' ('+str(speedBase)+')')
-		
+
+		# Equipment
+		if hero.equipSlots[0] != None:
+			armorName = hero.equipSlots[0].getName(False)
+		else:
+			armorName = 'Clothes'
+		libtcod.console_print_ex(panel, 3, 10, libtcod.BKGND_NONE, libtcod.LEFT, armorName)
+
+		if hero.equipSlots[1] != None:
+			weaponName = hero.equipSlots[1].getName(False)
+		else:
+			weaponName = 'Unarmed'
+		libtcod.console_print_ex(panel, 3, 11, libtcod.BKGND_NONE, libtcod.LEFT, weaponName)
+
 		
 
 	def renderMonsterInformation(self,panel,width,y,actor,displayStats):

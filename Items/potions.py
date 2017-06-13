@@ -28,7 +28,7 @@ class HealthPotion(Potion):
 
 		if self in actor.inventory:
 			actor.inventory.remove(self)
-			actor.game.message(actor.getName(True).capitalize()+" drinks a "+self.getName(False))
+			actor.game.message(actor.getName(True).title()+" drinks a "+self.getName(False))
 
 		if self.__class__.identified == False:
 			self.__class__.identified = True
