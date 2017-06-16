@@ -13,19 +13,10 @@ class Item(Object):
 	unidentifiedName = "Mysterious Item"
 	def __init__(self, game, x, y, char, name, color, level, blocks=False, properNoun = False):
 		Object.__init__(self, game, x, y, char, name, color, blocks=False, properNoun = False)	
-		#self.game = game
-		#self.x = x
-		#self.y = y
-		#self.char = char
-		#self.name = name
-		#self.color = color
-		self.level = level
-		#self.blocks = blocks
-		#self.properNoun = properNoun
 
-		#self.game.addObject(self)
-		#self.game._currentLevel.addObject(self)
-		#self.game.addItem(self)
+		self.level = level
+
+		self.game.addObject(self)
 		self.game._currentLevel.addItem(self)
 
 		self.renderFirst()
@@ -69,10 +60,10 @@ class Item(Object):
 class Equipment(Item):
 	identified = True
 	def __init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False, canBeUnequipped = True):
-		Item.__init__(self, game, x, y, char, name, color, level, blocks=False)
 		self.equipSlot = equipSlot
 		self.modifier = modifier
 		self.canBeUnequipped = canBeUnequipped
+		Item.__init__(self, game, x, y, char, name, color, level, blocks=False)
 
 	def use(self,actor):
 		# create equip command
@@ -85,8 +76,36 @@ class Equipment(Item):
 		# if the item was equipped, return true, else return false
 		return success
 
-	def upgrade(self,level):
-		pass
+	def addUpgrades(self,mod):
+		# add the passed modifier to the item's existing modifiers
+		for modType in mod.keys():
+			# check to see if there are any mods of that type
+			if modType in self.modifier:
+
+				for statType in mod[modType].keys():
+					# check to see if there are any mods for that type
+					if statType in self.modifier[modType]:
+						# if stat is attack or defense
+						if statType == 'attack' or statType == 'defense':
+							if len(mod[modType][statType]) != len(self.modifier[modType][statType]):
+								break
+							# add the list, one element at a time
+							length = len(mod[modType][statType])
+							for i in xrange(length):
+								self.modifier[modType][statType][i] += mod[modType][statType][i]
+
+						else:
+							# stat is a normal stat, not a list
+							# add the old modifier value to the new modifier value
+							self.modifier[modType][statType] += mod[modType][statType]
+
+					else:
+						# self.modifier does not contain a modifier for that stat
+						self.modifier[modType].update(mod[modType])
+			
+			else:
+				# add the new modType
+				self.modifier.update(mod)
 
 class Armor(Equipment):
 	unidentifiedName = "Mysterious Armor"

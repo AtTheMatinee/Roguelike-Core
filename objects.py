@@ -21,7 +21,7 @@ class Object(object):
 		self.blocks = blocks
 		self.properNoun = properNoun
 
-		#self.game.addObject(self)
+		self.game.addObject(self)
 		self.game._currentLevel.addObject(self)
 		self.renderFirst()
 		if self.blocks == True:
