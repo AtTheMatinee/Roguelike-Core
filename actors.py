@@ -12,6 +12,8 @@ import random
 
 import actorStats
 
+import statusEffects
+
 import libtcodpy as libtcod
 
 class Actor(Object):
@@ -121,18 +123,37 @@ class Actor(Object):
 		physicalDam = max(0,(damage[0] - armor))
 
 		# ==========
-		# !!! look for status effect flags with: if any(isinstance(instance,statusEffect)) for instance in self.statusEffects
+		# !!! look for status effect flags with: if any(isinstance(instance,statusEffect) for instance in self.statusEffects)
 		# ==========
 
-		# I have these seperated out so I can implement additional modifiers in the future
+		# ==== Fire ====
 		fireDam = damage[2] - float(damage[2]*defense[1]) # inflicts inflamed
+		if (fireDam >= 1) and (random.random() <= 0.05):
+			self.addStatusEffect(statusEffects.Flaming,10,False)
+
+		# ==== Frost ====
 		frostDam = damage[3] - float(damage[3]*defense[2]) # inflicts frozen
+		if (frostDam >= 1) and (random.random() <= 0.05):
+			self.addStatusEffect(statusEffects.Frozen,10,False)
+
+		# ==== Poison ====
 		poisonDam = damage[4] - float(damage[4]*defense[3]) # inflicts poison
-		bleedDam = damage[5] - float(damage[5]*defense[4]) # does not do damage, only inflicts bleed status
+		if (poisonDam >= 1) and (random.random() <= 0.1):
+			self.addStatusEffect(statusEffects.Poisoned,int(poisonDam)*2,False)
+
+		# ==== Bleed ====
+		bleedChance = damage[5] - float(damage[5]*defense[4]) # does not do damage, only inflicts bleed status
+		if bleedChance > 0 and random.random() <= bleedChance:
+			self.addStatusEffect(statusEffects.Bleeding,10,True)
+
+		# ==== Holy ====
 		holyDam = damage[6] - float(damage[6]*defense[5])
+		
+		# ==== Unholy ====
 		unholyDam = damage[7] - float(damage[7]*defense[6])
 
-		totalDam = (physicalDam + fireDam + frostDam + poisonDam + holyDam + unholyDam + damage[6])
+
+		totalDam = (physicalDam + fireDam + frostDam + poisonDam + holyDam + unholyDam + damage[8])
 
 		health = self.stats.get("healthCurrent")
 		health = min(health-totalDam,self.stats.get("healthMax"))
@@ -148,10 +169,9 @@ class Actor(Object):
 			self.stats.setBaseStat("healthCurrent",0)
 			if (self.surviveMortalWound == False) or ((self.mortalWound == True) and (self.hadLastChance)):
 				self.death()
-			else:
+			elif self.mortalWound == False:
 				self.mortalWound = True
-				self.game.message(self.getName(True)+" is mortally wounded.",libtcod.red)
-				# TODO: Implement mortal wound status effect debuff
+				self.addStatusEffect(statusEffects.MortallyWounded,30,True)
 
 		elif (self.mortalWound == True) or (self.hadLastChance == True):
 			self.mortalWound = False
@@ -161,16 +181,15 @@ class Actor(Object):
 		if self.deathState != None:
 			self.deathState.process()
 		else:
-			#self.game.removeObject(self)
+			self.game.removeObject(self)
 			self.game._currentLevel.removeObject(self)
 			self.game._currentLevel.setHasObjectFalse(self.x,self.y)
-			#self.game.removeActor(self)
 			self.game._currentLevel.removeActor(self)
 
 			del self
 
 	def dropLoot(self):
-		# Drop Inventory and Equipment
+		# TODO: Drop Inventory and Equipment
 
 		# Random Drop { itemKey : odds=1/n }
 		level = 0
@@ -179,9 +198,13 @@ class Actor(Object):
 				if random.random() <= 1.0/odds:
 					self.game.itemSpawner.spawn(self.x,self.y,item,level,True)
 
+	def addStatusEffect(self,statusEffect,timer,stacks):
+		# see if an instance of that effect already exists, and that the effect cannot stack
+		if (stacks == False):
+			if any(isinstance(se, statusEffect) for se in self.statusEffects):
+				return
 
-
-	def addStatusEffect(self,statusEffect,timer):
+		# else, add the effect
 		statusEffect = statusEffect(self,timer)
 		self.statusEffects.append(statusEffect)
 

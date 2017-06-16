@@ -53,7 +53,7 @@ class ActorSpawner:
 		hero.deathState = states.DeathState(hero)
 		
 		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Weapon',8,False)
+		weapon = self.game.itemSpawner.spawn(x,y,'Weapon',0,False)
 		hero.equipItem(weapon)
 
 		# add items to inventory

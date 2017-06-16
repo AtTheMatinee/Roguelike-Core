@@ -381,7 +381,10 @@ class UserInterface:
 		# Load old game._currentActor
 
 	def renderStatusBar(self,panel,x, y, total_width, name, value, maxValue, bar_color, back_color):
-		bar_width = int(float(value) / maxValue * total_width)
+		if maxValue <= 0: 
+			bar_width = 0
+		else:
+			bar_width = int(float(value) / maxValue * total_width)
 
 		# Render the background
 		libtcod.console_set_default_background(panel, back_color)

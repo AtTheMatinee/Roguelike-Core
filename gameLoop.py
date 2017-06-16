@@ -125,14 +125,31 @@ class GameLoop:
 		heroY = self.mapHeight/2#self._currentLevel.tempY
 		self.hero = self.actorSpawner.spawn(heroX,heroY,"Hero")
 		self.hero.name = heroName
-		self.hero.addStatusEffect(statusEffects.StatusEffect,10)
+		self.hero.addStatusEffect(statusEffects.Flaming,10,False)
+
 
 	def saveGame(self):
-		print self._objects
+		#print self._objects
+		'''
+		save seed, _currentLevel, _currentActor
+
+		for each object in game._objects, save any relevent variables
+		needed to create an exact copy of the object.
+
+		for each level, save seed, and the index in game_objects
+		to each object in level._objects, level._items, level._actors
+		'''
 		pass
 
 	def loadGame(self,saveFile):
 		pass
+		'''
+		for each object in the saved game._objects, create an instance 
+		of the same object, overwrighting the new objects relevent 
+		stats from the saved object
+
+		reconstruct the level lists from the saved level variables
+		'''
 
 	def getSeeds(self):
 		random.seed(self.globalSeed)
