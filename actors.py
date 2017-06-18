@@ -28,6 +28,7 @@ class Actor(Object):
 		self.faction = faction
 		self.blocks = blocks
 		self.properNoun = properNoun
+		self.alwaysVisible = False
 
 		self.nearbyActors = self.getNearbyActors()
 		self.nearbyObjects = self.getNearbyObjects()
@@ -171,7 +172,7 @@ class Actor(Object):
 				self.death()
 			elif self.mortalWound == False:
 				self.mortalWound = True
-				self.addStatusEffect(statusEffects.MortallyWounded,30,True)
+				self.addStatusEffect(statusEffects.MortallyWounded,100,True)
 
 		elif (self.mortalWound == True) or (self.hadLastChance == True):
 			self.mortalWound = False
@@ -192,7 +193,7 @@ class Actor(Object):
 		# TODO: Drop Inventory and Equipment
 
 		# Random Drop { itemKey : odds=1/n }
-		level = 0
+		level = self.level
 		if self.drops:
 			for item,odds in self.drops.items():
 				if random.random() <= 1.0/odds:

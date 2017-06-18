@@ -81,7 +81,7 @@ class RoomAddition:
 		if self.includeShortcuts == True:
 			self.addShortcuts(mapWidth,mapHeight)
 
-		#self.placeStaircases(mapWidth,mapHeight)
+		self.placeStaircases(mapWidth,mapHeight)
 
 	def generateRoom(self):
 		# select a room type to generate
@@ -292,10 +292,7 @@ class RoomAddition:
 			#spawn the room touching wallTile
 			startRoomX = None
 			startRoomY = None
-			'''
-			TODO: replace this with a method that returns a 
-			random floor tile instead of the top left floor tile
-			'''
+			 
 			while not startRoomX and not startRoomY:
 				x = random.randint(0,roomWidth-1)
 				y =  random.randint(0,roomHeight-1)
@@ -314,14 +311,6 @@ class RoomAddition:
 					roomX = possibleRoomX 
 					roomY = possibleRoomY 
 
-					# build connecting tunnel
-					#Attempt 1
-					'''
-					for i in range(tunnelLength+1):
-						x = wallTile[0] + direction[0]*i
-						y = wallTile[1] + direction[1]*i
-						self.level[x][y] = 0
-					'''
 					# moved tunnel code into self.generateLevel()
 
 					return roomX,roomY, wallTile, direction, tunnelLength
@@ -443,7 +432,6 @@ class RoomAddition:
 		the future, I'll implement it.
 		'''
 		
-		
 		#initialize the libtcodpy map
 		libtcodMap = libtcod.map_new(mapWidth,mapHeight)
 		self.recomputePathMap(mapWidth,mapHeight,libtcodMap)
@@ -480,6 +468,54 @@ class RoomAddition:
 								self.recomputePathMap(mapWidth,mapHeight,libtcodMap)
 
 
+		# destroy the path object
+		libtcod.path_delete(pathMap)
+
+	def placeStaircases(self,mapWidth,mapHeight):
+		downStairsX = None
+		downStairsY = None
+		upStairsX = None
+		upStairsY = None
+		longestDistance = 0
+
+		#initialize the libtcodpy map
+		libtcodMap = libtcod.map_new(mapWidth,mapHeight)
+		self.recomputePathMap(mapWidth,mapHeight,libtcodMap)
+
+		# try n times
+		for i in xrange(20):
+			# pick a random point
+			while True:
+				tempX1 = random.randint(8,mapWidth-8)
+				tempY1 = random.randint(8,mapHeight-8)
+				if self.level.getBlocksMovement(tempX1,tempY1) == False: 
+					break
+
+			# try n times
+			for i in xrange(20):
+				# pick another random point
+				while True:
+					tempX2 = random.randint(8,mapWidth-8)
+					tempY2 = random.randint(8,mapHeight-8)
+					if self.level.getBlocksMovement(tempX2,tempY2) == False: 
+						break
+
+				# if pathingDistance between the two points is greater
+				# than the longest pathing distance, set the stair coordinates
+				# to the two points, else continue
+				pathMap = libtcod.path_new_using_map(libtcodMap)
+				libtcod.path_compute(pathMap,tempX1,tempY1,tempX2,tempY2)
+				distance = libtcod.path_size(pathMap)
+
+				if distance > longestDistance:
+					downStairsX = tempX1
+					downStairsY = tempY1
+					upStairsX = tempX2
+					upStairsY = tempY2
+					longestDistance = distance
+
+		self.level.placeStairs(downStairsX,downStairsY,upStairsX,upStairsY)
+		
 		# destroy the path object
 		libtcod.path_delete(pathMap)
 
@@ -541,33 +577,3 @@ class RoomAddition:
 				if room[x][y] == 0:
 					return True
 		return False
-
-	def placeStaircases(self,mapWidth,mapHeight):
-		'''
-		# TODO: Make this a random room, instead of the first one
-		if self.level.getBlocksMovement((roomX + roomWidth/2),(roomY + roomWidth/2)) == False:
-			self.level.upStaircase.x = roomX + roomWidth/2
-			self.level.upStaircase.y = roomY + roomWidth/2
-		else:
-			for x in xrange(roomWidth):
-				for y in yrange(roomHeight):
-					tileX = roomX + x
-					tileY = roomY + y
-					if self.level.getBlocksMovement(tileX,tileY) == False:
-						self.level.upStaircase.x = tileX
-						self.level.upStaircase.y = tileY
-		'''
-
-		# TODO: Move to Level Code
-		upStairsX = 0
-		upStairsY = 0
-		while upStairsX == 0 and upStairsY == 0:
-			upStairsX == random.randint(1,mapWidth-1)
-			upStairsY == random.randint(1,mapHeight-1)
-			if self.level.getBlocksMovement(upStairsX,upStairsY) == False:
-				self.level.tempX = upStairsX
-				self.level.tempY = upStairsY
-				return
-			else:
-				upStairsX = 0
-				upStairsY = 0

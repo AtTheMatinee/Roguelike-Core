@@ -22,10 +22,13 @@ class ItemSpawner:
 		'_Special' branches are never deliberately spawned and can only happen by chance
 		'''
 		self._lootHeirarchy = {
-		'Item':[None,['Potion','Equipment']], #'_Special'
+		'Item':[None,['Potion','Equipment']], #'_Special','Food'
 		'Potion':['Item',['Medicine']], #'Poison','_Special'
-		'Medicine':['Potion',['Health Potion']],
+		'Medicine':['Potion',['Health Potion','Firebrew Potion','Antidote','Permafrost Potion']],
 		'Health Potion':['Medicine',[]],
+		'Firebrew Potion':['Medicine',[]],
+		'Permafrost Potion':['Medicine',[]],
+		'Antidote':['Medicine',[]],
 		'Equipment':['Item',['Weapon','Armor']], # Rings
 		'Weapon':['Equipment',['Heavy Weapon','Light Weapon']], # Ranged Weapon
 		'Heavy Weapon':['Weapon',['Mace']], # Axe, Club, Hammer, Maul, Halbard
@@ -40,6 +43,9 @@ class ItemSpawner:
 
 		self.spawnMethods = {
 		'Health Potion':self.spawnHealthPotion,
+		'Antidote':self.spawnAntidote,
+		'Firebrew Potion':self.spawnFirebrewPotion,
+		'Permafrost Potion':self.spawnPermafrostPotion,
 		'Dagger':self.spawnDagger,
 		'Mace':self.spawnMace,
 		'Spear':self.spawnSpear,
@@ -94,12 +100,21 @@ class ItemSpawner:
 
 		else: print "CHILD ERROR"
 
+	# ==== Item Methods ====
+	def spawnAntidote(self,x,y,level):
+		item = Items.potions.Antidote(self.game, x, y, '!', "Antidote", libtcod.azure, level, blocks=False)
+		return item
+
 	def spawnDagger(self,x,y,level):
 		modifier = {
 		'add':{'attack':[2.0,0,0,0,0,0,0,0,0], 'attackSpeed':4},
 		'mult':{'critChance':0.5}
 		}
 		item = Items.weapons.Dagger(self.game, x, y, chr(24), "Dagger", libtcod.azure, level, 1, modifier)
+		return item
+
+	def spawnFirebrewPotion(self,x,y,level):
+		item = Items.potions.Firebrew(self.game, x, y, '!', "Firebrew Potion", libtcod.azure, level, blocks=False)
 		return item
 
 	def spawnHealthPotion(self,x,y,level):
@@ -111,6 +126,10 @@ class ItemSpawner:
 		'add':{'attack':[3.0,2,0,0,0,0,0,0,0], 'attackSpeed':-2},
 		}
 		item = Items.weapons.Mace(self.game, x, y, chr(24), "Mace", libtcod.azure, level, 1, modifier)
+		return item
+
+	def spawnPermafrostPotion(self,x,y,level):
+		item = Items.potions.Permafrost(self.game, x, y, '!', "Permafrost Potion", libtcod.azure, level, blocks=False)
 		return item
 
 	def spawnSpear(self,x,y,level):

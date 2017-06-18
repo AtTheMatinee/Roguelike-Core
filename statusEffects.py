@@ -35,18 +35,22 @@ Status Effect Tags
 '''
 
 class StatusEffect(object):
-	def __init__(self,actor,timer):
+	def __init__(self,actor,timer = 0):
 		self.actor = actor
 		self.game = actor.game
 		self.timer = int(timer)
 
 	def effect(self):
 		if self.timer == 0:
-			self.actor.removeStatusEffect(self)
-			self.game.message("The status effect has worn off.")
+			self.remove()
 			return
 			
 		self.timer -= 1
+
+	def remove(self):
+		self.actor.removeStatusEffect(self)
+		self.game.message("The status effect has worn off.")
+
 
 
 # ==== Status Effects ====
@@ -55,12 +59,11 @@ class Poisoned(StatusEffect):
 		StatusEffect.__init__(self,actor,timer)
 
 		# message
-		self.game.message(self.actor.getName(True)+" is poisoned.",libtcod.violet)
+		self.game.message(self.actor.getName(True).title()+" is poisoned.",libtcod.violet)
 
 	def effect(self):
 		if self.timer == 0:
-			self.actor.removeStatusEffect(self)
-			self.game.message(self.actor.getName(True)+" is no longer poisoned.",libtcod.light_violet)
+			self.remove()
 			return
 
 		# take poison damage
@@ -68,21 +71,25 @@ class Poisoned(StatusEffect):
 
 		self.timer -= 1
 
+	def remove(self):
+		self.actor.removeStatusEffect(self)
+		self.game.message(self.actor.getName(True).title()+" is no longer poisoned.",libtcod.light_violet)
+
 
 class Bleeding(StatusEffect):
 	def __init__(self,actor,timer):
 		StatusEffect.__init__(self,actor,timer)
+		self.timer = 10
 
-		# does hal of your current health over ten turns
+		# does half of your current health over ten turns
 		self.damage = max(0.5,self.actor.stats.get("healthCurrent")/20)
 		
 		# message
-		self.game.message(self.actor.getName(True)+" is bleeding.",libtcod.violet)
+		self.game.message(self.actor.getName(True).title()+" is bleeding.",libtcod.violet)
 
 	def effect(self):
 		if self.timer == 0:
-			self.actor.removeStatusEffect(self)
-			self.game.message(self.actor.getName(True)+" is no longer bleeding.",libtcod.light_violet)
+			self.remove()
 			return
 
 		# take bleed damage
@@ -90,13 +97,17 @@ class Bleeding(StatusEffect):
 		
 		self.timer -= 1
 
+	def remove(self):
+		self.actor.removeStatusEffect(self)
+		self.game.message(self.actor.getName(True).title()+" is no longer bleeding.",libtcod.light_violet)
+
 
 class Frozen(StatusEffect):
 	def __init__(self,actor,timer):
 		StatusEffect.__init__(self,actor,timer)
 
 		# message
-		self.game.message(self.actor.getName(True)+" is frozen.",libtcod.violet)
+		self.game.message(self.actor.getName(True).title()+" is frozen.",libtcod.violet)
 
 		# Take Frost Damage (20 damage up front)
 		self.actor.takeDamage([0,0,0, 20, 0,0,0,0,0])
@@ -106,12 +117,15 @@ class Frozen(StatusEffect):
 
 	def effect(self):
 		if self.timer == 0:
-			self.actor.stats.removeModifier(self)
-			self.actor.removeStatusEffect(self)
-			self.game.message(self.actor.getName(True)+" is no longer frozen.",libtcod.light_violet)
+			self.remove()
 			return
 			
 		self.timer -= 1
+
+	def remove(self):
+		self.actor.stats.removeModifier(self)
+		self.actor.removeStatusEffect(self)
+		self.game.message(self.actor.getName(True).title()+" is no longer frozen.",libtcod.light_violet)
 
 
 class Flaming(StatusEffect):
@@ -121,16 +135,14 @@ class Flaming(StatusEffect):
 		self.damage = 2 # take 2 damage per turn for 10 turns
 
 		# message
-		self.game.message(self.actor.getName(True)+" is on fire.",libtcod.violet)
+		self.game.message(self.actor.getName(True).title()+" is on fire.",libtcod.violet)
 
 		modifier = {'add':{'attack': [0,0, 2, 0,0,0,0,0,0]} ,'mult':{'defense':[-0.5,0,-0.5,-0.5,-0.5,-0.5,-0.5]}}
 		self.actor.stats.addModifier(self, modifier)
 
 	def effect(self):
 		if self.timer == 0:
-			self.actor.stats.removeModifier(self)
-			self.actor.removeStatusEffect(self)
-			self.game.message(self.actor.getName(True)+" is no longer on fire.",libtcod.light_violet)
+			self.remove()
 			return
 
 		# Take Fire Damage
@@ -138,6 +150,53 @@ class Flaming(StatusEffect):
 			
 		self.timer -= 1
 
+	def remove(self):
+		self.actor.stats.removeModifier(self)
+		self.actor.removeStatusEffect(self)
+		self.game.message(self.actor.getName(True).title()+" is no longer on fire.",libtcod.light_violet)
+
+
+class Flamable(StatusEffect):
+	def __init__(self,actor,timer):
+		StatusEffect.__init__(self,actor,timer)
+
+		# message
+		self.game.message(self.actor.getName(True).title()+" is covered in flamable liquid.",libtcod.violet)
+
+	def effect(self):
+		if self.timer == 0:
+			self.remove()
+			return
+			
+		self.timer -= 1
+
+	def remove(self):
+		self.actor.removeStatusEffect(self)
+		self.game.message(self.actor.getName(True).title()+" is no longer flamable.",libtcod.light_violet)
+
+
+class Wet(StatusEffect):
+	def __init__(self,actor,timer):
+		StatusEffect.__init__(self,actor,timer)
+
+		# message
+		self.game.message(self.actor.getName(True).title()+" is soaked.",libtcod.violet)
+
+	def effect(self):
+		if self.timer == 0:
+			self.remove
+			return
+			
+		for se in self.actor.statusEffects:
+			if (isinstance(se, Flaming)):
+				se.remove()
+				self.remove()
+
+		self.timer -= 1
+
+	def remove(self):
+		self.actor.removeStatusEffect(self)
+		self.game.message(self.actor.getName(True).title()+" is no longer soaked.",libtcod.light_violet)
 
 # ==== Buffs ====
 
@@ -148,7 +207,7 @@ class MortallyWounded(StatusEffect):
 		StatusEffect.__init__(self,actor,timer)
 
 		# message
-		self.game.message(self.actor.getName(True)+" is mortally wounded.",libtcod.red)
+		self.game.message(self.actor.getName(True).title()+" is mortally wounded.",libtcod.red)
 
 		# Add Modifier
 		n = self.actor.stats.get('healthMax')/2
@@ -157,9 +216,12 @@ class MortallyWounded(StatusEffect):
 
 	def effect(self):
 		if self.timer == 0:
-			self.actor.stats.removeModifier(self)
-			self.actor.removeStatusEffect(self)
-			self.game.message(self.actor.getName(True)+" is no longer mortally wounded.")
+			self.remove()
 			return
 
 		self.timer -= 1
+
+	def remove(self):
+		self.actor.stats.removeModifier(self)
+		self.actor.removeStatusEffect(self)
+		self.game.message(self.actor.getName(True).title()+" has recovered from their wounds.")
