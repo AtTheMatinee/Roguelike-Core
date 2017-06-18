@@ -22,8 +22,6 @@ import actorSpawner
 
 import itemSpawner
 
-import dungeonGeneration
-
 import commands
 
 import statusEffects
@@ -115,18 +113,17 @@ class GameLoop:
 			self._messages.append((line,color))
 
 	def newGame(self):
-		# TODO: Pregenerate all levels at the beginning
-
-		mapType = dungeonGeneration.RoomAddition()
-		self.map.createNewLevel(mapType) #the location of this will probably change
+		for i in xrange(20):
+			self.map.createNewLevel() #the location of this will probably change
+		self.map.loadLevel(0)
 
 		heroName = "Hero"
-		heroX = self.mapWidth/2#self._currentLevel.tempX
-		heroY = self.mapHeight/2#self._currentLevel.tempY
-		self.hero = self.actorSpawner.spawn(heroX,heroY,"Hero")
+		heroX = self._currentLevel.stairsUp.x
+		heroY = self._currentLevel.stairsUp.y
+		self.hero = self.actorSpawner.spawn(heroX,heroY,heroName)
 		self.hero.name = heroName
 		self.hero.addStatusEffect(statusEffects.Flaming,10,False)
-
+		self.hero.addStatusEffect(statusEffects.Wet,10,False)
 
 	def saveGame(self):
 		#print self._objects
@@ -154,7 +151,7 @@ class GameLoop:
 	def getSeeds(self):
 		random.seed(self.globalSeed)
 		seeds = []
-		for i in xrange(20):
+		for i in xrange(21):
 			seeds.append(random.random())
 		return seeds
 

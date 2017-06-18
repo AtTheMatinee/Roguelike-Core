@@ -32,7 +32,7 @@ TODO: Option to switch virtical panel from right to left
 TODO: spell hoykeys (Should be easy after key rebinding is implemented)
 TODO: Mouselook on an enemy pops it to the top of the enemy information panel
 TODO: Virtical panel shows player stats, equipment, and hotkeys (if bound)
-
+TODO: Virtical panel shown player status effects
 '''
 
 class UserInterface:
@@ -95,6 +95,7 @@ class UserInterface:
 			for object in self.game._currentLevel._objects:
 				object.clear()
 
+		# clear all windows
 		libtcod.console_clear(self.con)
 		libtcod.console_clear(self.horPanel)
 		libtcod.console_clear(self.virPanel)
@@ -166,6 +167,9 @@ class UserInterface:
 			elif (keyboard.vk == libtcod.KEY_RIGHT):
 				keycode = 'RIGHT'
 
+			elif (keyboard.vk == libtcod.KEY_SPACE):
+				keycode = 'SPACE'
+
 			elif keyboard.c:
 				for c in "abcdefghijklmnopqrstuvwxyz":
 					if keyboard.c == ord(str(c)):
@@ -188,6 +192,10 @@ class UserInterface:
 					keycode = '-'
 				elif (keyboard.c == ord("+")):
 					keycode = '+'
+				elif (keyboard.c == ord("<")):
+					keycode = '<'
+				elif (keyboard.c == ord(">")):
+					keycode = '>'
 
 			if keycode != None:
 				# TODO: if SHIFT: keycode = "SHIFT_" + keycode
@@ -448,7 +456,7 @@ class UserInterface:
 
 		index = self.menu(INVENTORY_WIDTH,header,options)
 
-		if 0 <= index < len(options):
+		if (len(inventory) > 0) and (0 <= index < len(options)):
 			item = inventory[index]
 			self.game.hero.setNextCommand(commands.UseCommand(self.game.hero,item))
 
@@ -667,6 +675,8 @@ class KeyboardCommands:
 		']':None,
 		'-':None,
 		'=':None,
+		'<':self.GoUpStairs,
+		'>':self.GoDownStairs,
 		'KP0':None,
 		'KP1':self.WalkSouthWest,
 		'KP2':self.WalkSouth,
@@ -737,6 +747,16 @@ class KeyboardCommands:
 	def OpenInventory(self,ui,hero):
 		ui._gameState = ui._inventoryMenu
 		ui.keyboard.c = libtcod.KEY_NONE
+
+	def GoUpStairs(self,ui,hero):
+		hero.setNextCommand(commands.GoUpStairsCommand(hero))
+		#libtcod.console_clear(ui.con)
+		ui.fovRecompute = True
+
+	def GoDownStairs(self,ui,hero):
+		hero.setNextCommand(commands.GoDownStairsCommand(hero))
+		#libtcod.console_clear(ui.con)
+		ui.fovRecompute = True
 
 if __name__ == "__main__":
 	ui = UserInterface()

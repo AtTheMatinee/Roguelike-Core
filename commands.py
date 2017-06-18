@@ -5,6 +5,8 @@ import random
 
 import actors
 
+import libtcodpy as libtcod
+
 from items import Equipment
 '''
 ====================
@@ -157,12 +159,13 @@ class AttackCommand(Command):
 		return success, alternative
 		
 
-
 class CastSpellCommand(Command):
 	pass
 
+
 class FireRangedWeaponCommand(Command):
 	pass
+
 
 class UseCommand(Command):
 	def __init__(self, actor, item):
@@ -228,6 +231,7 @@ class PickUpCommand(Command):
 
 		return success, alternative
 
+
 class DropCommand(Command):
 	def __init__(self,actor,item):
 		self.actor = actor
@@ -237,6 +241,7 @@ class DropCommand(Command):
 
 	def perform(self):
 		self.item.dropFromInventory(self.item,self.actor)
+
 
 class ThrowCommand(Command):
 	pass
@@ -330,3 +335,107 @@ class UnequipCommand(Command):
 			alternative = None
 
 		return success,alternative
+
+
+class GoUpStairsCommand(Command):
+	def __init__(self,actor):
+		self.actor = actor
+		self.energyCost = 12
+
+	def perform(self):
+		game = self.actor.game
+		currentLevel = game._currentLevel
+		newLevelIndex = currentLevel.levelDepth-1 # levelDepth increases as you go down
+		newLevel = game.map._levels[newLevelIndex] 
+
+		# See if you are on an up staircase
+		if ((self.actor.x == currentLevel.stairsUp.x) and 
+			(self.actor.y == currentLevel.stairsUp.y) and
+			(0 <= newLevelIndex < len(game.map._levels)) ):
+
+			# Move the actor to the new level
+			currentLevel.removeObject(self.actor)
+			currentLevel.removeActor(self.actor)
+
+			newLevel.addObject(self.actor)
+			newLevel.addActor(self.actor)
+
+			# if the actor is the player, load the new level
+			if self.actor == game.hero:
+				game.map.loadLevel(newLevelIndex)
+				libtcod.console_clear(game.ui.con)
+
+				# place actor on down stairs
+				self.actor.x = newLevel.stairsDown.x
+				self.actor.y = newLevel.stairsDown.y
+
+
+
+			else:
+				# if the level has been generated, place actor around down stairs
+				if newLevel.stairsDown != None:
+					self.actor.x = newLevel.stairsDown.x
+					self.actor.y = newLevel.stairsDown.y
+
+			self.actor.energy -= self.energyCost
+			# set flags that change when a turn is taken
+			self.actor.hasTakenTurn()
+			success = True
+			alternative = None
+
+		else:
+			success = False
+			alternative = None
+
+		return success, alternative
+
+
+class GoDownStairsCommand(Command):
+	def __init__(self,actor):
+		self.actor = actor
+		self.energyCost = 12
+
+	def perform(self):
+		game = self.actor.game
+		currentLevel = game._currentLevel
+		newLevelIndex = currentLevel.levelDepth+1 # levelDepth increases as you go down
+		newLevel = game.map._levels[newLevelIndex] 
+
+		# See if you are on a down staircase
+		if ((self.actor.x == currentLevel.stairsDown.x) and 
+			(self.actor.y == currentLevel.stairsDown.y) and
+			(0 <= newLevelIndex < len(game.map._levels)) ):
+
+			# Move the actor to the new level
+			currentLevel.removeObject(self.actor)
+			currentLevel.removeActor(self.actor)
+
+			newLevel.addObject(self.actor)
+			newLevel.addActor(self.actor)
+
+			# if the actor is the player, load the new level
+			if self.actor == game.hero:
+				game.map.loadLevel(newLevelIndex)
+				libtcod.console_clear(game.ui.con)
+
+				# place actor on down stairs
+				self.actor.x = newLevel.stairsUp.x
+				self.actor.y = newLevel.stairsUp.y
+
+			else:
+				# if the level has been generated, place actor around down stairs
+				if newLevel.stairsDown != None:
+					self.actor.x = newLevel.stairsUp.x
+					self.actor.y = newLevel.stairsUp.y
+
+			self.actor.energy -= self.energyCost
+			# set flags that change when a turn is taken
+			self.actor.hasTakenTurn()
+			success = True
+			alternative = None
+
+		else:
+			success = False
+			alternative = None
+
+		return success, alternative

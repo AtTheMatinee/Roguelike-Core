@@ -9,7 +9,11 @@ import random
 
 #import actorStats
 
+import objects
+
 import actorSpawner
+
+import dungeonGeneration
 
 #import states
 
@@ -40,32 +44,26 @@ class Map:
 		# Initialize the Field of View map object
 		self.fov_map = libtcod.map_new(mapWidth,mapHeight)
 
-	def createNewLevel(self,mapType):
+	def createNewLevel(self):
 		map = self
+		# Generate the layout of newLevel
+		depth = len(self._levels)
+		seed = self.levelSeeds[depth]
+		mapType = dungeonGeneration.RoomAddition()
 
 		# Initialize mapType
-		newLevel = Level(map, self.mapWidth, self.mapHeight)
+		newLevel = Level(map, self.mapWidth, self.mapHeight, seed, mapType, depth)
 		self._levels.append(newLevel)
-		if self.game._currentLevel == None:
-			self.game._currentLevel = newLevel
-			#self.game._actors = newLevel._actors
-			#self.game._objects = newLevel._objects
-			#self.game._items = newLevel._items
 
+		#self.loadLevel(depth)
 
-		# Set the depth of newLevel
-		levelDepth = len(self._levels)
-		newLevel.levelDepth = levelDepth
+	def loadLevel(self,index):
+		level = self._levels[index]
 
-		# Generate the layout of newLevel
-		seed = self.levelSeeds[levelDepth]
-		newLevel.generateLevel(mapType,seed)
-
-		self.initializeFOV(newLevel)
-
-	def loadLevel(self):
-		#set game._currentLevel to loaded level
-		pass
+		self.game._currentLevel = level
+		level.generateLevel()
+		self.initializeFOV(level)
+		return level
 
 	def initializeFOV(self,level):
 		for y in xrange(self.mapHeight):
@@ -85,37 +83,39 @@ class Level:
 	GameUI's noisemap multiplied by the coresponding cell in the level's
 	color map.
 	'''
-	def __init__(self, map, mapWidth, mapHeight):
+	def __init__(self, map, mapWidth, mapHeight, seed, mapType, levelDepth):
 		self.map = map # points to the map object that stores every level
 		self.game = self.map.game
 		self.mapWidth = mapWidth
 		self.mapHeight = mapHeight
+		self.seed = seed 
+		self.mapType = mapType
+
 		self.terrain = []
 		self.rooms = []
 		self._objects = []
 		self._items = []
 		self._actors = []
 
-		self.levelDepth = 0
+		self.levelDepth = levelDepth
+
+		self.StairsUp = None
+		self.StairsDown = None
 
 		Level._blocksMovement = 1 # bitwise map flag
 		Level._blocksSight = 2 # bitwise map flag
 		Level._hasObject = 4 # bitwise map flag
 		Level._hasBeenExplored = 8 # bitwise map flag
 
-	def generateLevel(self,mapType,seed):
+	def generateLevel(self):
 		# Creates an empty 2D array
 		
 		self.terrain = [[0
 			for y in range(self.mapHeight)]
 				for x in range(self.mapWidth)]
 
-		mapType.generateLevel(self, self.mapWidth, self.mapHeight,seed)
+		self.mapType.generateLevel(self, self.mapWidth, self.mapHeight,self.seed)
 		self.pathMap = libtcod.path_new_using_map(self.map.fov_map,1)
-		self.placeStairs()
-
-	def placeStairs(self):
-		pass
 
 	def populateRoom(self,roomX, roomY, roomWidth, roomHeight, room):
 		maxRoomDifficulty = ROOM_DIFICULTY_BASE + ROOM_DIFICULTY_BASE*self.levelDepth/2
@@ -146,6 +146,15 @@ class Level:
 				elif 0.40 < choice <= 0.9:
 					self.game.actorSpawner.spawn(x,y,"Plague Rat")
 				else: self.game.actorSpawner.spawn(x,y,"Snakeman")
+
+	def placeStairs(self,downStairsX,downStairsY,upStairsX,upStairsY):
+		# place stairs down
+		destination = self.levelDepth + 1
+		self.stairsDown = objects.Stairs(self.game, downStairsX, downStairsY, '>', 'Stairs', libtcod.white, destination)
+
+		# place stairs up
+		destination = self.levelDepth - 1
+		self.stairsUp = objects.Stairs(self.game, upStairsX, upStairsY, '<', 'Stairs', libtcod.white, destination)
 
 	'''
 	==== Tile Bitwise Operators ====
