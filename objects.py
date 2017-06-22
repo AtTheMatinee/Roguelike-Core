@@ -35,15 +35,15 @@ class Object(object):
 			libtcod.console_set_default_foreground(self.game.ui.con, self.color)
 			libtcod.console_put_char(self.game.ui.con, self.x, self.y, self.char, libtcod.BKGND_NONE)
 
-
 	def clear(self):
 		if libtcod.map_is_in_fov(self.game.map.fov_map, self.x, self.y):
 			libtcod.console_put_char_ex(self.game.ui.con, self.x, self.y, '.', self.game.ui.color_light_ground_fore, self.game.ui.color_light_ground_back)
 
-	def getName(self,useDefiniteArticle):
+	def getName(self,useDefiniteArticle,showLevel = False):
+		name = self.name
 		if useDefiniteArticle == True and self.properNoun == False:
-			return "the "+self.name
-		return self.name
+			name = "the "+name
+		return name
 
 	def distanceTo(self,object):
 		dx = object.x-self.x

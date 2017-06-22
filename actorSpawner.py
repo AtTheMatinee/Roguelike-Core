@@ -1,6 +1,7 @@
 '''
 actorSpawner.py
 '''
+import random
 import actors
 import actorStats
 import states
@@ -12,6 +13,14 @@ Actor Spawner
 '''
 
 # TODO: Actors with inventorySize > 0 will sometimes spawn with items
+# TODO: Revamp how monsters work
+'''
+	Monsters spawn at a certain level, which is consistant among monsters of that type
+	Monsters upgrade the same way that items do
+	Since monsters upgrade according to their level, monsters will vary more between 
+	instances as the levels get higher
+	Monsters that spawn in with gear will have gear appropriate to their levels
+'''
 
 class ActorSpawner:
 	def __init__(self,game):
@@ -24,6 +33,7 @@ class ActorSpawner:
 			'Golem':self.spawnGolem,
 			'Angel':self.spawnAngel,
 			'Demon':self.spawnDemon,
+			'Cultist':self.spawnCultist,
 			'Fire Elemental':self.spawnFireElemental,
 			'Frost Elemental':self.spawnFrostElemental,
 			'Swamp Hag':self.spawnSwampHag,
@@ -35,14 +45,37 @@ class ActorSpawner:
 			'Wyrm':self.spawnWyrm,
 			'Knight':self.spawnKnight
 			}
+			'''
+			Hero
+				Test
+				Arbalest - Crossbow, Brigandine, ammo, health potion
+				Assassin - Cloak and Dagger, various poisons (unidentified)
+				Barbarian - Axe
+				Cleric - Mace, Preist Robes, Heal Spell
+				Occultist - Dagger, debuff and offensive spells but low magic, so spells must be cast from HP
+				Magician - weak spells, some magical items
+				Mercenary
+				Alchemist - Begins with random potions identified
+				Druid
+			Lancer
+			Brute
+			Archer
+			Rogue
+			'''
 
 	def spawn(self,x,y,key):
 		level = 0
 		if key in self.spawnMethods:
 			actor = self.spawnMethods[key](x,y,level)
+
+			# give the actor a reference to its own spawn key
+			actor._spawnKey = key
 			return actor
 
 	def spawnAngel(self,x,y,level):
+		pass
+
+	def spawnCultist(self,x,y,level):
 		pass
 
 	def spawnDemon(self,x,y,level):
@@ -57,7 +90,7 @@ class ActorSpawner:
 		hero.equipItem(weapon)
 
 		# add items to inventory
-		for item in [("Health Potion",0),('Health Potion',3),('Antidote',0)]:
+		for item in [("Health Potion",0),('Health Potion',3),('Antidote',0),('Serpent Sword',1)]:
 			gear,itemLevel = item
 			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
 			g.moveToInventory(hero)
@@ -103,9 +136,17 @@ class ActorSpawner:
 		return rougarou
 
 	def spawnSnakeman(self,x,y,level):
+		level = 1
+
 		lootDrops = {'Sword':5,'Health Potion':2}
-		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman",libtcod.desaturated_sea,level,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI(),drops = lootDrops, canEquipArmor = True, canEquipWeapons = True)
+		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman",libtcod.desaturated_sea,level,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI(),drops = lootDrops, inventorySize = 4, canEquipArmor = True, canEquipWeapons = True)
 		snakeman.deathState = states.DeathState(snakeman)
+
+		# add equipment
+		if random.random() <= .2:
+			weapon = self.game.itemSpawner.spawn(x,y,'Serpent Sword',level,False)
+			snakeman.equipItem(weapon)
+
 		return snakeman
 
 	def spawnSwampHag(self,x,y,level):

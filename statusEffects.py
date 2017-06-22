@@ -45,7 +45,7 @@ class StatusEffect(object):
 			self.remove()
 			return
 			
-		self.timer -= 1
+		if self.timer > 0: self.timer -= 1
 
 	def remove(self):
 		self.actor.removeStatusEffect(self)
@@ -69,7 +69,7 @@ class Poisoned(StatusEffect):
 		# take poison damage
 		self.actor.takeDamage([0,0,0,0, 2, 0,0,0,0])
 
-		self.timer -= 1
+		if self.timer > 0: self.timer -= 1
 
 	def remove(self):
 		self.actor.removeStatusEffect(self)
@@ -95,7 +95,7 @@ class Bleeding(StatusEffect):
 		# take bleed damage
 		self.actor.takeDamage([0,0,0,0,0,0,0,0,self.damage])
 		
-		self.timer -= 1
+		if self.timer > 0: self.timer -= 1
 
 	def remove(self):
 		self.actor.removeStatusEffect(self)
@@ -120,7 +120,7 @@ class Frozen(StatusEffect):
 			self.remove()
 			return
 			
-		self.timer -= 1
+		if self.timer > 0: self.timer -= 1
 
 	def remove(self):
 		self.actor.stats.removeModifier(self)
@@ -147,8 +147,8 @@ class Flaming(StatusEffect):
 
 		# Take Fire Damage
 		self.actor.takeDamage([0,0, self.damage, 0,0,0,0,0,0])
-			
-		self.timer -= 1
+
+		if self.timer > 0: self.timer -= 1
 
 	def remove(self):
 		self.actor.stats.removeModifier(self)
@@ -168,7 +168,7 @@ class Flamable(StatusEffect):
 			self.remove()
 			return
 			
-		self.timer -= 1
+		if self.timer > 0: self.timer -= 1
 
 	def remove(self):
 		self.actor.removeStatusEffect(self)
@@ -192,7 +192,7 @@ class Wet(StatusEffect):
 				se.remove()
 				self.remove()
 
-		self.timer -= 1
+		if self.timer > 0: self.timer -= 1
 
 	def remove(self):
 		self.actor.removeStatusEffect(self)
@@ -219,7 +219,7 @@ class MortallyWounded(StatusEffect):
 			self.remove()
 			return
 
-		self.timer -= 1
+		if self.timer > 0: self.timer -= 1
 
 	def remove(self):
 		self.actor.stats.removeModifier(self)

@@ -9,7 +9,7 @@ from config import *
 
 import gameLoop
 
-#import objects
+import statusEffects
 
 #import actors
 
@@ -32,7 +32,6 @@ TODO: Option to switch virtical panel from right to left
 TODO: spell hoykeys (Should be easy after key rebinding is implemented)
 TODO: Mouselook on an enemy pops it to the top of the enemy information panel
 TODO: Virtical panel shows player stats, equipment, and hotkeys (if bound)
-TODO: Virtical panel shown player status effects
 '''
 
 class UserInterface:
@@ -54,6 +53,25 @@ class UserInterface:
 		self._rightAlign = 1
 		self._topAlign = -1
 		self._bottomAlign = 1
+
+		# In-Game Menu states
+		self._playing = 0
+		self._inventoryMenu = 1
+		self._throwMenu = 2
+		self._dropMenu = 3
+
+		# Hero Panel status tracker
+		self.reevaluateHeroStatusEffects = False
+		self.heroStatusEffects = 0
+		self._SEPoisoned = 1
+		self._SEBleeding = 2
+		self._SEFrozen = 4
+		self._SEFlaming = 8
+		self._SEWet = 16
+		self._SEFlamable = 32
+		#self._SEStunned = 256
+		#self._SEConfised = 128
+		self._SEMortallyWounded = 64
 
 
 		self.setColorScheme(ColorScheme.DEFAULT)
@@ -89,6 +107,12 @@ class UserInterface:
 			# Menus
 			if self._gameState == self._inventoryMenu:
 				self.inventoryMenu('Press the key next to an item to use it, or any other key to cancel.\n')
+
+			elif self._gameState == self._dropMenu:
+				self.dropMenu('Press the key next to an item to drop it, or any other key to cancel.\n')
+
+			elif self._gameState == self._throwMenu:
+				self.inventoryMenu('Press the key next to an item to throw it, or any other key to cancel.\n')
 
 			libtcod.console_flush()
 
@@ -362,8 +386,6 @@ class UserInterface:
 					break
 
 	def newGame(self):
-		self._playing = 0
-		self._inventoryMenu = 1
 		self._gameState = self._playing
 
 		seed = random.random()
@@ -421,7 +443,7 @@ class UserInterface:
 		height = len(options) + headerHeight
 
 		# Create off screen console
-		self.window = libtcod.console_new(width,height)
+		self.window = libtcod.console_new(width+4,height+4)
 
 		# Print the header
 		libtcod.console_set_default_foreground(self.window, libtcod.white)
@@ -444,6 +466,7 @@ class UserInterface:
 
 		if self.keyboard.c:
 			self._gameState = self._playing
+
 			return self.keyboard.c - ord('a')
 
 	def inventoryMenu(self,header):
@@ -452,13 +475,42 @@ class UserInterface:
 			options = ['Inventory is empty']
 
 		else:
-			options = [item.getName(False) for item in inventory]
+			options = [item.getName(False,showLevel = True) for item in inventory]
 
 		index = self.menu(INVENTORY_WIDTH,header,options)
 
 		if (len(inventory) > 0) and (0 <= index < len(options)):
 			item = inventory[index]
 			self.game.hero.setNextCommand(commands.UseCommand(self.game.hero,item))
+
+	def throwMenu(self,header):
+		inventory = self.game.hero.inventory
+		if len(inventory) <= 0:
+			options = ['Inventory is empty']
+
+		else:
+			options = [item.getName(False,showLevel = True) for item in inventory]
+
+		index = self.menu(INVENTORY_WIDTH,header,options)
+
+		if (len(inventory) > 0) and (0 <= index < len(options)):
+			item = inventory[index]
+			self.game.hero.setNextCommand(commands.ThrowCommand(self.game.hero,item))
+
+	def dropMenu(self,header):
+		inventory = self.game.hero.inventory
+		if len(inventory) <= 0:
+			options = ['Inventory is empty']
+
+		else:
+			options = [item.getName(False,showLevel = True) for item in inventory]
+
+		index = self.menu(INVENTORY_WIDTH,header,options)
+
+		if (len(inventory) > 0) and (0 <= index < len(options)):
+			item = inventory[index]
+			self.game.hero.setNextCommand(commands.DropCommand(self.game.hero,item))
+
 
 	def renderBoarderAroundConsole(self,console,width,height,color):
 		'''
@@ -521,7 +573,7 @@ class UserInterface:
 		if listLength > 0:
 			i = 0
 			for actor in self.game.hero.nearbyActors: #TODO: calculate how many monsters I can fit here
-				y = 15+i*6
+				y = 19 + i*6
 				if y >= height - 6: break
 				if self.game.factions.getRelationship(self.game.hero.faction, actor.faction) == self.game.factions._hostile:
 					self.renderMonsterInformation(panel,width,y,actor,False)
@@ -530,42 +582,150 @@ class UserInterface:
 	def renderHeroPanel(self,panel,width):
 		hero = self.game.hero
 		libtcod.console_set_default_foreground(panel,libtcod.white)
-		# Hero Name
-		libtcod.console_print_ex(panel, width/2, 2, libtcod.BKGND_NONE, libtcod.CENTER, hero.name)
-		# Health Bar
-		self.renderHealthBar(panel,2,4,width-4, hero)
+		y=2
+
+		# ==== Hero Name ====
+		libtcod.console_print_ex(panel, width/2, y, libtcod.BKGND_NONE, libtcod.CENTER, hero.name)
+		# ==== Health Bar ====
+		y+=2
+		self.renderHealthBar(panel,2,y,width-4, hero)
 		# Magic Bar
+		y+=1
 
-		# Stats
-		
-		attack = int(hero.stats.get('attack')[0] + hero.stats.get('attack')[3] +
-			hero.stats.get('attack')[4] + hero.stats.get('attack')[5] +
-			hero.stats.get('attack')[7] + hero.stats.get('attack')[8])
-		attackBase = hero.stats.getBaseStat('attack')[0]
-		libtcod.console_print_ex(panel, 3, 6, libtcod.BKGND_NONE, libtcod.LEFT, 'ATK: '+str(attack)+' ('+str(attackBase)+')')
-		
-		defense = int(hero.stats.get('defense')[0])
-		defenseBase = hero.stats.getBaseStat('defense')[0]
-		libtcod.console_print_ex(panel, 3, 7, libtcod.BKGND_NONE, libtcod.LEFT, 'DEF: '+str(defense)+' ('+str(defenseBase)+')')
-		
-		speed = int(hero.stats.get('speed'))
-		speedBase = hero.stats.getBaseStat('speed')
-		libtcod.console_print_ex(panel, 3, 8, libtcod.BKGND_NONE, libtcod.LEFT, 'SPD: '+str(speed)+' ('+str(speedBase)+')')
-
-		# Equipment
+		# ==== Equipment ====
+		y+=2
 		if hero.equipSlots[0] != None:
 			armorName = hero.equipSlots[0].getName(False)
 		else:
 			armorName = 'Clothes'
-		libtcod.console_print_ex(panel, 3, 10, libtcod.BKGND_NONE, libtcod.LEFT, armorName)
+		libtcod.console_print_ex(panel, 3, y, libtcod.BKGND_NONE, libtcod.LEFT, armorName)
 
+		y+=1
 		if hero.equipSlots[1] != None:
 			weaponName = hero.equipSlots[1].getName(False)
 		else:
 			weaponName = 'Unarmed'
-		libtcod.console_print_ex(panel, 3, 11, libtcod.BKGND_NONE, libtcod.LEFT, weaponName)
+		libtcod.console_print_ex(panel, 3, y, libtcod.BKGND_NONE, libtcod.LEFT, weaponName)
 
+		# ==== Stats ====
+		y+=2
+		attack = int(hero.stats.get('attack')[0] + hero.stats.get('attack')[3] +
+			hero.stats.get('attack')[4] + hero.stats.get('attack')[5] +
+			hero.stats.get('attack')[7] + hero.stats.get('attack')[8])
+		attackBase = hero.stats.getBaseStat('attack')[0]
+		libtcod.console_print_ex(panel, 3, y, libtcod.BKGND_NONE, libtcod.LEFT, 'ATK: '+str(attack)+' ('+str(attackBase)+')')
 		
+		y+=1
+		defense = int(hero.stats.get('defense')[0])
+		defenseBase = hero.stats.getBaseStat('defense')[0]
+		libtcod.console_print_ex(panel, 3, y, libtcod.BKGND_NONE, libtcod.LEFT, 'DEF: '+str(defense)+' ('+str(defenseBase)+')')
+		
+		y+=1
+		speed = int(hero.stats.get('speed'))
+		speedBase = hero.stats.getBaseStat('speed')
+		libtcod.console_print_ex(panel, 3, y, libtcod.BKGND_NONE, libtcod.LEFT, 'SPD: '+str(speed)+' ('+str(speedBase)+')')
+
+		# ==== Status Effects ====
+		if self.reevaluateHeroStatusEffects == True:
+			self.recomputeHeroStatusEffects(hero)
+
+		statusEffects = self.listHeroStatusEffects()
+		if len(statusEffects) > 0:
+			statKeys = statusEffects.keys()
+			statColors = statusEffects.values()
+
+			y += 2
+			for i in xrange( min( 3, len(statusEffects) ) ):
+				x = 3 + (i*5)
+				text = statKeys[i]
+				color = statColors[i]
+				libtcod.console_set_default_foreground(panel,color)
+				libtcod.console_print_ex(panel, x, y, libtcod.BKGND_NONE, libtcod.LEFT, text)
+
+		if len(statusEffects) > 3:
+			y += 1
+			for i in xrange( min( 3, len(statusEffects)-3 ) ):
+				x = 3 + (i*5)
+				text = statKeys[3+i]
+				color = statColors[3+i]
+				libtcod.console_set_default_foreground(panel,color)
+				libtcod.console_print_ex(panel, x, y, libtcod.BKGND_NONE, libtcod.LEFT, text)
+
+		if len(statusEffects) > 6:
+			y+=1
+			for i in xrange( min( 3, len(statusEffects)-6 ) ):
+				x = 3 + (i*5)
+				text = statKeys[6+i]
+				color = statColors[6+i]
+				libtcod.console_set_default_foreground(panel,color)
+				libtcod.console_print_ex(panel, x, y, libtcod.BKGND_NONE, libtcod.LEFT, text)
+
+	def recomputeHeroStatusEffects(self,hero):
+		# use a bitmask to keep track of which status effects the hero is aflicted with.
+		if any(isinstance(se, statusEffects.Flaming) for se in hero.statusEffects):
+			self.heroStatusEffects = self.heroStatusEffects | self._SEFlaming
+		else:
+			self.heroStatusEffects = self.heroStatusEffects & ~ self._SEFlaming
+
+		if any(isinstance(se, statusEffects.Frozen) for se in hero.statusEffects):
+			self.heroStatusEffects = self.heroStatusEffects | self._SEFrozen
+		else:
+			self.heroStatusEffects = self.heroStatusEffects & ~ self._SEFrozen
+
+		if any(isinstance(se, statusEffects.Poisoned) for se in hero.statusEffects):
+			self.heroStatusEffects = self.heroStatusEffects | self._SEPoisoned
+		else:
+			self.heroStatusEffects = self.heroStatusEffects & ~ self._SEPoisoned
+
+		if any(isinstance(se, statusEffects.Bleeding) for se in hero.statusEffects):
+			self.heroStatusEffects = self.heroStatusEffects | self._SEBleeding
+		else:
+			self.heroStatusEffects = self.heroStatusEffects & ~ self._SEBleeding
+
+		if any(isinstance(se, statusEffects.Flamable) for se in hero.statusEffects):
+			self.heroStatusEffects = self.heroStatusEffects | self._SEFlamable
+		else:
+			self.heroStatusEffects = self.heroStatusEffects & ~ self._SEFlamable
+
+		if any(isinstance(se, statusEffects.Wet) for se in hero.statusEffects):
+			self.heroStatusEffects = self.heroStatusEffects | self._SEWet
+		else:
+			self.heroStatusEffects = self.heroStatusEffects & ~ self._SEWet
+
+		if any(isinstance(se, statusEffects.MortallyWounded) for se in hero.statusEffects):
+			self.heroStatusEffects = self.heroStatusEffects | self._SEMortallyWounded
+		else:
+			self.heroStatusEffects = self.heroStatusEffects & ~ self._SEMortallyWounded
+		# Confused
+		# Stunned
+
+		self.reevaluateHeroStatusEffects = False
+
+	def listHeroStatusEffects(self):
+		statusEffects = {}
+
+		if bool((self.heroStatusEffects & self._SEFlaming) != 0):
+			statusEffects.update({'FIRE':libtcod.orange})
+
+		if bool((self.heroStatusEffects & self._SEFrozen) != 0):
+			statusEffects.update({'FRZN':libtcod.light_blue})
+
+		if bool((self.heroStatusEffects & self._SEPoisoned) != 0):
+			statusEffects.update({'PSND':libtcod.sea})
+
+		if bool((self.heroStatusEffects & self._SEBleeding) != 0):
+			statusEffects.update({'BLDG':libtcod.crimson})
+
+		if bool((self.heroStatusEffects & self._SEFlamable) != 0):
+			statusEffects.update({'FLMB':libtcod.amber})
+
+		if bool((self.heroStatusEffects & self._SEWet) != 0):
+			statusEffects.update({'WET ':libtcod.azure})
+
+		if bool((self.heroStatusEffects & self._SEMortallyWounded) != 0):
+			statusEffects.update({'MWND':libtcod.red})
+
+		return statusEffects
 
 	def renderMonsterInformation(self,panel,width,y,actor,displayStats):
 		'''
@@ -614,7 +774,7 @@ class UserInterface:
 			for y in xrange(MAP_HEIGHT):
 				self.noiseMap[x][y] = (0.5+random.random())
 
-class ColorScheme():
+class ColorScheme:
 	DEFAULT = [
 	libtcod.black, 				# color_dark_wall_fore
 	libtcod.violet,			# color_dark_wall_back
@@ -634,7 +794,7 @@ class KeyboardCommands:
 		'A':None,
 		'B':self.WalkSouthWest,
 		'C':None,
-		'D':None,
+		'D':self.OpenDropMenu,
 		'E':None,
 		'F':None,
 		'G':self.PickUpItem,
@@ -650,7 +810,7 @@ class KeyboardCommands:
 		'Q':None,
 		'R':None,
 		'S':None,
-		'T':None,
+		'T':self.OpenThrowMenu,
 		'U':self.WalkNorthEast,
 		'V':None,
 		'W':self.Wait,
@@ -748,6 +908,14 @@ class KeyboardCommands:
 		ui._gameState = ui._inventoryMenu
 		ui.keyboard.c = libtcod.KEY_NONE
 
+	def OpenDropMenu(self,ui,hero):
+		ui._gameState = ui._dropMenu
+		ui.keyboard.c = libtcod.KEY_NONE
+
+	def OpenThrowMenu(self,ui,hero):
+		ui._gameState = ui._throwMenu
+		ui.keyboard.c = libtcod.KEY_NONE
+
 	def GoUpStairs(self,ui,hero):
 		hero.setNextCommand(commands.GoUpStairsCommand(hero))
 		#libtcod.console_clear(ui.con)
@@ -757,6 +925,24 @@ class KeyboardCommands:
 		hero.setNextCommand(commands.GoDownStairsCommand(hero))
 		#libtcod.console_clear(ui.con)
 		ui.fovRecompute = True
+
+class MainMenu:
+	def __init__(self):
+		options = ['(C)ontinue','(N)ew Game','(O)ptions','(E)xit']
+
+		width = 24
+		height = len(options)+2
+
+		logoLength = len(LOGO[0])
+
+class NewGameMenu:
+	pass
+	# Select a class
+		# Debugger
+	# Seed: random.random
+
+class OptionsMenu:
+	pass
 
 if __name__ == "__main__":
 	ui = UserInterface()

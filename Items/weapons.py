@@ -13,7 +13,7 @@ Weapons
 '''
 
 class Weapon(Equipment):
-	unidentifiedName = "Mysterious Potion"
+	unidentifiedName = "Mysterious Weapon"
 	def __init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False):
 		Equipment.__init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False)
 		self.equipSlot = 1

@@ -25,7 +25,7 @@ class AI(State):
 		# preferredMinRange
 		# idealRange
 		# actor.mostRecentAttacker
-	def __init__(self):
+	def __init__(self): # morale
 
 		# wonder
 		self.changeDirectionChance = 0.2
@@ -57,12 +57,9 @@ class AI(State):
 			return command
 
 	def chaseTarget(self,actor,target):
-		# TODO: replace player with generic target
-		player = actor.game.hero
-
 		# pathfind to the player's location
 		path = actor.game._currentLevel.pathMap
-		libtcod.path_compute(path,actor.x,actor.y,player.x,player.y)
+		libtcod.path_compute(path,actor.x,actor.y,target.x,target.y)
 
 		if libtcod.path_size(path) < 1:
 			command = self.wonder(actor)
@@ -70,6 +67,11 @@ class AI(State):
 		else:
 			x,y = libtcod.path_get(path,False)
 
+		command = self.moveTowardLocation(actor,x,y)
+
+		return command
+
+	def moveTowardLocation(self,actor,x,y):
 		dx = 0
 		dy = 0
 
@@ -82,6 +84,7 @@ class AI(State):
 			dy = 1
 		elif actor.y > y:
 			dy = -1
+			
 		if dx == 0 and dy == 0:
 			pass
 
@@ -89,30 +92,15 @@ class AI(State):
 		return command
 
 
-	def hunt(self,actor,target):
-		# search for the player in the target's
-		# last known location.
-		pass
 
-	def chase(self,target):
-		pass
-
-	def moveTowardLocation(self,actor,x,y):
-		pass
+	def canArrackTarget(self,actor,target):
+		return False
 
 	def moveAndShoot(self,actor,target):
 		pass
 
 	def turret(self,actor,target):
 		pass
-
-	def inflictMostDamage(self,target):
-		pass
-
-	def attackClosestEnemy(self,target):
-		pass
-
-
 
 class AIConfused:
 	def __init__(self):
@@ -149,8 +137,9 @@ class DeathState:
 		o.game.removeObject(o)
 		o.game._currentLevel.removeObject(o)
 		o.game._currentLevel.setHasObjectFalse(o.x, o.y)
-
 		o.game._currentLevel.removeActor(o)
+
+		o._nextCommand = None
 
 		o.game.message(o.getName(True).title()+" is dead.",libtcod.crimson)
 
@@ -159,6 +148,6 @@ class DeathState:
 		name = "Corpse of "+o.getName(True)
 		objects.Corpse(o.game, o.x, o.y, "%",name, libtcod.crimson)
 
-		del o.deathState
+		o.deathState = None
 		del o.statusEffects[:]
 		del o

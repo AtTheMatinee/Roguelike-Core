@@ -74,18 +74,19 @@ class GameLoop:
 		the method gives up and tries again on the next frame.
 		'''
 		#import pdb; pdb.set_trace()
-		actor = self._currentLevel._actors[self._currentActor]
+		actor = self._currentLevel._actors[self._currentActor % len(self._currentLevel._actors)]
 
 		# Prevent the loop from skipping an actor if they havn't taken their turn E.G. the player
 		if (actor.energy >= self.turnCost) and (actor.needsInput()): return
 
 		command = None
 		while (command == None): # cycle through alternatives until one resolves
-			actor = self._currentLevel._actors[self._currentActor]
+			actor = self._currentLevel._actors[self._currentActor % len(self._currentLevel._actors)]
 
 			if (actor.energy >= self.turnCost) or (actor.gainEnergy()):	
 
 				if actor.needsInput(): return
+
 				command = actor.getCommand()
 
 			else:
@@ -122,8 +123,13 @@ class GameLoop:
 		heroY = self._currentLevel.stairsUp.y
 		self.hero = self.actorSpawner.spawn(heroX,heroY,heroName)
 		self.hero.name = heroName
-		self.hero.addStatusEffect(statusEffects.Flaming,10,False)
-		self.hero.addStatusEffect(statusEffects.Wet,10,False)
+		#self.hero.addStatusEffect(statusEffects.Flaming,10,False)
+		#self.hero.addStatusEffect(statusEffects.Wet,10,False)
+		#self.hero.addStatusEffect(statusEffects.Frozen,10,False)
+		self.hero.addStatusEffect(statusEffects.Poisoned,20,False)
+		#self.hero.addStatusEffect(statusEffects.Bleeding,2,False)
+		#self.hero.addStatusEffect(statusEffects.Flamable,10,False)
+		#self.hero.addStatusEffect(statusEffects.MortallyWounded,2,False)
 
 	def saveGame(self):
 		#print self._objects

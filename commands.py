@@ -8,6 +8,8 @@ import actors
 import libtcodpy as libtcod
 
 from items import Equipment
+
+import Items.rangedWeapons
 '''
 ====================
 Commands
@@ -61,6 +63,7 @@ class WalkCommand(Command):
 						self.game.factions.getRelationship(self.actor.faction, o.faction) == self.game.factions._hostile):
 						alternative = AttackCommand(self.actor,o)
 
+					#elif canPush: Push
 					else: alternative = WaitCommand(self.actor)
 
 					return success, alternative
@@ -164,6 +167,19 @@ class CastSpellCommand(Command):
 
 
 class FireRangedWeaponCommand(Command):
+	def __init__(self,actor,target):
+		self.actor = actor
+		self.target = target
+
+		if ((self.actor.equipSlots[2] != None) and
+			(isinstance(self.actor.equipSlots[2], rangedWeapons.RangedWeapon) == True) ):
+			self.weapon = self.actor.equipSlots[2]
+		else: self.weapon = False
+
+class LoadRangedWeapon(Command):
+	pass
+
+class ThrowCommand(Command):
 	pass
 
 
@@ -240,13 +256,24 @@ class DropCommand(Command):
 		self.energyCost = 8
 
 	def perform(self):
-		self.item.dropFromInventory(self.item,self.actor)
+		success = False
+		alternative = None
 
+		self.item.dropFromInventory(self.actor)
 
-class ThrowCommand(Command):
-	pass
+		self.actor.energy -= self.energyCost
+		# set flags that change when a turn is taken
+		self.actor.hasTakenTurn()
+
+		success = True
+		alternative = None
+
+		return success, alternative
+
 
 class EquipCommand(Command):
+	# TODO: Implement multi-slot equipment
+	
 	def __init__(self,actor,item):
 		self.actor = actor
 		self.item = item
@@ -439,3 +466,8 @@ class GoDownStairsCommand(Command):
 			alternative = None
 
 		return success, alternative
+
+#class PushedCommand(Command):
+
+
+#class PulledCommand(Command):

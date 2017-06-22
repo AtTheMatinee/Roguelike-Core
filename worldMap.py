@@ -15,13 +15,15 @@ import actorSpawner
 
 import dungeonGeneration
 
+import randomChoice
+
 #import states
 
 FOV_ALGORITHM = 0
 FOV_LIGHT_WALLS = True
 FOV_RADIUS = 10
 
-ROOM_DIFICULTY_BASE = 1 # The base multiplier for the total max difficulty of the monsters in a room,
+ROOM_DIFICULTY_BASE = 2 # The base multiplier for the total max difficulty of the monsters in a room,
 # using the formula maxRoomDifficulty = ROOM_DIFICULTY_BASE + ROOM_DIFICULTY_BASE*levelDepth/2
 EMPTY_ROOM_CHANCE = 0.5 # Probability of a room containing 0 monsters
 
@@ -139,13 +141,9 @@ class Level:
 						y = roomY + tempY
 
 				# placeholder Monster Spawn
-				#monster = actors.Monster(self.game,x,y,'S',"Snakeman",libtcod.desaturated_green,stats = actorStats.Stats("Snakeman"),state = states.AIWonder())
-				choice = random.random()
-				if choice <= 0.45:
-					self.game.actorSpawner.spawn(x,y,"Mirehound")
-				elif 0.40 < choice <= 0.9:
-					self.game.actorSpawner.spawn(x,y,"Plague Rat")
-				else: self.game.actorSpawner.spawn(x,y,"Snakeman")
+				monsterTable = {'Mirehound':3,'Plague Rat':2,'Snakeman':1}
+				self.game.actorSpawner.spawn(x,y,randomChoice.choose(monsterTable))
+
 
 	def placeStairs(self,downStairsX,downStairsY,upStairsX,upStairsY):
 		# place stairs down
