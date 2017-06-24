@@ -8,6 +8,8 @@ import actors
 import libtcodpy as libtcod
 
 from items import Equipment
+
+import Items.rangedWeapons
 '''
 ====================
 Commands
@@ -61,6 +63,7 @@ class WalkCommand(Command):
 						self.game.factions.getRelationship(self.actor.faction, o.faction) == self.game.factions._hostile):
 						alternative = AttackCommand(self.actor,o)
 
+					#elif canpush: Push
 					else: alternative = WaitCommand(self.actor)
 
 					return success, alternative
@@ -133,7 +136,7 @@ class AttackCommand(Command):
 		unblockable
 		]
 		'''
-		self.energyCost = 20 - int(actor.stats.get("attackSpeed"))
+		self.energyCost = 18 - int(actor.stats.get("attackSpeed"))
 
 	def perform(self):
 		attack = self.actor.stats.get('attack')
@@ -149,6 +152,7 @@ class AttackCommand(Command):
 
 		self.target.takeDamage(attack)
 		self.target.mostRecentAttacker = self.actor
+		# TODO: Update faction opinions accordingly
 
 		self.actor.energy -= self.energyCost
 		# set flags that change when a turn is taken
@@ -164,7 +168,210 @@ class CastSpellCommand(Command):
 
 
 class FireRangedWeaponCommand(Command):
-	pass
+	def __init__(self,actor,target):
+		self.actor = actor
+		self.target = target
+
+		if ((self.actor.equipSlots[2] != None) and
+			(isinstance(self.actor.equipSlots[2], Items.rangedWeapons.RangedWeapon) == True) ):
+			self.weapon = self.actor.equipSlots[2]
+
+		else: self.weapon = None
+
+		self.energyCost = 20 #(- weapon.attackSpeed)
+
+	def perform(self):
+		success = False
+		alternative = None
+
+		if self.weapon != None:
+			if self.weapon.loadedRounds > 0:
+
+				# LOS to target
+				libtcod.line_init(self.actor.x, self.actor.y, self.target.x, self.target.y)
+				x = self.actor.x
+				y = self.actor.y
+				lineX,lineY = libtcod.line_step()
+				while (not lineX is None) and not (self.actor.game._currentLevel.getBlocksMovement(lineX,lineY)):
+					x = lineX
+					y = lineY
+					if (self.actor.game._currentLevel.getHasObject(x,y)):
+						break
+					lineX,lineY = libtcod.line_step()
+
+				if x == self.target.x and y == self.target.y:
+					self.weapon.loadedRounds -= 1
+
+					self.weapon.loadedAmmoType.hitEffect(self.target)
+					self.actor.game.message(self.actor.getName(True).title()+" shot "+self.target.getName(True)+" with a "+self.weapon.loadedAmmoType.getName(False))
+					self.target.mostRecentAttacker = self.actor
+
+
+					self.actor.energy -= (self.energyCost - self.weapon.attackSpeed)
+					# set flags that change when a turn is taken
+					self.actor.hasTakenTurn()
+
+					success = True
+					alternative = None
+
+			elif self.weapon.loadedAmmoType != None:
+				alternative = LoadRangedWeaponCommand(self.actor, self.weapon.loadedAmmoType)
+
+			else:
+				self.actor.game.message(self.weapon.getName(True).title()+" is out of ammunition.")
+
+		else:
+			self.actor.game.message("You do not have a ranged weapon equipped.")
+
+		return success, alternative
+
+
+class LoadRangedWeaponCommand(Command):
+	def __init__(self, actor, ammoType):
+		self.actor = actor
+		self.ammoType = ammoType # an instance of the ammo class or subclass, whose name will be used to load the correct ammo
+
+		self.energyCost = 12
+
+	def perform(self):
+		success = False
+		alternative = None
+
+		# Make sure that there is a ranged weapon equipped
+		if not (isinstance(self.actor.equipSlots[2], Items.rangedWeapons.RangedWeapon) == True):
+			self.actor.game.message("You do not have a ranged weapon equipped.")
+			return success, alternative
+
+		weapon = self.actor.equipSlots[2]
+
+		# Make sure that there is ammo of the chosen type available
+		ammo = None
+		if any(isinstance(item, self.ammoType.__class__) for item in self.actor.inventory):
+			for item in self.actor.inventory:
+				if item.name == self.ammoType.name:
+					ammo = item
+		if ammo == None:
+			self.actor.game.message("You are out of "+self.ammoType.name+"s.")
+			return success, alternative
+
+		# if weapon is loaded
+		if weapon.loadedAmmoType != None:
+			# if weapon is loaded with different ammoType
+			if ammo.name != weapon.loadedAmmoType.name:
+
+				# Try to unload ammo if there is more than 0 loaded
+				if (weapon.loadedRounds > 0):
+					# unload weapon
+					unload = UnloadRangedWeaponCommand(self.actor, weapon)
+					unload.energyCost = 0
+					success, alternative = unload.perform()				
+					if success == False:
+						return success, alternative
+
+		# load ammo
+		weapon.loadedAmmoType = ammo
+		while ( ((weapon.maxRounds-weapon.loadedRounds) > 0) and
+			ammo.number > 0):
+			ammo.number -= 1
+			weapon.loadedRounds += 1
+		# remove the ammo from inventory if there is none left
+		if not (ammo.number > 0):
+			if ammo in self.actor.inventory:
+				self.actor.inventory.remove(ammo)
+
+
+		#print weapon.loadedAmmoType
+
+		self.actor.energy -= (self.energyCost - weapon.attackSpeed)
+		# set flags that change when a turn is taken
+		self.actor.hasTakenTurn()
+
+		success = True
+
+		return success, alternative
+
+class UnloadRangedWeaponCommand(Command):
+	def __init__(self,actor, weapon):
+		self.actor = actor
+		self.weapon = weapon
+
+	def perform(self):
+		success = False
+		alternative = None
+
+		if (isinstance(self.weapon, Items.rangedWeapons.RangedWeapon) == True):
+
+			if (self.weapon.loadedAmmoType != None) and (self.weapon.loadedRounds > 0):
+
+				if ((len(self.actor.inventory) + 1 <= self.actor.inventorySize) or 
+					any(isinstance(item, self.weapon.loadedAmmoType.__class__) for item in self.actor.inventory) ):
+					# remove the ammo from the weapon and add it to the inventory
+					n = self.weapon.loadedAmmoType.number + self.weapon.loadedRounds
+					self.weapon.loadedRounds = 0				
+					self.weapon.loadedAmmoType.moveToInventory(self.actor)
+					self.weapon.loadedAmmoType.number = n
+					self.weapon.loadedAmmoType = None
+
+					success = True
+
+
+		self.actor.energy -= self.energyCost
+
+		return success, alternative
+
+class ThrowCommand(Command):
+	# TODO: special throw for Ammo
+	def __init__(self,actor,x,y,item):
+		self.actor = actor
+		self.game = actor.game
+		self.x = x
+		self.y = y
+		self.item = item
+
+		self.energyCost = 16
+
+	def perform(self):
+		success = False
+		alternative = None
+
+		# Check for los to tile
+		libtcod.line_init(self.actor.x, self.actor.y, self.x, self.y)
+		self.x = self.actor.x
+		self.y = self.actor.y
+		x,y = libtcod.line_step()
+		while (not x is None) and not (self.game._currentLevel.getBlocksMovement(x,y)):
+			self.x = x
+			self.y = y
+			if (self.game._currentLevel.getHasObject(x,y)):
+				break
+			x,y = libtcod.line_step()
+
+		# See if there is an object at those coordinates
+		target = None
+		for obj in self.game._currentLevel._objects:
+			if obj.x == self.x and obj.y == self.y:
+				target = obj
+
+		if target != None:
+			self.item.dropFromInventory(self.actor)
+			self.item.x = self.x
+			self.item.y = self.y
+			self.item.thrownEffect(target)
+
+		else:
+			self.item.dropFromInventory(self.actor)
+			self.item.x = self.x
+			self.item.y = self.y
+
+
+		self.actor.energy -= self.energyCost
+		# set flags that change when a turn is taken
+		self.actor.hasTakenTurn()
+
+		success = True
+		alternative = None
+
+		return success, alternative
 
 
 class UseCommand(Command):
@@ -240,13 +447,24 @@ class DropCommand(Command):
 		self.energyCost = 8
 
 	def perform(self):
-		self.item.dropFromInventory(self.item,self.actor)
+		success = False
+		alternative = None
 
+		self.item.dropFromInventory(self.actor)
 
-class ThrowCommand(Command):
-	pass
+		self.actor.energy -= self.energyCost
+		# set flags that change when a turn is taken
+		self.actor.hasTakenTurn()
+
+		success = True
+		alternative = None
+
+		return success, alternative
+
 
 class EquipCommand(Command):
+	# TODO: Implement multi-slot equipment
+	
 	def __init__(self,actor,item):
 		self.actor = actor
 		self.item = item
@@ -258,7 +476,7 @@ class EquipCommand(Command):
 			# Actor cannot equip equipment
 			if ((self.item.equipSlot == 0) and (self.actor.canEquipArmor == False) or
 				(self.item.equipSlot == 1) and (self.actor.canEquipWeapons == False)):
-				self.actor.game.message(self.actor.getName(True)+" cannot equip "+self.item.getName(True))
+				self.actor.game.message(self.actor.getName(True).title()+" cannot equip "+self.item.getName(True))
 				success = False
 				alternative = None
 				return success,alternative
@@ -278,6 +496,7 @@ class EquipCommand(Command):
 				# Unequip the item in the taken slot
 				itemToUnequip = self.actor.equipSlots[self.item.equipSlot]
 				unequip = UnequipCommand(self.actor, itemToUnequip)
+				unequip.energyCost = 0
 				success, alternative = unequip.perform()
 
 				if success == False:
@@ -290,7 +509,7 @@ class EquipCommand(Command):
 				#self.actor.stats.addModifier(self.item,self.item.modifier)
 				self.actor.equipItem(self.item)
 
-			self.actor.game.message(self.actor.getName(True)+" has equipped a "+self.item.getName(False))
+			self.actor.game.message(self.actor.getName(True).title()+" has equipped a "+self.item.getName(False))
 			self.actor.energy -= self.energyCost
 			# set flags that change when a turn is taken
 			self.actor.hasTakenTurn()
@@ -439,3 +658,8 @@ class GoDownStairsCommand(Command):
 			alternative = None
 
 		return success, alternative
+
+#class PushedCommand(Command):
+
+
+#class PulledCommand(Command):

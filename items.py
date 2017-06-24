@@ -2,6 +2,7 @@
 items.py
 '''
 from objects import Object
+import actors
 import commands
 '''
 ====================
@@ -23,15 +24,25 @@ class Item(Object):
 		if self.blocks == True:
 			self.game._currentLevel.setHasObjectTrue(x,y)
 
-	def getName(self,useDefiniteArticle):
+	def getName(self,useDefiniteArticle,showLevel = False):
+		name = self.name
 		if useDefiniteArticle == True and self.properNoun == False:
 			if self.__class__.identified == True:
-				return "the "+self.name
-			else: return "the "+self.__class__.unidentifiedName
+				name = "the "+self.name
+			else:
+				name = "the "+self.__class__.unidentifiedName
+
+		#if useIndefiniteArticle:
 		else:
 			if self.__class__.identified == True:
-				return self.name
-			else: return self.__class__.unidentifiedName
+				name = self.name
+			else:
+				name = self.__class__.unidentifiedName
+
+		if (self.__class__.identified == True) and (showLevel == True) and (self.level != 0):
+			name = name+" ["+str(self.level)+"]"
+		
+		return name
 
 	def moveToInventory(self,actor):
 		self.game._currentLevel.removeItem(self)
@@ -46,7 +57,7 @@ class Item(Object):
 			self.game._currentLevel.addObject(self)
 			self.x = actor.x
 			self.y = actor.y
-
+			self.renderFirst()
 
 	def use(self,actor):
 		if self in actor.inventory:
@@ -54,8 +65,15 @@ class Item(Object):
 			actor.game.message(actor.name +" uses "+self.getName(True))
 		return True
 
+	def thrownEffect(self,obj):
+		if isinstance(obj, actors.Actor):
+			# defines what happens if the thrown object hits an actor
+			self.game.message(obj.getName(True)+" was hit by a "+self.getName(False))
+			obj.takeDamage([2,0,0,0,0,0,0,0,0])
+
 	def upgrade(self,level):
 		pass
+
 
 class Equipment(Item):
 	identified = True
@@ -106,16 +124,3 @@ class Equipment(Item):
 			else:
 				# add the new modType
 				self.modifier.update(mod)
-
-class Armor(Equipment):
-	unidentifiedName = "Mysterious Armor"
-
-''' 
-Gauntlet
-Sword
-Staff
-Bow
-Axe
-Club
-Dagger
-'''

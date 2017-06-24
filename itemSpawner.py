@@ -20,29 +20,99 @@ class ItemSpawner:
 		The loot heirarchy is a dictionary of lists of every item's parent and children classes.
 		self._lootHeirarchy[item][parent][children]
 		'_Special' branches are never deliberately spawned and can only happen by chance
+		Some items have references to a parent, but the parent has no reference back to the item
+			so that the item can mutate into similar items, but other items cannot mutate into it.
 		'''
 		self._lootHeirarchy = {
-		'Item':[None,['Potion','Equipment']], #'_Special','Food'
-		'Potion':['Item',['Medicine']], #'Poison','_Special'
+		'Item':[None,['Potion','Equipment','Ammo']], #'_Special','Food'
+
+		'Potion':['Item',['Medicine','Toxin']], #'_Special'
 		'Medicine':['Potion',['Health Potion','Firebrew Potion','Antidote','Permafrost Potion']],
+		'Toxin':['Potion',['Poison']],
 		'Health Potion':['Medicine',[]],
+		'Poison':['Toxin',[]],
 		'Firebrew Potion':['Medicine',[]],
 		'Permafrost Potion':['Medicine',[]],
 		'Antidote':['Medicine',[]],
+
 		'Equipment':['Item',['Weapon','Armor']], # Rings
-		'Weapon':['Equipment',['Heavy Weapon','Light Weapon']], # Ranged Weapon
-		'Heavy Weapon':['Weapon',['Mace']], # Axe, Club, Hammer, Maul, Halbard
-		'Light Weapon':['Weapon',['Dagger','Sword','Spear']], # Machete, Staff, Claw, Hook
+
+		'Weapon':['Equipment',['Melee Weapon','Ranged Weapon']],
+		'Melee Weapon':['Weapon',['Heavy Weapon','Light Weapon']],
+		'Heavy Weapon':['Weapon',['Mace']], # Axe, Club, Hammer, Maul, Halbard, Scythe, Morning Star,
+		'Light Weapon':['Weapon',['Dagger','Sword','Spear']], # Machete, Staff, Claw, Hook, Curved Sword, Estoc, 
+		'Ranged Weapon':['Weapon',['Light Crossbow']],
 		'Dagger':['Light Weapon',[]],
 		'Mace':['Heavy Weapon',[]],
 		'Spear':['Light Weapon',[]],
 		'Sword':['Light Weapon',[]],
-		'Armor':['Equipment',['Hauberk']], # 'Heavy Armor','Light Armor'
-		'Hauberk':['Armor',[]]
+		'Serpent Sword':['Light Weapon',[]], # This was intentionally left out of 'Light Weapon' children
+		'Light Crossbow':['Ranged Weapon',[]],
+
+
+		'Armor':['Equipment',['Light Armor']], # 'Heavy Armor'
+		'Light Armor':['Armor',['Hauberk','Quilted Jacket']],
+		'Hauberk':['Light Armor',[]],
+		'Quilted Jacket':['Light Armor',[]],
+
+		'Ammo':['Item',['Wooden Bolt','Steel Bolt']],
+		'Wooden Bolt':['Ammo',[]],
+		'Steel Bolt':['Ammo',[]]
 		}
+		'''
+		Food
+		Water
+		Poisons
+		Rings
+
+		Bow (Secondary)
+		Crossbow (Secondary)
+		Shield (Secondary)
+		Whip (Secondary)
+
+		Wands (Primary Weapon that acts like multiple scrolls)
+		Scrolls
+		Books (Perminantly learn spells)
+
+		Sword <Serpent Sword>
+		Dagger
+		Spear
+		Mace
+		Axe
+		Club
+		Hammer
+		Maul
+		Halbard *
+		Scythe *
+		Pitchfork *
+		Lance *
+		Morning Star
+		Machete
+		Staff
+		Claw
+		Hook
+		Curved Sword
+		Estoc (high armorPiercing damage)
+		Javelin (terrible weapon except when thrown)
+
+		ARMOR (affects defense, speed)
+		Quilted Jacket [1.5,0.1,0.1,0,0,0,0]
+		Leather Armor
+		Hauberk [1.5,0,0,0,0.2,0,0]
+		Brigandine
+		Reinforced Chainmail
+		Breastplate <Serpent Armour>
+		Platemail Armor
+		Fur Lined Armor
+		Cloak
+		Church Robes
+		Occult Robes
+		Leather Coat (Fire resistant)
+		'''
 
 		self.spawnMethods = {
 		'Health Potion':self.spawnHealthPotion,
+		'Poison':self.spawnPoison,
 		'Antidote':self.spawnAntidote,
 		'Firebrew Potion':self.spawnFirebrewPotion,
 		'Permafrost Potion':self.spawnPermafrostPotion,
@@ -50,7 +120,13 @@ class ItemSpawner:
 		'Mace':self.spawnMace,
 		'Spear':self.spawnSpear,
 		'Sword':self.spawnSword,
-		'Hauberk':self.spawnHealthPotion,
+		'Light Crossbow':self.spawnLightCrossbow,
+		'Serpent Sword':self.spawnSerpentSword,
+		'Hauberk':self.spawnHauberk,
+		'Quilted Jacket':self.spawnQuiltedJacket,
+		'Serpent Armor':self.spawnHealthPotion,
+		'Wooden Bolt':self.spawnWoodenBolt,
+		'Steel Bolt':self.spawnSteelBolt
 		}
 	
 	def getRandomLoot(self,item,canRandomize):
@@ -67,7 +143,8 @@ class ItemSpawner:
 		# move down the hierarchy
 		children = self.getChildren(self.itemType)
 		while children:
-			self.itemType = children[random.randint(0,len(children)-1) ]
+			index = random.randint(0,len(children)-1)
+			self.itemType = children[index]
 
 			children = self.getChildren(self.itemType)
 
@@ -87,6 +164,10 @@ class ItemSpawner:
 		if itemKey in self.spawnMethods:
 			item = self.spawnMethods[itemKey](x,y,level)
 			item.upgrade(level)
+
+			# give the item a reference to it's own spawn key
+			item._spawnKey = itemKey
+
 			return item
 
 	def getParent(self,item):
@@ -99,6 +180,7 @@ class ItemSpawner:
 			return self._lootHeirarchy[item][1]
 
 		else: print "CHILD ERROR"
+
 
 	# ==== Item Methods ====
 	def spawnAntidote(self,x,y,level):
@@ -117,8 +199,21 @@ class ItemSpawner:
 		item = Items.potions.Firebrew(self.game, x, y, '!', "Firebrew Potion", libtcod.azure, level, blocks=False)
 		return item
 
+	def spawnHauberk(self,x,y,level):
+		modifier = {
+		'add':{'defense':[1.5,0,0,0,0.2,0,0]}
+		}
+		item = Items.armor.Hauberk(self.game, x, y, ']', "Hauberk", libtcod.azure, level, 0, modifier)
+		return item
+
 	def spawnHealthPotion(self,x,y,level):
 		item = Items.potions.HealthPotion(self.game, x, y, '!', "Health Potion", libtcod.azure, level, blocks=False)
+		return item
+
+	def spawnLightCrossbow(self,x,y,level):
+		modifier = {}
+		ammoTypes = [Items.rangedWeapons.Bolts]
+		item = Items.rangedWeapons.RangedWeapon(self.game, x, y, chr(24), "Light Crossbow", libtcod.azure, level, 2, modifier, 10, 6, -4, ammoTypes, blocks=False)
 		return item
 
 	def spawnMace(self,x,y,level):
@@ -132,14 +227,48 @@ class ItemSpawner:
 		item = Items.potions.Permafrost(self.game, x, y, '!', "Permafrost Potion", libtcod.azure, level, blocks=False)
 		return item
 
+	def spawnPoison(self,x,y,level):
+		item = Items.potions.Poison(self.game, x, y, '!', "Poison", libtcod.azure, level, blocks = False)
+		return item
+
+	def spawnQuiltedJacket(self,x,y,level):
+		modifier = {
+		'add':{'defense':[1.5,0.1,0.1,0,0,0,0]}
+		}
+		item = Items.armor.Hauberk(self.game, x, y, ']', "Quilted Jacket", libtcod.azure, level,  0, modifier)
+		return item
+
+	def spawnSerpentArmor(self,x,y,level):
+		pass
+		# Special varient of the chest plate armour
+
+	def spawnSerpentSword(self,x,y,level):
+		modifier = {'add':{'attack':[2.5,0,0,0,0.5,0.15,0,0,0]}}
+		# TODO: possibly change this into a curved sword
+		item = Items.weapons.Sword(self.game, x, y, chr(24), "Serpent Sword", libtcod.azure, level, 1, modifier)
+		item.upgradePhysicalDamage = [1.0, 0,0,0,0,0,0,0,0]
+		return item
+
 	def spawnSpear(self,x,y,level):
 		modifier = {'add':{'attack':[5.0,0,0,0,0,0.1,0,0,0]}}
 		item = Items.weapons.Spear(self.game, x, y, chr(24), "Spear", libtcod.azure, level, 1, modifier)
 		return item
 
+	def spawnSteelBolt(self,x,y,level):
+		number = 7 #random.randint(4,10)
+		damage = [4,1,0,0,0,0,0,0,0]
+		item = Items.rangedWeapons.Bolts(self.game, x, y, '/', "Steel Bolt", libtcod.azure, level, number, damage)
+		return item
+
 	def spawnSword(self,x,y,level):
 		modifier = {'add':{'attack':[3.0,0,0,0,0,0.1,0,0,0]}}
 		item = Items.weapons.Sword(self.game, x, y, chr(24), "Sword", libtcod.azure, level, 1, modifier)
+		return item
+
+	def spawnWoodenBolt(self,x,y,level):
+		number = 7 #random.randint(4,14)
+		damage = [3,0,0,0,0,0,0,0,0]
+		item = Items.rangedWeapons.Bolts(self.game, x, y, '/', "Wooden Bolt", libtcod.azure, level, number, damage)
 		return item
 		
 

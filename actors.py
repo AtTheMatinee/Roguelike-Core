@@ -33,6 +33,7 @@ class Actor(Object):
 		self.nearbyActors = self.getNearbyActors()
 		self.nearbyObjects = self.getNearbyObjects()
 		
+		self.mostRecentAttacker = None
 		self.surviveMortalWound = surviveMortalWound
 		self.mortalWound = False
 		self.hadLastChance = False
@@ -220,6 +221,8 @@ class Actor(Object):
 		if item in self.game._currentLevel._items:
 			self.game._currentLevel._items.remove(item)
 
+		#for slot in item.equipSlot:
+			#self.equipSlots[slot] = item
 		self.equipSlots[item.equipSlot] = item
 		self.stats.addModifier(item,item.modifier)
 
@@ -250,6 +253,25 @@ class Hero(Actor):
 
 		self.nearbyActors = self.getNearbyActors()
 		self.nearbyObjects = self.getNearbyObjects()
+
+	def addStatusEffect(self,statusEffect,timer,stacks):
+		# see if an instance of that effect already exists, and that the effect cannot stack
+		if (stacks == False):
+			if any(isinstance(se, statusEffect) for se in self.statusEffects):
+				return
+
+		# else, add the effect
+		statusEffect = statusEffect(self,timer)
+		self.statusEffects.append(statusEffect)
+
+		self.game.ui.reevaluateHeroStatusEffects = True
+
+	def removeStatusEffect(self,statusEffect):
+		self.statusEffects.remove(statusEffect)
+
+		self.game.ui.reevaluateHeroStatusEffects = True
+
+
 
 class Monster(Actor):
 	pass

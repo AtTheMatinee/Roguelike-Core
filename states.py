@@ -21,28 +21,110 @@ class State:
 			return command
 
 class AI(State):
-	# TODO: perameters to implement and use
-		# preferredMinRange
-		# idealRange
-		# actor.mostRecentAttacker
-	def __init__(self):
+	def __init__(self, morale, retreatProbability, chargeProbability, meleeProbability, maxDistanceFromTarget, minDistanceFromTarget):
+		self.morale = morale # percentage of health that actor can lose before it flees
+		self.retreatProbability = retreatProbability # probability that actor will retreat instead of attack
+		self.chargeProbability = chargeProbability # probability that actor will charge instead of attack
+		self.meleeProbability = meleeProbability # the probability that the actor will choose melee of they can attack with both melee and ranged
+		self.maxDistanceFromTarget = maxDistanceFromTarget # when exceeded, actor will try to get closer
+		self.minDistanceFromTarget = minDistanceFromTarget # when exceeded, actor will try to get farther away
 
-		# wonder
+		# wonder perameters
 		self.changeDirectionChance = 0.2
 		self.waitChance = 0.3
 		self.dx = 0
 		self.dy = 0
-	
+
 	def getAICommand(self,actor):
+		target = None
 		fov = actor.game.map.fov_map
 		if libtcod.map_is_in_fov(fov,actor.x,actor.y):
-			target = actor.game.hero
-			return self.chaseTarget(actor,target)
+			if self.canTargetNemesis(actor):
+				target = actor.mostRecentAttacker
+
+			elif self.hostileToHero(actor):
+				target = actor.game.hero
+
+		if (target != None):
+			ableToAttack = self.canAttackTarget(actor, target)
+
+			if self.damagePercent(actor) > self.morale:
+				if self.canRunAwayFromTarget(actor, target):
+					command = self.runAwayFromTarget(actor, target)
+				elif self.canAttackTarget(actor, target):
+					command = self.attackTarget(actor, target)
+				else:
+					command = self.wander(actor)
+
+			elif ( (self.tooFarFromTarget(actor, target)) and
+				(ableToAttack) and
+				(self.canMoveTowardTarget(actor, target)) ):
+
+				if random.random() < self.chargeProbability:
+					command = self.moveTowardTarget(actor, target)
+				else:
+					command = self.attackTarget(actor, target)
+
+			elif ( (self.tooCloseToTarget(actor, target)) and
+				(ableToAttack) and
+				(self.canMoveAwayFromTarget(actor, target)) ):
+
+				if random.random() < self.retreatProbability:
+					command = self.moveAwayFromTarget(actor, target)
+				else:
+					command = self.attackTarget(actor, target)
+
+			elif ableToAttack:
+				command = self.attackTarget(actor, target)
+
+			elif ( (self.tooFarFromTarget(actor, target)) and
+				(self.canMoveTowardTarget(actor, target)) ):
+				command = self.moveTowardTarget(actor, target)
+
+			elif ( (self.tooCloseToTarget(actor, target)) and
+				(self.canMoveAwayFromTarget(actor, target)) ):
+				command = self.moveAwayFromTarget(actor, target)
+
+			else:
+				command = self.wait(actor)
 
 		else:
-			return self.wonder(actor)
+			command = self.wander(actor)
 
-	def wonder(self,actor):
+		return command
+
+
+		'''
+		TODO: Consider Possible Future Behaviors
+			too far from group center
+			can move toward group center
+			move toward group center
+			too close to group center
+			can move away from group center
+			move away from group center
+			enough friendlies in group
+		'''
+	def canTargetNemesis(self,actor):
+		# returns True if the last thing to attack the actor is still alive
+		if ( (actor.mostRecentAttacker != None) and
+			(actor.mostRecentAttacker in actor.game._currentLevel._objects) ):
+			return True
+		else:
+			return False
+
+	def hostileToHero(self,actor):
+		if (actor.game.factions.getRelationship(actor.faction, actor.game.hero.faction) == actor.game.factions._hostile):
+			return True
+		else:
+			return False
+
+	def damagePercent(self,actor):
+		health = actor.stats.get('healthCurrent')
+		maxHealth = actor.stats.get('healthMax')
+
+		return (maxHealth-health)/maxHealth
+
+	def wander(self,actor):
 		if actor._nextCommand != None:
 			return None
 		else:
@@ -57,19 +139,21 @@ class AI(State):
 			return command
 
 	def chaseTarget(self,actor,target):
-		# TODO: replace player with generic target
-		player = actor.game.hero
-
 		# pathfind to the player's location
 		path = actor.game._currentLevel.pathMap
-		libtcod.path_compute(path,actor.x,actor.y,player.x,player.y)
+		libtcod.path_compute(path,actor.x,actor.y,target.x,target.y)
 
 		if libtcod.path_size(path) < 1:
-			command = self.wonder(actor)
+			command = self.wander(actor)
 			return command
 		else:
 			x,y = libtcod.path_get(path,False)
 
+		command = self.moveTowardLocation(actor,x,y)
+
+		return command
+
+	def moveTowardLocation(self,actor,x,y):
 		dx = 0
 		dy = 0
 
@@ -82,36 +166,206 @@ class AI(State):
 			dy = 1
 		elif actor.y > y:
 			dy = -1
+			
 		if dx == 0 and dy == 0:
 			pass
+
+		# adjust for blocked movement
 
 		command = commands.WalkCommand(actor,dx,dy)
 		return command
 
+	def canAttackTarget(self,actor,target):
+		# Check to see if the target is in melee range of the actor
+		for dx in xrange(-1,2):
+			for dy in xrange(-1,2):
+				if (actor.x + dx == target.x) and (actor.y + dy == target.y):
+					return True
 
-	def hunt(self,actor,target):
-		# search for the player in the target's
-		# last known location.
-		pass
+		# Check to see if the actor can ranged attack the target
+		if ((actor.equipSlots[2] != None) and
+			(isinstance(actor.equipSlots[2], Items.rangedWeapons.RangedWeapon) == True) and
+			(actor.equipSlots[2].loadedRounds > 0) and
+			self.LOSToTarget(actor,target) ):
+			return True
 
-	def chase(self,target):
-		pass
+		return False
 
-	def moveTowardLocation(self,actor,x,y):
-		pass
+	def attackTarget(self,actor,target):
+		canMelee = False
+		canRange = False
+		# Check to see if the target is in melee range of the actor
+		for dx in xrange(-1,2):
+			for dy in xrange(-1,2):
+				if (actor.x + dx == target.x) and (actor.y + dy == target.y):
+					canMelee = True
 
-	def moveAndShoot(self,actor,target):
-		pass
+		# Check to see if the actor can ranged attack the target
+		if ((actor.equipSlots[2] != None) and
+			(isinstance(actor.equipSlots[2], Items.rangedWeapons.RangedWeapon) == True) and
+			(actor.equipSlots[2].loadedRounds > 0) and
+			self.LOSToTarget(actor,target) ):
+			canRange = True
 
-	def turret(self,actor,target):
-		pass
+		if ((canMelee == True) and 
+			((canRange == False) or (random.random() < self.meleeProbability))):
+			command = commands.AttackCommand(actor,target)
 
-	def inflictMostDamage(self,target):
-		pass
+		else:
+			command = commands.FireRangedWeaponCommand(actor,target)
 
-	def attackClosestEnemy(self,target):
-		pass
+		return command
 
+	def LOSToTarget(self,actor,target):
+		# TODO: LOS to target
+		libtcod.line_init(actor.x, actor.y, target.x, target.y)
+		x = actor.x
+		y = actor.y
+		lineX,lineY = libtcod.line_step()
+		while (not lineX is None) and not (actor.game._currentLevel.getBlocksMovement(lineX,lineY)):
+			x = lineX
+			y = lineY
+			if (actor.game._currentLevel.getHasObject(x,y)):
+				break
+			lineX,lineY = libtcod.line_step()
+
+		if x == target.x and y == target.y:
+			return True
+		else:
+			return False
+
+	def tooCloseToTarget(self,actor,target):
+		if actor.distance(target.x,target.y) < self.minDistanceFromTarget:
+			return True
+		else:
+			return False
+
+	def canMoveAwayFromTarget(self,actor,target):
+		# check the 8 tiles surrounding the actor and 
+		# return True if the actor can move to one to  
+		# increase their distance from the target
+		greatestDistance = target.distance(actor.x, actor.y)
+		for dx in xrange(-1,2): # -1, 0, 1
+			for dy in xrange(-1,2): # -1, 0, 1
+				x = actor.x + dx
+				y = actor.y + dy
+				if ((actor.game._currentLevel.getBlocksMovement(x,y) == False) and 
+					(actor.game._currentLevel.getHasObject(x,y)) ==False):
+					distance = target.distance(x,y)
+					if distance > greatestDistance:
+						return True
+
+		return False
+
+	def moveAwayFromTarget(self,actor,target):
+		# check the 8 tiles surrounding the actor and
+		# move to the one that maximizes the distance 
+		# between it and the target
+		bestDX = 0
+		bestDY = 0
+		greatestDistance = target.distance(actor.x, actor.y)
+		for dx in xrange(-1,2): # -1, 0, 1
+			for dy in xrange(-1,2): # -1, 0, 1
+				x = actor.x + dx
+				y = actor.y + dy
+				if ((actor.game._currentLevel.getBlocksMovement(x,y) == False) and 
+					(actor.game._currentLevel.getHasObject(x,y)) ==False):
+					distance = target.distance(x,y)
+					if distance > greatestDistance:
+						bestDX = dx
+						bestDY = dy
+						greatestDistance = distance
+						
+		command = commands.WalkCommand(actor,bestDX,bestDY)
+		return command
+
+	def tooFarFromTarget(self,actor,target):
+		if actor.distance(target.x,target.y) > self.maxDistanceFromTarget:
+			return True
+		else:
+			return False
+
+	def canMoveTowardTarget(self,actor,target):
+		# check the 8 tiles surrounding the actor and 
+		# return True if the actor can move to one to  
+		# increase their distance from the target
+		leastDistance = target.distance(actor.x, actor.y)
+		for dx in xrange(-1,2): # -1, 0, 1
+			for dy in xrange(-1,2): # -1, 0, 1
+				x = actor.x + dx
+				y = actor.y + dy
+				if ((actor.game._currentLevel.getBlocksMovement(x,y) == False) and 
+					(actor.game._currentLevel.getHasObject(x,y)) ==False):
+					distance = target.distance(x,y)
+					if distance < leastDistance:
+						return True
+
+		return False
+
+	def moveTowardTarget(self,actor,target):
+		# check the 8 tiles surrounding the actor and
+		# move to the one that maximizes the distance 
+		# between it and the target
+		bestDX = 0
+		bestDY = 0
+		leastDistance = target.distance(actor.x, actor.y)
+		for dx in xrange(-1,2): # -1, 0, 1
+			for dy in xrange(-1,2): # -1, 0, 1
+				x = actor.x + dx
+				y = actor.y + dy
+				if ((actor.game._currentLevel.getBlocksMovement(x,y) == False) and 
+					(actor.game._currentLevel.getHasObject(x,y)) ==False):
+					distance = target.distance(x,y)
+					if distance < leastDistance:
+						bestDX = dx
+						bestDY = dy
+						leastDistance = distance
+						
+		command = commands.WalkCommand(actor,bestDX,bestDY)
+		return command
+
+	def canRunAwayFromTarget(self,actor,target):
+		# check the 8 tiles surrounding the actor and 
+		# return True if the actor can move to one to  
+		# increase their distance from the target
+		greatestDistance = target.distance(actor.x, actor.y)
+		for dx in xrange(-1,2): # -1, 0, 1
+			for dy in xrange(-1,2): # -1, 0, 1
+				x = actor.x + dx
+				y = actor.y + dy
+				if ((actor.game._currentLevel.getBlocksMovement(x,y) == False) and 
+					(actor.game._currentLevel.getHasObject(x,y)) ==False):
+					distance = target.distance(x,y)
+					if distance > greatestDistance:
+						return True
+
+		return False
+
+	def runAwayFromTarget(self,actor,target):
+		# check the 8 tiles surrounding the actor and
+		# move to the one that maximizes the distance 
+		# between it and the target
+		bestDX = 0
+		bestDY = 0
+		greatestDistance = target.distance(actor.x, actor.y)
+		for dx in xrange(-1,2): # -1, 0, 1
+			for dy in xrange(-1,2): # -1, 0, 1
+				x = actor.x + dx
+				y = actor.y + dy
+				if ((actor.game._currentLevel.getBlocksMovement(x,y) == False) and 
+					(actor.game._currentLevel.getHasObject(x,y)) ==False):
+					distance = target.distance(x,y)
+					if distance > greatestDistance:
+						bestDX = dx
+						bestDY = dy
+						greatestDistance = distance
+						
+		command = commands.WalkCommand(actor,bestDX,bestDY)
+		return command
+
+	def wait(self,actor):
+		command = commands.WaitCommand(actor)
+		return command
 
 
 class AIConfused:
@@ -138,6 +392,7 @@ class AIConfused:
 
 		else: return None
 
+
 class DeathState:
 	def __init__(self,owner):
 		self.owner = owner
@@ -149,8 +404,9 @@ class DeathState:
 		o.game.removeObject(o)
 		o.game._currentLevel.removeObject(o)
 		o.game._currentLevel.setHasObjectFalse(o.x, o.y)
-
 		o.game._currentLevel.removeActor(o)
+
+		o._nextCommand = None
 
 		o.game.message(o.getName(True).title()+" is dead.",libtcod.crimson)
 
@@ -159,6 +415,6 @@ class DeathState:
 		name = "Corpse of "+o.getName(True)
 		objects.Corpse(o.game, o.x, o.y, "%",name, libtcod.crimson)
 
-		del o.deathState
+		o.deathState = None
 		del o.statusEffects[:]
 		del o

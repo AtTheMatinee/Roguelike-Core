@@ -4,6 +4,8 @@ weapons.py
 
 from items import Equipment
 
+import actors
+
 import randomChoice
 
 '''
@@ -13,7 +15,7 @@ Weapons
 '''
 
 class Weapon(Equipment):
-	unidentifiedName = "Mysterious Potion"
+	unidentifiedName = "Mysterious Weapon"
 	def __init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False):
 		Equipment.__init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False)
 		self.equipSlot = 1
@@ -177,7 +179,7 @@ class Spear(Weapon):
 		#modifier = {'add':{'attack':[5.0,0,0,0,0,0.1,0,0,0]}}
 
 		self.normalUpgradeOdds = {
-		'physical damage':4,
+		'physical damage':1,
 		'armor penetration':1,
 		'poison damage':1,
 		'bleed chance':1,
@@ -201,6 +203,13 @@ class Spear(Weapon):
 		self.upgradeFrostDamage = [0,0,0, 1, 0,0,0,0,0]
 		self.upgradeHolyDamage = [0,0,0,0,0,0, 1, 0,0]
 		self.upgradeUnholyDamage = [0,0,0,0,0,0,0, 1, 0]
+
+	def thrownEffect(self,obj):
+		if isinstance(obj, actors.Actor):
+			# defines what happens if the thrown object hits an actor
+			self.game.message(obj.getName(True)+" was hit by a "+self.getName(False))
+			damage = (5 + self.level)/2
+			obj.takeDamage([damage,0,0,0,0,0,0,0,0])
 
 class Dagger(Weapon):
 	def __init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False):

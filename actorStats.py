@@ -89,9 +89,9 @@ class StatsTable:
 		"magicCurrent":0,
 		"magicMax":0,
 		"speed":5,
-		"attack":[6,0,0,0,0,0,0,0,0],
+		"attack":[4,0,0,0,0,0,0,0,0],
 		"attackSpeed":-4,
-		"defense":[4,0,0,.5,0,0,0],
+		"defense":[2,0,0,.5,0,0,0],
 		"critChance":0.05
 		}
 	}
