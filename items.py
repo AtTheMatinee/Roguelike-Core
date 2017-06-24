@@ -2,6 +2,7 @@
 items.py
 '''
 from objects import Object
+import actors
 import commands
 '''
 ====================
@@ -64,10 +65,11 @@ class Item(Object):
 			actor.game.message(actor.name +" uses "+self.getName(True))
 		return True
 
-	def thrownEffect(self,actor):
-		# defines what happens if the thrown object hits an actor
-		self.game.message(actor.getName(True)+" was hit by a "+self.getName(False))
-		actor.takeDamage([2,0,0,0,0,0,0,0,0])
+	def thrownEffect(self,obj):
+		if isinstance(obj, actors.Actor):
+			# defines what happens if the thrown object hits an actor
+			self.game.message(obj.getName(True)+" was hit by a "+self.getName(False))
+			obj.takeDamage([2,0,0,0,0,0,0,0,0])
 
 	def upgrade(self,level):
 		pass
@@ -122,6 +124,3 @@ class Equipment(Item):
 			else:
 				# add the new modType
 				self.modifier.update(mod)
-
-class Armor(Equipment):
-	unidentifiedName = "Mysterious Armor"

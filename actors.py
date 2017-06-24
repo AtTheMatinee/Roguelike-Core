@@ -33,6 +33,7 @@ class Actor(Object):
 		self.nearbyActors = self.getNearbyActors()
 		self.nearbyObjects = self.getNearbyObjects()
 		
+		self.mostRecentAttacker = None
 		self.surviveMortalWound = surviveMortalWound
 		self.mortalWound = False
 		self.hadLastChance = False

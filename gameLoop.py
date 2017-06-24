@@ -126,7 +126,7 @@ class GameLoop:
 		#self.hero.addStatusEffect(statusEffects.Flaming,10,False)
 		#self.hero.addStatusEffect(statusEffects.Wet,10,False)
 		#self.hero.addStatusEffect(statusEffects.Frozen,10,False)
-		self.hero.addStatusEffect(statusEffects.Poisoned,20,False)
+		#self.hero.addStatusEffect(statusEffects.Poisoned,4,False)
 		#self.hero.addStatusEffect(statusEffects.Bleeding,2,False)
 		#self.hero.addStatusEffect(statusEffects.Flamable,10,False)
 		#self.hero.addStatusEffect(statusEffects.MortallyWounded,2,False)

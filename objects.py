@@ -50,6 +50,11 @@ class Object(object):
 		dy = object.y-self.y
 		return math.sqrt(dx**2 + dy**2)
 
+	def distance(self,x,y):
+		dx = x-self.x
+		dy = y-self.y
+		return math.sqrt(dx**2 + dy**2)
+
 	def getNearbyActors(self):
 		nearbyActors = []
 		for actor in self.game._currentLevel._actors:

@@ -11,6 +11,8 @@ import gameLoop
 
 import statusEffects
 
+import Items
+
 #import actors
 
 #import worldMap
@@ -59,6 +61,7 @@ class UserInterface:
 		self._inventoryMenu = 1
 		self._throwMenu = 2
 		self._dropMenu = 3
+		self._targetState = 4
 
 		# Hero Panel status tracker
 		self.reevaluateHeroStatusEffects = False
@@ -112,7 +115,7 @@ class UserInterface:
 				self.dropMenu('Press the key next to an item to drop it, or any other key to cancel.\n')
 
 			elif self._gameState == self._throwMenu:
-				self.inventoryMenu('Press the key next to an item to throw it, or any other key to cancel.\n')
+				self.throwMenu('Press the key next to an item to throw it, or any other key to cancel.\n')
 
 			libtcod.console_flush()
 
@@ -483,6 +486,53 @@ class UserInterface:
 			item = inventory[index]
 			self.game.hero.setNextCommand(commands.UseCommand(self.game.hero,item))
 
+	def targetTile(self, maxRange = None):
+		# create an offscreen console (for drawing the line)
+		self.window = libtcod.console_new(MAP_WIDTH,MAP_HEIGHT)
+		# set every cell's background to the transparency color
+		color = UI_PRIMARY_COLOR*0.95 # Transparency color (guarenteed not to equal UI_PRIMARY_COLOR)
+		libtcod.console_set_key_color(self.window, color)
+		libtcod.console_set_default_background(self.window, color)
+		libtcod.console_clear(self.window)
+
+		while True:
+			libtcod.console_flush()
+			libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,self.keyboard,self.mouse)
+			self.renderAll()
+
+			# clear the overlay console
+			libtcod.console_clear(self.window)
+			
+			(x,y) = (self.mouse.cx, self.mouse.cy)
+			if not (0 <= x < MAP_WIDTH) or not (0 <= y < MAP_HEIGHT):
+				x = self.game.hero.x
+				y = self.game.hero.y
+
+			# Draw a line from the hero to the mouse location
+			libtcod.line_init(self.game.hero.x, self.game.hero.y, x, y)
+			lineX,lineY = libtcod.line_step()
+			while (not lineX is None) and not (self.game._currentLevel.getBlocksMovement(lineX,lineY)):
+				
+				# set the background color of those cells
+				libtcod.console_set_char_background(self.window, lineX, lineY, UI_PRIMARY_COLOR, libtcod.BKGND_SET)
+
+				if ((self.game._currentLevel.getHasObject(lineX,lineY)) or
+					not libtcod.map_is_in_fov(self.game.map.fov_map, lineX, lineY) ):
+					break
+				lineX,lineY = libtcod.line_step()
+
+			libtcod.console_blit(self.window, 0, 0, MAP_WIDTH, MAP_HEIGHT, 0, 0, 0, 0, 0.6)
+
+			if ( (self.mouse.lbutton_pressed) and
+			 (libtcod.map_is_in_fov(self.game.map.fov_map,x,y)) and
+			 (maxRange == None or self.game.hero.distance(x,y) <= maxRange) ):
+				libtcod.console_delete(self.window)
+				return (x,y)
+
+			if self.mouse.rbutton_pressed or self.keyboard.vk == libtcod.KEY_ESCAPE:
+				libtcod.console_delete(self.window)
+				return (None,None)
+
 	def throwMenu(self,header):
 		inventory = self.game.hero.inventory
 		if len(inventory) <= 0:
@@ -495,7 +545,11 @@ class UserInterface:
 
 		if (len(inventory) > 0) and (0 <= index < len(options)):
 			item = inventory[index]
-			self.game.hero.setNextCommand(commands.ThrowCommand(self.game.hero,item))
+
+			# choose target method
+			targetX,targetY = self.targetTile()
+			if targetX != None:
+				self.game.hero.setNextCommand(commands.ThrowCommand(self.game.hero, targetX, targetY, item))
 
 	def dropMenu(self,header):
 		inventory = self.game.hero.inventory
@@ -606,6 +660,16 @@ class UserInterface:
 		else:
 			weaponName = 'Unarmed'
 		libtcod.console_print_ex(panel, 3, y, libtcod.BKGND_NONE, libtcod.LEFT, weaponName)
+
+		if hero.equipSlots[2] != None:
+			y+=2
+			libtcod.console_print_ex(panel, 3, y, libtcod.BKGND_NONE, libtcod.LEFT, hero.equipSlots[2].getName(False))
+			if isinstance(hero.equipSlots[2],Items.rangedWeapons.RangedWeapon):
+				ammo = hero.equipSlots[2].loadedAmmoType
+				if ammo != None and hero.equipSlots[2].loadedRounds > 0:
+					y += 1
+					ammoText = ammo.getName(False)+' ('+str(hero.equipSlots[2].loadedRounds)+')'
+					libtcod.console_print_ex(panel, 3, y, libtcod.BKGND_NONE, libtcod.LEFT, ammoText)
 
 		# ==== Stats ====
 		y+=2
@@ -796,7 +860,7 @@ class KeyboardCommands:
 		'C':None,
 		'D':self.OpenDropMenu,
 		'E':None,
-		'F':None,
+		'F':self.FireRangedWeapon,
 		'G':self.PickUpItem,
 		'H':self.WalkWest,
 		'I':self.OpenInventory,
@@ -808,7 +872,7 @@ class KeyboardCommands:
 		'O':None,
 		'P':None,
 		'Q':None,
-		'R':None,
+		'R':self.FireRangedWeapon,
 		'S':None,
 		'T':self.OpenThrowMenu,
 		'U':self.WalkNorthEast,
@@ -925,6 +989,17 @@ class KeyboardCommands:
 		hero.setNextCommand(commands.GoDownStairsCommand(hero))
 		#libtcod.console_clear(ui.con)
 		ui.fovRecompute = True
+
+	def FireRangedWeapon(self,ui,hero):
+		target = None
+		targetX,targetY = ui.targetTile()
+		if targetX != None:
+			for actor in ui.game._currentLevel._actors:
+				if actor.x == targetX and actor.y == targetY:
+					target = actor
+
+		if target != None:
+			hero.setNextCommand(commands.FireRangedWeaponCommand(hero,target))
 
 class MainMenu:
 	def __init__(self):
