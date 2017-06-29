@@ -173,13 +173,13 @@ class ItemSpawner:
 	def getParent(self,item):
 		if item in self._lootHeirarchy:
 			return self._lootHeirarchy[item][0]
-		else: print "PARENT ERROR"
+		else: print "PARENT ERROR: "+str(item)
 
 	def getChildren(self,item):
 		if item in self._lootHeirarchy:
 			return self._lootHeirarchy[item][1]
 
-		else: print "CHILD ERROR"
+		else: print "CHILD ERROR: "+str(item)
 
 
 	# ==== Item Methods ====

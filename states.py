@@ -5,6 +5,8 @@ import commands
 import libtcodpy as libtcod
 import random
 import objects
+import items
+import Items
 '''
 ====================
 States
@@ -44,6 +46,13 @@ class AI(State):
 
 			elif self.hostileToHero(actor):
 				target = actor.game.hero
+
+		if (target == None):
+			if self.shouldManageEquipment(actor):
+				command = self.manageEquipment(actor)
+			else:
+				command = self.wander(actor)
+			# or inventory management
 
 		if (target != None):
 			ableToAttack = self.canAttackTarget(actor, target)
@@ -85,11 +94,11 @@ class AI(State):
 				(self.canMoveAwayFromTarget(actor, target)) ):
 				command = self.moveAwayFromTarget(actor, target)
 
+			elif self.shouldManageEquipment(actor):
+				command = self.manageEquipment(actor)
+
 			else:
 				command = self.wait(actor)
-
-		else:
-			command = self.wander(actor)
 
 		return command
 
@@ -362,6 +371,44 @@ class AI(State):
 						
 		command = commands.WalkCommand(actor,bestDX,bestDY)
 		return command
+
+	def shouldManageEquipment(self,actor):
+		if len(actor.inventory) < 1:
+			return False
+
+		for item in actor.inventory:
+			if isinstance(item, items.Equipment):
+				i = item.equipSlot
+				if ((actor.equipSlots[i] == None) or 
+					(item.level > actor.equipSlots[i].level)):
+					return True
+
+			elif (isinstance(item, Items.rangedWeapons.Ammo) and
+				(isinstance(actor.equipSlots[2], Items.rangedWeapons.RangedWeapon)) and
+				(actor.equipSlots[2].loadedRounds < 1) ):
+				return True
+
+		return False
+
+	def manageEquipment(self,actor):
+		for item in actor.inventory:
+			if isinstance(item, items.Equipment):
+				i = item.equipSlot
+				if ((actor.equipSlots[i] == None) or 
+					(item.level > actor.equipSlots[i].level)):
+
+					print actor.name,' => ',item.name
+
+					return commands.UseCommand(actor,item)
+
+			elif (isinstance(item, Items.rangedWeapons.Ammo) and
+				(isinstance(actor.equipSlots[2], Items.rangedWeapons.RangedWeapon)) and
+				(actor.equipSlots[2].loadedRounds < 1) ):
+
+				return commands.UseCommand(actor,item)
+
+
+		return commands.WaitCommand(actor)
 
 	def wait(self,actor):
 		command = commands.WaitCommand(actor)

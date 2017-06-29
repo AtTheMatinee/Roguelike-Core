@@ -28,6 +28,9 @@ class Object(object):
 		if self.blocks == True:
 			self.game._currentLevel.setHasObjectTrue(x,y)
 
+	def tick(self):
+		pass
+
 	def draw(self):
 		if (libtcod.map_is_in_fov(self.game.map.fov_map, self.x, self.y) or
 			(self.alwaysVisible == True) and self.game._currentLevel.getHasBeenExplored(self.x,self.y)):

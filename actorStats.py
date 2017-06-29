@@ -22,6 +22,18 @@ class StatsTable:
 		"defense":[0,0,0,0,0,0,0],
 		"critChance":0
 		},
+	"Gargoyle":
+		{
+		"healthCurrent":20,
+		"healthMax":20,
+		"magicCurrent":0,
+		"magicMax":15,
+		"speed":6,
+		"attack":[8.0,0,0,0,0,0,0,0,0],
+		"attackSpeed":-4,
+		"defense":[12,0.5,0.5,0.5,0.5,0,0],
+		"critChance":0
+		},
 	"Ghost":
 		{
 		"healthCurrent":10,
@@ -29,9 +41,9 @@ class StatsTable:
 		"magicCurrent":0,
 		"magicMax":20,
 		"speed":6,
-		"attack":[6.0,0,0,0,0,0,0,6,0],
+		"attack":[4.0,0,0,0,0,0,0,4,0],
 		"attackSpeed":0,
-		"defense":[0,0,0,0,0,-1,1],
+		"defense":[0,0.5,0.5,1,1,-1,-1],
 		"critChance":0
 		},
 	"Hero":
@@ -72,12 +84,12 @@ class StatsTable:
 		},
 	"Rougarou":
 		{
-		"healthCurrent":36,
-		"healthMax":40,
+		"healthCurrent":26,
+		"healthMax":26,
 		"magicCurrent":0,
 		"magicMax":0,
-		"speed":8,
-		"attack":[18,6,0,0,0,0.1,0,0,0],
+		"speed":10,
+		"attack":[12,4,0,0,0,0.1,0,0,0],
 		"attackSpeed":2,
 		"defense":[6,0,0,0,0,0,0],
 		"critChance":0.1

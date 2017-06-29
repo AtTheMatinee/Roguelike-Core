@@ -74,6 +74,7 @@ class GameLoop:
 		the method gives up and tries again on the next frame.
 		'''
 		#import pdb; pdb.set_trace()
+		
 		actor = self._currentLevel._actors[self._currentActor % len(self._currentLevel._actors)]
 
 		# Prevent the loop from skipping an actor if they havn't taken their turn E.G. the player
@@ -99,6 +100,12 @@ class GameLoop:
 			success,alternative = command.perform()
 
 		if (self.spendEnergyOnFailure == True) or (success == True):
+			if actor == self.hero:
+				# after the hero has successfully taken a turn,
+				# update the tick method on every object in the level
+				for obj in self._currentLevel._objects:
+					obj.tick()
+
 			self._currentActor = (self._currentActor + 1) % len(self._currentLevel._actors)
 
 	def message(self,newMsg,color = UI_PRIMARY_COLOR):
@@ -129,7 +136,7 @@ class GameLoop:
 		#self.hero.addStatusEffect(statusEffects.Poisoned,4,False)
 		#self.hero.addStatusEffect(statusEffects.Bleeding,2,False)
 		#self.hero.addStatusEffect(statusEffects.Flamable,10,False)
-		#self.hero.addStatusEffect(statusEffects.MortallyWounded,2,False)
+		#self.hero.addStatusEffect(statusEffects.MortallyWounded,20,False)
 
 	def saveGame(self):
 		#print self._objects
