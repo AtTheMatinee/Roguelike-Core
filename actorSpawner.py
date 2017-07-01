@@ -91,18 +91,18 @@ class ActorSpawner:
 		hero.deathState = states.DeathState(hero)
 		
 		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Melee Weapon',8,False)
+		weapon = self.game.itemSpawner.spawn(x,y,'Melee Weapon',0,False)
 		hero.equipItem(weapon)
 
-		armor = self.game.itemSpawner.spawn(x,y,'Armor', 1, False)
+		armor = self.game.itemSpawner.spawn(x,y,'Armor',0,False)
 		hero.equipItem(armor)
 
 		# add items to inventory
-		for item in [("Health Potion",0),('Antidote',0),('Serpent Sword',1),('Light Crossbow',0),('Wooden Bolt',0),('Steel Bolt',0)]:
+		for item in [("Health Potion",0),('Potion',0),('Potion',0),('Light Crossbow',0),('Wooden Bolt',0),('Steel Bolt',0)]:
 			gear,itemLevel = item
 			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
 			g.moveToInventory(hero)
-			g.__class__.identified = True
+			#g.__class__.identified = True
 
 		return hero
 

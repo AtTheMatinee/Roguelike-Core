@@ -196,7 +196,16 @@ class Actor(Object):
 				self.game._currentLevel.removeActor(self)
 
 	def dropLoot(self):
-		# TODO: Drop Inventory and Equipment
+		# Drop Inventory and Equipment
+		for i in xrange(len(self.equipSlots) -1):
+			if self.equipSlots[i] != None:
+				self.inventory.append(self.equipSlots[i])
+				self.equipSlots[i] = None
+
+		if len(self.inventory) > 0:
+			for item in self.inventory:
+				if random.random() <= 0.5:
+					item.dropFromInventory(self)
 
 		# Random Drop { itemKey : odds=1/n }
 		level = self.level
