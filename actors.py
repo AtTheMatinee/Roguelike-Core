@@ -39,6 +39,8 @@ class Actor(Object):
 		self.hadLastChance = False
 		self.canBePushed = True
 
+		self.dead = False
+
 		self.game.addObject(self)
 		self.game._currentLevel.addObject(self)
 		self.game._currentLevel.setHasObjectTrue(x,y)
@@ -67,11 +69,6 @@ class Actor(Object):
 		self._nextCommand = None
 
 	def getCommand(self):
-		# process status effects
-		if self.statusEffects:
-			for statusEffect in self.statusEffects:
-				statusEffect.effect()
-
 		command = self._nextCommand
 
 		if self.state:
@@ -86,6 +83,7 @@ class Actor(Object):
 				command = AICommand
 
 		self._nextCommand = None
+
 		return command
 
 	def setNextCommand(self,command):
@@ -102,6 +100,13 @@ class Actor(Object):
 			return (self._nextCommand == None)
 
 	def hasTakenTurn(self):
+		# Magic Regen
+
+		# process status effects
+		if self.statusEffects:
+			for statusEffect in self.statusEffects:
+				statusEffect.effect()
+
 		# Reset Once per turn flags
 		self.canBePushed = True
 
@@ -180,18 +185,27 @@ class Actor(Object):
 			self.hadLastChance = False
 
 	def death(self):
-		if self.deathState != None:
-			self.deathState.process()
-		else:
-			self.game.removeObject(self)
-			self.game._currentLevel.removeObject(self)
-			self.game._currentLevel.setHasObjectFalse(self.x,self.y)
-			self.game._currentLevel.removeActor(self)
-
-			del self
+		if self.dead == False:
+			self.dead = True
+			if self.deathState != None:
+				self.deathState.process()
+			else:
+				self.game.removeObject(self)
+				self.game._currentLevel.removeObject(self)
+				self.game._currentLevel.setHasObjectFalse(self.x,self.y)
+				self.game._currentLevel.removeActor(self)
 
 	def dropLoot(self):
-		# TODO: Drop Inventory and Equipment
+		# Drop Inventory and Equipment
+		for i in xrange(len(self.equipSlots) -1):
+			if self.equipSlots[i] != None:
+				self.inventory.append(self.equipSlots[i])
+				self.equipSlots[i] = None
+
+		if len(self.inventory) > 0:
+			for item in self.inventory:
+				if random.random() <= 0.5:
+					item.dropFromInventory(self)
 
 		# Random Drop { itemKey : odds=1/n }
 		level = self.level
@@ -245,13 +259,8 @@ class Hero(Actor):
 		libtcod.map_is_in_fov(self.game.map.fov_map, x, y)
 
 	def hasTakenTurn(self):
-		# Reset Once per turn flags
-		self.canBePushed = True
+		Actor.hasTakenTurn(self)
 
-		if (self.mortalWound == True):
-			self.hadLastChance = True
-
-		self.nearbyActors = self.getNearbyActors()
 		self.nearbyObjects = self.getNearbyObjects()
 
 	def addStatusEffect(self,statusEffect,timer,stacks):

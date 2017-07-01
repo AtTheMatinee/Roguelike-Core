@@ -10,6 +10,7 @@ Ranged Weapons
 ====================
 '''
 class Ammo(Item):
+	identified = True
 	def __init__(self, game, x, y, char, name, color, level, number, damage):
 		Item.__init__(self, game, x, y, char, name, color, level, blocks=False, properNoun = False)
 		self.number = int(number)
@@ -78,6 +79,7 @@ class Darts(Ammo):
 
 
 class RangedWeapon(Equipment):
+	identified = True
 	def __init__(self, game, x, y, char, name, color, level, equipSlot, modifier, maxRange, maxRounds, attackSpeed, ammoTypes = [], blocks=False):
 		Equipment.__init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False)
 		self.equipSlot = 2

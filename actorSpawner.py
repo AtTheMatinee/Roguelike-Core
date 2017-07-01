@@ -42,6 +42,7 @@ class ActorSpawner:
 			'Plague Rat':self.spawnPlagueRat,
 			'Rougarou':self.spawnRougarou,
 			'Snakeman':self.spawnSnakeman,
+			'Snakeman Archer':self.spawnSnakemanArcher,
 			'Wyrm':self.spawnWyrm,
 			'Knight':self.spawnKnight
 			}
@@ -76,6 +77,9 @@ class ActorSpawner:
 	def spawnAngel(self,x,y,level):
 		pass
 
+	def spawnAutomaton(self,x,y,level):
+		pass
+
 	def spawnCultist(self,x,y,level):
 		pass
 
@@ -87,18 +91,18 @@ class ActorSpawner:
 		hero.deathState = states.DeathState(hero)
 		
 		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Melee Weapon',8,False)
+		weapon = self.game.itemSpawner.spawn(x,y,'Melee Weapon',0,False)
 		hero.equipItem(weapon)
 
-		armor = self.game.itemSpawner.spawn(x,y,'Armor', 1, False)
+		armor = self.game.itemSpawner.spawn(x,y,'Armor',0,False)
 		hero.equipItem(armor)
 
 		# add items to inventory
-		for item in [("Health Potion",0),('Antidote',0),('Serpent Sword',1),('Light Crossbow',0),('Wooden Bolt',0),('Steel Bolt',0)]:
+		for item in [("Health Potion",0),('Potion',0),('Potion',0),('Light Crossbow',0),('Wooden Bolt',0),('Steel Bolt',0)]:
 			gear,itemLevel = item
 			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
 			g.moveToInventory(hero)
-			g.__class__.identified = True
+			#g.__class__.identified = True
 
 		return hero
 
@@ -149,7 +153,41 @@ class ActorSpawner:
 		# add equipment
 		if random.random() <= .2:
 			weapon = self.game.itemSpawner.spawn(x,y,'Serpent Sword',level,False)
-			snakeman.equipItem(weapon)
+			weapon.moveToInventory(snakeman)
+
+		return snakeman
+
+	def spawnSnakemanArcher(self,x,y,level):
+		level = 1
+
+		lootDrops = {'Wooden Bolts':5,'Health Potion':2}
+		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman Archer",libtcod.red,level,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI(0.9,0.8,0.8,1,7,2),drops = lootDrops, inventorySize = 4, canEquipArmor = True, canEquipWeapons = True)
+		snakeman.deathState = states.DeathState(snakeman)
+
+		for name, level in [('Light Crossbow',0),('Steel Bolt',0),('Wooden Bolt',0)]:
+			item = self.game.itemSpawner.spawn(x,y,name,level,False)
+			item.moveToInventory(snakeman)
+
+		# add equipment
+		if random.random() <= .2:
+			weapon = self.game.itemSpawner.spawn(x,y,'Serpent Sword',level,False)
+			weapon.moveToInventory(snakeman)
+
+		return snakeman
+
+	def spawnSnakemanChampion(self,x,y,level):
+		level = 1
+
+		lootDrops = {'Sword':5,'Health Potion':2}
+		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman Champion",libtcod.desaturated_sea,level,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI(0.9,0.5,0.5,1,0,0),drops = lootDrops, inventorySize = 4, canEquipArmor = True, canEquipWeapons = True)
+		snakeman.deathState = states.DeathState(snakeman)
+
+		# add equipment
+		weapon = self.game.itemSpawner.spawn(x,y,'Serpent Sword',level,False)
+		snakeman.equipItem(weapon)
+
+		# Shield
+		# Armor
 
 		return snakeman
 
