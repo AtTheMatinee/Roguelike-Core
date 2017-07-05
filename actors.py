@@ -120,9 +120,6 @@ class Actor(Object):
 		'''
 		damage = [physical, armorPenetration, fire, frost, poison, bleed, holy, unholy, unblockable]
 		defense = [physical, fire, frost, poison, bleed, holy, unholy]
-		TODO: instead of dying when your health reaches 0,
-		health being at 0 puts the actor in a near death state,
-		in which the next damage taken is fatal
 		'''
 		defense = self.stats.get("defense")
 
@@ -241,7 +238,7 @@ class Actor(Object):
 		self.stats.addModifier(item,item.modifier)
 
 class Hero(Actor):
-
+	#TODO: the hero gains experience (1 per enemy killed that is a higher level than the hero)
 	def getNearbyActors(self):
 		nearbyActors = []
 		for actor in self.game._currentLevel._actors:
@@ -284,13 +281,6 @@ class Hero(Actor):
 
 class Monster(Actor):
 	pass
-
-class Elemental(Monster):
-	pass
-	# Takes damage every turn
-	# heals 100% from their element
-	# have a lot of elemental spells
-	# have a spell that casts their elemental status effect on themself so they heal while it's in effect
 
 
 if __name__ == "__main__":

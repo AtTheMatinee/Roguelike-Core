@@ -60,9 +60,11 @@ class ActorSpawner:
 				Alchemist - Begins with random potions identified
 				Druid
 			Lancer
+			Sorceror
 			Brute
 			Archer
 			Rogue
+			Champion
 		'''
 
 	def spawn(self,x,y,key):
@@ -116,7 +118,12 @@ class ActorSpawner:
 		pass
 
 	def spawnGhost(self,x,y,level):
-		pass
+		level = 3
+
+		lootDrops = {'Potion':1}
+		ghost = monsters.Ghost(self.game,x,y,'g',"Ghost",libtcod.light_cyan,level,faction = "Ghosts",stats = actorStats.Stats("Ghost"),state = states.AI(0.7,0.5,0.5,1,0,0),drops = lootDrops)
+		ghost.deathState = states.DeathState(ghost)
+		return ghost
 
 	def spawnGolem(self,x,y,level):
 		pass

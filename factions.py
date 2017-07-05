@@ -13,33 +13,59 @@ class FactionTracker:
 		self._friendly = 3
 
 		self._factions = {
+			"Ghosts":
+				{
+				"Ghosts":self._neutral,
+				"Hero": self._hostile,
+				"Snakemen": self._hostile,
+				"Temple Guardians":self._neutral,
+				"Mirehounds":self._hostile,
+				"Plague Rats": self._hostile
+				},
 			"Hero":
 				{
+				"Ghosts":self._hostile,
 				"Hero": self._friendly,
 				"Snakemen": self._hostile,
+				"Temple Guardians":self._hostile,
 				"Plague Rats": self._hostile,
 				"Mirehounds":self._hostile
 				},
+			"Mirehounds":
+				{
+				"Ghosts":self._hostile,
+				"Hero": self._hostile,
+				"Snakemen": self._friendly,
+				"Temple Guardians":self._neutral,
+				"Plague Rats": self._hostile,
+				"Mirehounds": self._friendly
+				},
 			"Plague Rats":
 				{
+				"Ghosts":self._hostile,
 				"Hero": self._hostile,
 				"Snakemen": self._hostile,
+				"Temple Guardians":self._hostile,
 				"Mirehounds":self._hostile,
 				"Plague Rats": self._friendly
 				},
 			"Snakemen":
 				{
+				"Ghosts":self._hostile,
 				"Hero": self._hostile,
 				"Snakemen": self._friendly,
+				"Temple Guardians":self._neutral,
 				"Plague Rats": self._hostile,
 				"Mirehounds": self._friendly
 				},
-			"Mirehounds":
+			"Temple Guardians":
 				{
+				"Ghosts":self._neutral,
 				"Hero": self._hostile,
-				"Snakemen": self._friendly,
-				"Plague Rats": self._hostile,
-				"Mirehounds": self._friendly
+				"Snakemen": self._neutral,
+				"Temple Guardians":self._friendly,
+				"Mirehounds":self._neutral,
+				"Plague Rats": self._hostile
 				}
 			}
 
