@@ -141,7 +141,7 @@ class Level:
 						y = roomY + tempY
 
 				# placeholder Monster Spawn
-				monsterTable = {'Mirehound':4,'Plague Rat':3,'Snakeman':2, 'Snakeman Archer':1}
+				monsterTable = {'Mirehound':4,'Plague Rat':3,'Snakeman':2}#, 'Snakeman Archer':1}
 				self.game.actorSpawner.spawn(x,y,randomChoice.choose(monsterTable))
 
 

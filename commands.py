@@ -164,6 +164,7 @@ class AttackCommand(Command):
 		
 
 class CastSpellCommand(Command):
+	# actor, x, y
 	pass
 
 

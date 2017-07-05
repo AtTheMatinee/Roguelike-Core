@@ -13,6 +13,7 @@ import statusEffects
 
 import Items
 
+import objects
 #import actors
 
 #import worldMap
@@ -881,7 +882,7 @@ class KeyboardCommands:
 		'X':None,
 		'Y':self.WalkNorthWest,
 		'Z':None,
-		'0':None,
+		'0':self.test1,
 		'1':None,
 		'2':None,
 		'3':None,
@@ -1000,6 +1001,9 @@ class KeyboardCommands:
 
 		if target != None:
 			hero.setNextCommand(commands.FireRangedWeaponCommand(hero,target))
+
+	def test1(self,ui,hero):
+		e = objects.Explosion(ui.game, hero.x, hero.y, libtcod.flame, [10,0,5,0,0,0,0,0,0], 20)
 
 class MainMenu:
 	def __init__(self):
