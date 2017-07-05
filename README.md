@@ -1,4 +1,4 @@
 # Roguelike-Core
 A work in progress roguelike written in python.
 
-Run gameUI.py in python 2.7
+Run __init__.py in python 2.7
