@@ -397,8 +397,6 @@ class AI(State):
 				if ((actor.equipSlots[i] == None) or 
 					(item.level > actor.equipSlots[i].level)):
 
-					print actor.name,' => ',item.name
-
 					return commands.UseCommand(actor,item)
 
 			elif (isinstance(item, Items.rangedWeapons.Ammo) and
@@ -415,7 +413,7 @@ class AI(State):
 		return command
 
 
-class AIConfused:
+class AIConfused(AI):
 	def __init__(self):
 		self.confusionChance = 0.5
 		self.waitChance = 1.0/3

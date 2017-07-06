@@ -63,6 +63,7 @@ class UserInterface:
 		self._throwMenu = 2
 		self._dropMenu = 3
 		self._targetState = 4
+		self._spellMenu = 5
 
 		# Hero Panel status tracker
 		self.reevaluateHeroStatusEffects = False
@@ -89,9 +90,11 @@ class UserInterface:
 		# ====================
 
 		# Menu
-		self.mainMenu()
+		main = MainMenu(self)
+		main.process()
 
 	def mainLoop(self):
+		self.heroStatusEffects = 0
 		while not libtcod.console_is_window_closed():
 
 			#Input
@@ -117,6 +120,9 @@ class UserInterface:
 
 			elif self._gameState == self._throwMenu:
 				self.throwMenu('Press the key next to an item to throw it, or any other key to cancel.\n')
+
+			elif self._gameState == self._spellMenu:
+				self.spellMenu('Press the key next to a spell to cast it, or any other key to cancel.\n')
 
 			libtcod.console_flush()
 
@@ -329,72 +335,13 @@ class UserInterface:
 		self.color_light_ground_fore = colorScheme[6]
 		self.color_light_ground_back = colorScheme[7]
 
-	def mainMenu(self):
-		options = ['(C)ontinue','(N)ew Game','(O)ptions','(E)xit']
-
-		width = 24
-		height = len(options)+2
-
-		logoLength = len(LOGO[0])
-
-		while not libtcod.console_is_window_closed():
-			# Print LOGO
-			logo = libtcod.console_new(logoLength,20)
-			
-			y=0
-			for line in LOGO:
-				libtcod.console_print_ex(logo, 0, y, libtcod.BKGND_NONE, libtcod.LEFT, line)
-				y += 1
-
-			logoX = (SCREEN_WIDTH-logoLength)/2
-			libtcod.console_blit(logo,0,0,logoLength,20,0,logoX,10,1,0)
-			libtcod.console_delete(logo)
-			
-			# ====================	
-
-			# Print options
-			self.window = libtcod.console_new(width,height)
-
-			libtcod.console_set_default_foreground(self.window, UI_PRIMARY_COLOR)
-
-			y = 1
-			for text in options:
-
-				libtcod.console_print_ex(self.window, width/2-6, y, libtcod.BKGND_NONE, libtcod.LEFT, text)
-				y += 1
-
-			# blit the window to the root
-			x = SCREEN_WIDTH/2 - width/2
-			y = (SCREEN_HEIGHT - height)*2/3
-			libtcod.console_blit(self.window, 0, 0, width, height, 0, x, y, 1.0, 0.6)
-			libtcod.console_delete(self.window)
-
-			libtcod.console_flush()
-
-			libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, self.keyboard, self.mouse)
-
-
-			if self.keyboard.c:
-				if self.keyboard.c == ord('c'):
-					pass
-
-				elif self.keyboard.c == ord('n'):
-					self.newGame()
-					self.mainLoop()
-					#break
-
-				elif self.keyboard.c == ord('o'):
-					pass
-
-				elif self.keyboard.c == ord('e'):
-					break
-
-	def newGame(self):
+	def newGame(self,heroClass,seed,heroName):
 		self._gameState = self._playing
 
-		seed = random.random()
+		if seed == None:
+			seed = random.random()
 		self.game = gameLoop.GameLoop(self,MAP_WIDTH,MAP_HEIGHT,seed)
-		self.game.newGame()
+		self.game.newGame(heroClass,heroName)
 
 		self.fovRecompute = True
 		self.generateNoiseMap()
@@ -435,10 +382,14 @@ class UserInterface:
 			name + ': ' + str(int(value)) + '/' + str(int(maxValue)))
 
 	def renderHealthBar(self,panel,x, y, width, actor):
-
 		hp = actor.stats.get("healthCurrent")
 		hpMax = actor.stats.get("healthMax")
 		self.renderStatusBar(panel,x,y,width,"HP",hp,hpMax,libtcod.red,libtcod.darker_red)
+
+	def renderMagicBar(self,panel,x, y, width, actor):
+		mp = actor.stats.get("magicCurrent")
+		mpMax = actor.stats.get("magicMax")
+		self.renderStatusBar(panel,x,y,width,"MP",mp,mpMax,libtcod.darker_blue,libtcod.darkest_blue)
 
 	def menu(self,width,header,options):
 		if len(options) > 26: raise ValueError('Limit options to 26')
@@ -566,6 +517,19 @@ class UserInterface:
 			item = inventory[index]
 			self.game.hero.setNextCommand(commands.DropCommand(self.game.hero,item))
 
+	def spellMenu(self,header):
+		spellList = self.game.hero.spells
+		if len(spellList) <= 0:
+			options = ['No Spells Known']
+
+		else:
+			options = [spell.name+' {'+str(spell.magicCost)+'}' for spell in spellList]
+
+		index = self.menu(INVENTORY_WIDTH,header,options)
+
+		if (len(spellList) > 0) and (0 <= index < len(options)):
+			spell = spellList[index]
+			self.game.hero.setNextCommand(commands.CastSpellCommand(self.game.hero,spell))
 
 	def renderBoarderAroundConsole(self,console,width,height,color):
 		'''
@@ -617,6 +581,7 @@ class UserInterface:
 
 	def printGameMessages(self):
 		# print the game messages
+		# TODO: ability to scroll back through old messages
 		y = 1
 		for (line,color) in self.game._messages:
 			libtcod.console_set_default_foreground(self.horPanel, color)
@@ -646,6 +611,7 @@ class UserInterface:
 		self.renderHealthBar(panel,2,y,width-4, hero)
 		# Magic Bar
 		y+=1
+		self.renderMagicBar(panel,2,y,width-4,hero)
 
 		# ==== Equipment ====
 		y+=2
@@ -874,7 +840,7 @@ class KeyboardCommands:
 		'P':None,
 		'Q':None,
 		'R':self.FireRangedWeapon,
-		'S':None,
+		'S':self.OpenSpellMenu,
 		'T':self.OpenThrowMenu,
 		'U':self.WalkNorthEast,
 		'V':None,
@@ -891,7 +857,7 @@ class KeyboardCommands:
 		'6':None,
 		'7':None,
 		'8':None,
-		'9':None,
+		'9':self.test2,
 		';':None,
 		',':None,
 		'.':self.Wait,
@@ -981,6 +947,10 @@ class KeyboardCommands:
 		ui._gameState = ui._throwMenu
 		ui.keyboard.c = libtcod.KEY_NONE
 
+	def OpenSpellMenu(self,ui,hero):
+		ui._gameState = ui._spellMenu
+		ui.keyboard.c = libtcod.KEY_NONE
+
 	def GoUpStairs(self,ui,hero):
 		hero.setNextCommand(commands.GoUpStairsCommand(hero))
 		#libtcod.console_clear(ui.con)
@@ -1003,25 +973,386 @@ class KeyboardCommands:
 			hero.setNextCommand(commands.FireRangedWeaponCommand(hero,target))
 
 	def test1(self,ui,hero):
-		e = objects.Explosion(ui.game, hero.x, hero.y, libtcod.flame, [10,0,5,0,0,0,0,0,0], 20)
+		objects.PoisonCloud(ui.game, hero.x, hero.y, 'cloud', libtcod.green, 20)
+
+	def test2(self,ui,hero):
+		spell = ui.game.spellSpawner.spawn(hero,"Self Heal")
+		spell.cast()
 
 class MainMenu:
-	def __init__(self):
+	def __init__(self,ui):
+		self.ui = ui
+		self.cursor = 0
+
+	def process(self):
 		options = ['(C)ontinue','(N)ew Game','(O)ptions','(E)xit']
 
 		width = 24
 		height = len(options)+2
 
+
+
+		while not libtcod.console_is_window_closed():
+			self.renderLogo()			
+
+			# Print options
+			window = libtcod.console_new(width,height)
+
+			libtcod.console_set_default_foreground(window, UI_PRIMARY_COLOR)
+
+			y = 1
+			for i in xrange(len(options)):
+				if i == self.cursor:
+					text = '@ '+options[i]
+				else:
+					text = '  '+options[i]
+				libtcod.console_print_ex(window, width/2-8, y, libtcod.BKGND_NONE, libtcod.LEFT, text)
+				y += 1
+
+			# blit the window to the root
+			x = SCREEN_WIDTH/2 - width/2
+			y = (SCREEN_HEIGHT - height)*2/3
+			libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.6)
+			libtcod.console_delete(window)
+
+			libtcod.console_flush()
+
+			libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, self.ui.keyboard, self.ui.mouse)
+
+
+			if self.ui.keyboard.c or self.ui.keyboard.vk:
+				# move cursor
+				if ( (self.ui.keyboard.vk == libtcod.KEY_UP) or
+					(self.ui.keyboard.vk == libtcod.KEY_LEFT) ):
+
+					self.cursor = (self.cursor-1) % len(options)
+
+				if ((self.ui.keyboard.vk == libtcod.KEY_DOWN) or
+					(self.ui.keyboard.vk == libtcod.KEY_RIGHT) ):
+
+					self.cursor = (self.cursor+1) % len(options)
+
+				# select option
+				if ( (self.ui.keyboard.c == ord('c')) or
+					( (self.ui.keyboard.vk == libtcod.KEY_ENTER) and
+					(self.cursor == 0) ) ):
+					self.clearConsoles()
+					pass
+
+				if ( (self.ui.keyboard.c == ord('n')) or
+					( (self.ui.keyboard.vk == libtcod.KEY_ENTER) and
+					(self.cursor == 1) ) ):
+					self.clearConsoles()
+					n = NewGameMenu(self.ui)
+					heroClass,seed,heroName = n.process()
+
+					if heroClass != None:
+						self.ui.newGame(heroClass,seed,heroName) # (heroClass,seed)
+						self.ui.mainLoop()
+					
+
+				if ( (self.ui.keyboard.c == ord('o')) or
+					( (self.ui.keyboard.vk == libtcod.KEY_ENTER) and
+					(self.cursor == 2) ) ):
+					self.clearConsoles()
+					pass
+
+				elif ( (self.ui.keyboard.c == ord('e')) or 
+					( (self.ui.keyboard.vk == libtcod.KEY_ENTER) and
+					(self.cursor == 3) )  ):
+					# exit
+					break
+
+	def renderLogo(self):
 		logoLength = len(LOGO[0])
+		logo = libtcod.console_new(logoLength,20)
+		
+		y=0
+		for line in LOGO:
+			libtcod.console_print_ex(logo, 0, y, libtcod.BKGND_NONE, libtcod.LEFT, line)
+			y += 1
+
+		logoX = (SCREEN_WIDTH-logoLength)/2
+		libtcod.console_blit(logo,0,0,logoLength,20,0,logoX,10,1,0)
+		libtcod.console_delete(logo)
+
+	def clearConsoles(self):
+		libtcod.console_clear(0)
+		libtcod.console_flush()
+
 
 class NewGameMenu:
-	pass
-	# Select a class
-		# Debugger
-	# Seed: random.random
+	def __init__(self,ui):
+		self.ui = ui
+
+		self.heroClasses = [
+			'Alchemist',
+			'Arbalest',
+			'Assassin',
+			'Barbarian',
+			'Cleric',
+			'Houndmaster',
+			'Knight',
+			'Occultist',
+			'Magician',
+			'Mercenary',
+			'Specialist',
+			'Systems Test'
+		]
+
+		self.seed = random.random()
+		self.heroName = 'Hero'
+		self.selection = 0
+		self.cursor = 0
+
+	def process(self):
+		'''
+		LeftWindow:
+
+		  Class  
+		_________
+		Alchemist
+		Arbalest
+		Assassin
+		Barbarian
+		Cleric
+		Houndmaster TODO
+		Knight
+		Occultist
+		Magician
+		Mercenary
+		Specialist
+		Systems Test
+
+		  Seed  
+		________
+		3829094375
+
+		==============
+
+		BottomWindow: 
+
+		(C)ontinue | (R)eturn
+
+		RightWindow:
+		'Hero Name'
+
+		wordwraped description in
+		bordered text box.
+
+		'''
+		while not libtcod.console_is_window_closed():
+			self.renderLogo()			
+
+			self.renderLeftWindow()
+
+			# ==== Render Right Window ====
+
+			# ==== Render Bottom Window ====
+			self.renderBottomWindow()
+
+			libtcod.console_flush()
+
+			libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, self.ui.keyboard, self.ui.mouse)
+
+			if self.ui.keyboard.c or self.ui.keyboard.vk:
+				# move cursor
+				if ( (self.ui.keyboard.vk == libtcod.KEY_UP) or
+					(self.ui.keyboard.vk == libtcod.KEY_LEFT) ):
+
+					self.cursor = (self.cursor-1) % (len(self.heroClasses)+4)
+
+				if ((self.ui.keyboard.vk == libtcod.KEY_DOWN) or
+					(self.ui.keyboard.vk == libtcod.KEY_RIGHT) ):
+
+					self.cursor = (self.cursor+1) % (len(self.heroClasses)+4)
+
+				# select options
+				if ( (self.ui.keyboard.vk == libtcod.KEY_ENTER) and
+					(self.cursor < len(self.heroClasses))):
+					self.selection = self.cursor
+
+
+				if ( (self.ui.keyboard.c == ord('c')) or
+					( (self.ui.keyboard.vk == libtcod.KEY_ENTER) and
+					(self.cursor == len(self.heroClasses)+1) ) ):
+					self.clearConsoles()
+					return self.heroClasses[self.selection], self.seed, self.heroName
+
+				if ( (self.ui.keyboard.c == ord('r')) or 
+					(self.ui.keyboard.vk == libtcod.KEY_ESCAPE) or
+					( (self.ui.keyboard.vk == libtcod.KEY_ENTER) and
+					(self.cursor == len(self.heroClasses)+2) ) ):
+					self.clearConsoles()
+					return None,None, self.heroName
+
+	def clearConsoles(self):
+		libtcod.console_clear(0)
+		libtcod.console_flush()
+
+	def renderLogo(self):
+		logoLength = len(LOGO[0])
+		logo = libtcod.console_new(logoLength,20)
+		
+		y=0
+		for line in LOGO:
+			libtcod.console_print_ex(logo, 0, y, libtcod.BKGND_NONE, libtcod.LEFT, line)
+			y += 1
+
+		logoX = (SCREEN_WIDTH-logoLength)/2
+		libtcod.console_blit(logo,0,0,logoLength,20,0,logoX,10,1,0)
+		libtcod.console_delete(logo)
+
+	def renderLeftWindow(self):
+		leftWindowHeight = len(self.heroClasses)+13
+		leftWindowWidth = 32
+
+		# ==== Render Left Window ====
+
+		leftWindow = libtcod.console_new(leftWindowWidth,leftWindowHeight)
+
+		libtcod.console_set_default_foreground(leftWindow, UI_PRIMARY_COLOR)
+
+		# ==== Class Selection ====
+		y = 1
+		libtcod.console_print_ex(leftWindow, 4, y, libtcod.BKGND_NONE, libtcod.LEFT, 'CLASS')
+		# Draw line under 'CLASS'
+		y += 2
+		for i in xrange(10):
+			libtcod.console_put_char_ex(leftWindow, 1+i, y, 196, UI_PRIMARY_COLOR, libtcod.BKGND_NONE)
+
+		# print class options
+		y+=2
+		for i in xrange(len(self.heroClasses)):
+			text = self.heroClasses[i].upper()
+			if self.cursor == i:
+				text = '@ '+text
+			else: 
+				text = '  '+text
+
+			if i == self.selection:
+				libtcod.console_set_default_foreground(leftWindow,UI_PRIMARY_COLOR*10)
+
+			libtcod.console_print_ex(leftWindow, 0, y, libtcod.BKGND_NONE, libtcod.LEFT, text)
+			libtcod.console_set_default_foreground(leftWindow,UI_PRIMARY_COLOR)
+			y += 1
+
+		# ==== Optional Seed Input ====
+
+		# print 'SEED'
+		y += 3
+		libtcod.console_print_ex(leftWindow, 4, y, libtcod.BKGND_NONE, libtcod.LEFT, 'SEED')
+		# Draw line under 'SEED'
+		y += 2
+		for i in xrange(10):
+			libtcod.console_put_char_ex(leftWindow, 1+i, y, 196, UI_PRIMARY_COLOR, libtcod.BKGND_NONE)
+		y += 2
+		# print the seed
+		text = str(self.seed)
+		if self.cursor == len(self.heroClasses):
+			text = '@ '+ text
+		else:
+			text = '  '+ text
+		libtcod.console_print_ex(leftWindow, 0, y, libtcod.BKGND_NONE, libtcod.LEFT, text)
+
+
+		# blit the window to the root
+		x = SCREEN_WIDTH/8
+		y = min((SCREEN_HEIGHT*3/7),(SCREEN_HEIGHT - leftWindowHeight))
+		libtcod.console_blit(leftWindow, 0, 0, leftWindowWidth, leftWindowHeight, 0, x, y, 1.0, 0.6)
+		libtcod.console_delete(leftWindow)
+
+	def renderBottomWindow(self):
+		bottomWindowHeight = 7
+		bottomWindowWidth = 32
+
+		# ==== Render Bottom Window ====
+		bottomWindow = libtcod.console_new(bottomWindowWidth,bottomWindowHeight)
+
+		libtcod.console_set_default_foreground(bottomWindow, UI_PRIMARY_COLOR)
+
+
+		# print text
+		y=3
+		if self.cursor == len(self.heroClasses)+1:
+			continueText = '@ (C)ontinue  '
+		else:
+			continueText = '  (C)ontinue  '
+		if self.cursor == len(self.heroClasses)+2:
+			returnText = ' @ (R)eturn'
+		else:
+			returnText = '   (R)eturn'
+		text = continueText+'|' + returnText
+		libtcod.console_print_ex(bottomWindow, bottomWindowWidth/2, y, libtcod.BKGND_NONE, libtcod.CENTER, text)
+
+		# render bar above text
+		y = 2
+		x = 6
+		barLength = 8
+		for i in xrange(barLength):
+			libtcod.console_put_char_ex(bottomWindow, x+i, y, 196, UI_PRIMARY_COLOR*0.25, libtcod.BKGND_NONE)
+		x = 22
+		barLength = 6
+		for i in xrange(barLength):
+			libtcod.console_put_char_ex(bottomWindow, x+i, y, 196, UI_PRIMARY_COLOR*0.25, libtcod.BKGND_NONE)
+		
+		# render bar below text
+		y = 4
+		x = 6
+		barLength = 8
+		for i in xrange(barLength):
+			libtcod.console_put_char_ex(bottomWindow, x+i, y, 196, UI_PRIMARY_COLOR*0.25, libtcod.BKGND_NONE)
+		x = 22
+		barLength = 6
+		for i in xrange(barLength):
+			libtcod.console_put_char_ex(bottomWindow, x+i, y, 196, UI_PRIMARY_COLOR*0.25, libtcod.BKGND_NONE)
+
+		# blit the window to the root
+		x = SCREEN_WIDTH/2 -(bottomWindowWidth/2)
+		y = (SCREEN_HEIGHT*6/7-1)
+		libtcod.console_blit(bottomWindow, 0, 0, bottomWindowWidth, bottomWindowHeight, 0, x, y, 1.0, 0.6)
+		libtcod.console_delete(bottomWindow)
+
 
 class OptionsMenu:
+	def __init__(self,ui):
+		self.ui = ui
+
+	def process(self):
+		pass
+		'''
+		Screen Options
+			Font Size
+			Full Screen (On/Off)
+			Colorblind Mode (On/Off)
+			Particle Effects (On/Off)
+			Restore Defaults
+		Controls
+			Rebind Keys
+			Restore Defaults
+		Audio
+			Volume Sliders
+			Sound Test
+			Restore Defaults
+
+		* automatically save selections in separate file
+		'''
+
+	def clearConsoles(self):
+		libtcod.console_clear(0)
+		libtcod.console_flush()
 	pass
+
+class SplashScreen:
+	def __init__(self,ui):
+		self.ui = ui
+
+		# Plays before the main menu
+		# (C)ontinue (actually works with any key)
+		# Can be skipped by pressing any button
+		# Fades out into the main menu
+
+
 
 if __name__ == "__main__":
 	ui = UserInterface()
@@ -1029,15 +1360,11 @@ if __name__ == "__main__":
 
 '''
 TODO:
-NAME = Mire
-AI class
-	monsters sometimes attack other monsters
 Gough Ghast - boss
 Sir Kalagrain - boss, Knight
 Deacon Deleto - boss, Occultist 
 Wyrm - "W"
 Kalagrain Knights - attack together
-Snakemen - generic enemy "S"
 Angels and Demons - special enemies
 	drop Angel feathers and demon ribs
 Fire Elemental
@@ -1055,19 +1382,14 @@ Special Map Tiles:
 	Spikes "^"
 	Ice
 	Flowers '"'
-Level difficulty = Dungeon difficulty + floor
 Doors - object "+" when closed, "D" when open
 Special Door - object "="
 Talismans
 
-Throw - command
-Use - command
 "Leveling Up" with special items that perminantly increase a single stat
 
 LONG TERM TODO:
-Spells
-	Spells that you don't have the magic for drain health instead
-	Spell Upgrades
+
 Traps "^" or "*"
 	groups of traps:
 		single
@@ -1078,47 +1400,12 @@ Bonfires - object
 Regular Fires - object
 Oil - object, makes things flamable
 Alters - object
-Character Classes - only really effect beginning
-	Healer
-		Starts with Heal AOE
-	Priest
-		Starts with Blessed weapon
-	Occultist
-		Starts with powerful spells, but low magic, so they must rely on blood-casting
-	Alchemist
-		Starts with some potions identified
-	Magi
-		Starts with some spells and highest Magic
-	???
-		Starts with some monsters as nonhostiles
 
 Crafting
 vision cones
 	vision cone length
 	vision cone angle
 	visionConeIsVisible = False
-Subclasses for Level which:
-	decide which level generator to use
-	set the default color scheme in the UI object
-World Map Generator
-	procedurally generates regions around special locations
-Regions:
-	Swamp
-	Fen
-	Forest
-
-Special Locations/ Ruins (procedurally mapped, semi-planned):
-	Dungeons
-	Towns
-	Ruins
-	Burial Mounds
-	Temples
-	Pyramids
-
-Ingrediants
-	Sugar Vine
-	White Angelbell
-	Red Angelbell
 
 Dialogue trees
 	walk into NPCs to talk or press action button

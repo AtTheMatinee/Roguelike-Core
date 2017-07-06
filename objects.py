@@ -111,7 +111,8 @@ class Corpse(Container):
 
 
 class Pool(Object):
-	def __init__(self, game, x, y, char, name, color, blocks=False):
+	def __init__(self, game, x, y, name, color, blocks=False):
+		char = '~'
 		Object.__init__(self, game, x, y, char, name, color, blocks)
 		self.renderFirst()
 
@@ -135,7 +136,6 @@ class Explosion(Object):
 
 	def explode(self):
 		self.game._currentLevel.removeObject(self)
-		print 'explode'
 
 		cells = self.expand(self.x, self.y)
 
@@ -184,9 +184,112 @@ class Explosion(Object):
 
 
 class Cloud(Object):
-	def __init__(self, game, x, y, char, name, color, blocks=False):
+	def __init__(self, game, x, y, name, color, volume, blocks=False):
+		char = ' '
 		Object.__init__(self, game, x, y, char, name, color, blocks)
+		self.volume = volume
 		self.renderFirst()
-		
-		# Change Draw Method to alter the tile background instead of foreground
-		# add tick() method to dissipate the cloud
+		self.canExplode = False
+
+		self.diffusionRate = .1 # percent of the gass volume that is dissapated each tick
+		self.minThreshold = 0.3 # minimum value before a cell is removed from the list
+		self.cells = {(self.x,self.y): self.volume}
+
+
+	def tick(self):
+		# remove the cloud object it it has completely dissapated
+		if len(self.cells) < 1:
+			self.game._currentLevel.removeObject(self)
+			return
+
+		toBeDiffused = {}
+		toBeDiffused.update(self.cells)
+		while toBeDiffused:
+			cell = toBeDiffused.popitem()
+			x,y = cell[0]
+			# get adjacent cells
+			openCells = self.getNeighboringCells(x,y)
+			for tempCell in openCells:
+				if tempCell in self.cells:
+					# move volume from high volume to low volume
+					if cell[1] > self.cells[tempCell]:
+						self.cells[tempCell] += (self.diffusionRate*cell[1])
+
+				else:
+					self.cells[tempCell] = (self.diffusionRate*cell[1])
+
+				self.cells[cell[0]] -= (self.diffusionRate*cell[1]/1.5)
+
+		# remove the cells that are below the threshold
+		tempCells = {}
+		tempCells.update(self.cells)
+		for cell in tempCells:
+			if self.cells[cell] <= self.minThreshold:
+				# remove the cell
+				self.cells.pop(cell)
+
+
+		# effect objects within the explosion		
+		for obj in self.game._currentLevel._objects:
+			if obj != self and (obj.x,obj.y) in self.cells:
+				self.hitEffect(obj)
+
+	def getNeighboringCells(self,x,y):
+		openCells = set()
+		# check to see if the cells in the 8 directions around (x,y) are open
+		for dx in xrange(-1,2):
+			for dy in xrange(-1,2):
+				tempX = x+dx
+				tempY = y+dy
+
+				if self.game._currentLevel.getBlocksMovement(tempX,tempY) == False:
+					openCells.add((tempX,tempY))
+
+		return openCells
+
+	def draw(self):
+		for cell in self.cells:
+			x,y = cell
+
+			color = self.color*self.cells[cell]
+			if libtcod.map_is_in_fov(self.game.map.fov_map,x,y):
+				libtcod.console_set_char_background(self.game.ui.con, x, y, color, flag=libtcod.BKGND_SET)
+
+	def hitEffect(self,actor):
+		pass
+
+	def takeDamage(self,damage):
+		# Explodes if it takes fire damage
+		if self.canExplode == True and damage[2] >= 1: # if the cloud takes fire damage
+			self.canExplode = False
+			for cell in self.cells:
+				x,y = cell
+				Explosion(self.game,x,y,libtcod.flame,[5,0,2,0,0,0,0,0,0],5)
+				self.cells[cell] = 0
+
+
+class WaterCloud(Cloud):
+	def hitEffect(self,actor):
+		actor.addStatusEffect(statusEffects.Wet,3,False)
+
+
+class GlassCloud(Cloud):
+	def hitEffect(self,actor):
+		actor.takeDamage([2, 1, 0,0,0, 0.1, 0,0,0])
+
+class PoisonCloud(Cloud):
+	def __init__(self, game, x, y, name, color, volume, blocks=False):
+		Cloud.__init__(self, game, x, y, name, color, volume, blocks)
+		self.canExplode = True
+
+	def hitEffect(self,actor):
+		actor.takeDamage([0,0,0,0, 2, 0,0,0,0])
+
+
+class DamageCloud(Cloud):
+	def __init__(self, game, x, y, name, color, volume, damage, blocks=False):
+		Cloud.__init__(self, game, x, y, name, color, volume, blocks)
+		self.damage = damage
+
+	def hitEffect(self,actor):
+		actor.takeDamage(self.damage)

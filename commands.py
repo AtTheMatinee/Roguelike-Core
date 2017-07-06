@@ -14,6 +14,7 @@ import Items.rangedWeapons
 ====================
 Commands
 ====================
+TODO: implement no clip 
 '''
 
 class Command:
@@ -164,8 +165,28 @@ class AttackCommand(Command):
 		
 
 class CastSpellCommand(Command):
-	# actor, x, y
-	pass
+	def __init__(self, actor, spell):
+		self.actor = actor
+		self.game = actor.game
+		self.spell = spell
+
+		self.energyCost = 24
+
+	def perform(self):
+		if self.spell.cast() == True:
+
+			self.actor.energy -= self.energyCost
+			# set flags that change when a turn is taken
+			self.actor.hasTakenTurn()
+			
+			success = True
+			alternative = None
+
+		else:
+			success = False
+			alternative = None
+
+		return success, alternative
 
 
 class FireRangedWeaponCommand(Command):
@@ -291,6 +312,7 @@ class LoadRangedWeaponCommand(Command):
 
 		return success, alternative
 
+
 class UnloadRangedWeaponCommand(Command):
 	def __init__(self,actor, weapon):
 		self.actor = actor
@@ -319,6 +341,7 @@ class UnloadRangedWeaponCommand(Command):
 		self.actor.energy -= self.energyCost
 
 		return success, alternative
+
 
 class ThrowCommand(Command):
 	# TODO: special throw for Ammo

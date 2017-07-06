@@ -22,6 +22,8 @@ import actorSpawner
 
 import itemSpawner
 
+import spellSpawner
+
 import commands
 
 import statusEffects
@@ -59,6 +61,7 @@ class GameLoop:
 
 		self.actorSpawner = actorSpawner.ActorSpawner(self)
 		self.itemSpawner = itemSpawner.ItemSpawner(self)
+		self.spellSpawner = spellSpawner.SpellSpawner(self)
 		self.factions = factions.FactionTracker()
 		# !!! When I continue an old game, load saved game.factions._factions
 
@@ -120,15 +123,16 @@ class GameLoop:
 			# add the new line as a tuple with the text and the color
 			self._messages.append((line,color))
 
-	def newGame(self):
+	def newGame(self,heroClass,heroName):
 		for i in xrange(20):
 			self.map.createNewLevel() #the location of this will probably change
 		self.map.loadLevel(0)
 
-		heroName = "Hero"
+		if heroName == None:
+			heroName = "Hero"
 		heroX = self._currentLevel.stairsUp.x
 		heroY = self._currentLevel.stairsUp.y
-		self.hero = self.actorSpawner.spawn(heroX,heroY,heroName)
+		self.hero = self.actorSpawner.spawn(heroX,heroY,heroClass)
 		self.hero.name = heroName
 		#self.hero.addStatusEffect(statusEffects.Flaming,10,False)
 		#self.hero.addStatusEffect(statusEffects.Wet,10,False)

@@ -1,0 +1,42 @@
+'''
+spellSpawner.py
+'''
+import Items
+import libtcodpy as libtcod
+'''
+====================
+Spell Spawner
+====================
+'''
+class SpellSpawner:
+	def __init__(self,game):
+		self.game = game
+
+		self.spawnMethods = {
+			'Fireball':self.spawnFireball,
+			'Firebolt':self.spawnFirebolt,
+			'Self Heal':self.spawnSelfHeal
+		}
+
+	def spawn(self,caster,key):
+		if key in self.spawnMethods:
+			spell = self.spawnMethods[key](caster)
+
+			return spell
+
+		else:
+			print "Error: Cannot locate spell type '"+str(key)+"'"
+
+	# ==== Spawn Methods ====
+
+	def spawnFireball(self,caster):
+		spell = Items.spells.Fireball(self.game,"Fireball",caster)
+		return spell
+
+	def spawnFirebolt(self,caster):
+		spell = Items.spells.Firebolt(self.game,"Firebolt",caster)
+		return spell
+
+	def spawnSelfHeal(self,caster):
+		spell = Items.spells.SelfHeal(self.game,"Heal",caster)
+		return spell
