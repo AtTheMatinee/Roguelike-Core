@@ -24,27 +24,28 @@ class ItemSpawner:
 			so that the item can mutate into similar items, but other items cannot mutate into it.
 		'''
 		self._lootHeirarchy = {
-		'Item':[None,['Potion','Equipment','Ammo']], #'_Special','Food'
+		'Item':[None,['Potion','Equipment','Ammo']], #'_Special','Food','Magic Item'
 
 		'Potion':['Item',['Medicine','Toxin']], #'_Special'
-		'Medicine':['Potion',['Health Potion','Firebrew Potion','Antidote','Permafrost Potion']],
-		'Toxin':['Potion',['Poison']],
+		'Medicine':['Potion',['Health Potion','Antidote']],
+		'Toxin':['Potion',['Poison','Firebrew Potion','Permafrost Potion']],
 		'Health Potion':['Medicine',[]],
 		'Poison':['Toxin',[]],
-		'Firebrew Potion':['Medicine',[]],
-		'Permafrost Potion':['Medicine',[]],
+		'Firebrew Potion':['Toxin',[]],
+		'Permafrost Potion':['Toxin',[]],
 		'Antidote':['Medicine',[]],
 
 		'Equipment':['Item',['Weapon','Armor']], # Rings
 
 		'Weapon':['Equipment',['Melee Weapon','Ranged Weapon']],
-		'Melee Weapon':['Weapon',['Heavy Weapon','Light Weapon']],
-		'Heavy Weapon':['Weapon',['Mace']], # Axe, Club, Hammer, Maul, Halbard, Scythe, Morning Star,
-		'Light Weapon':['Weapon',['Dagger','Sword','Spear']], # Machete, Staff, Claw, Hook, Curved Sword, Estoc, 
+		'Melee Weapon':['Weapon',['Heavy Weapon','Light Weapon','Pole Arm']],
+		'Heavy Weapon':['Weapon',['Mace']], # Axe, Club, Hammer, Maul, Morning Star,
+		'Light Weapon':['Weapon',['Dagger','Sword']], # Machete, Staff, Claw, Hook, Curved Sword, Estoc,
+		'Pole Arm':['Weapon',['Spear']], # Halbard, Scythe
 		'Ranged Weapon':['Weapon',['Light Crossbow']],
 		'Dagger':['Light Weapon',[]],
 		'Mace':['Heavy Weapon',[]],
-		'Spear':['Light Weapon',[]],
+		'Spear':['Pole Arm',[]],
 		'Sword':['Light Weapon',[]],
 		'Serpent Sword':['Light Weapon',[]], # This was intentionally left out of 'Light Weapon' children
 		'Light Crossbow':['Ranged Weapon',[]],

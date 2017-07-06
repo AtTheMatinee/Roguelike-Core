@@ -60,6 +60,7 @@ class Map:
 		#self.loadLevel(depth)
 
 	def loadLevel(self,index):
+		# TODO: Loading Screen
 		level = self._levels[index]
 
 		self.game._currentLevel = level

@@ -16,6 +16,7 @@ class StatsTable:
 		"healthMax":10,
 		"magicCurrent":0,
 		"magicMax":0,
+		"magicRegen":0.1,
 		"speed":6,
 		"attack":[2,0,0,0,0,0,0,0,0],
 		"attackSpeed":0,
@@ -28,6 +29,7 @@ class StatsTable:
 		"healthMax":20,
 		"magicCurrent":0,
 		"magicMax":15,
+		"magicRegen":0.2,
 		"speed":6,
 		"attack":[8.0,0,0,0,0,0,0,0,0],
 		"attackSpeed":-4,
@@ -40,6 +42,7 @@ class StatsTable:
 		"healthMax":10,
 		"magicCurrent":0,
 		"magicMax":20,
+		"magicRegen":0.5,
 		"speed":6,
 		"attack":[4.0,0,0,0,0,0,0,4,0],
 		"attackSpeed":0,
@@ -50,8 +53,165 @@ class StatsTable:
 		{
 		"healthCurrent":20,
 		"healthMax":20,
+		"magicCurrent":0,
+		"magicMax":10,
+		"magicRegen":0.01,
+		"speed":6,
+		"attack":[2,0,0,0,0,0,0,0,0],
+		"attackSpeed":0,
+		"defense":[2,0,0,0,0,0,0],
+		"critChance":0.05
+		},
+	'Hero Alchemist':
+		{
+		"healthCurrent":15,
+		"healthMax":15,
+		"magicCurrent":0,
+		"magicMax":10,
+		"magicRegen":0.01,
+		"speed":6,
+		"attack":[2,0,0,0,0,0,0,0,0],
+		"attackSpeed":0,
+		"defense":[2,0,0,0,0,0,0],
+		"critChance":0.05
+		},
+	'Hero Arbalest':
+		{
+		"healthCurrent":20,
+		"healthMax":20,
+		"magicCurrent":0,
+		"magicMax":5,
+		"magicRegen":0.01,
+		"speed":6,
+		"attack":[2,0,0,0,0,0,0,0,0],
+		"attackSpeed":0,
+		"defense":[2,0,0,0,0,0,0],
+		"critChance":0.05
+		},
+	'Hero Assassin':
+		{
+		"healthCurrent":12,
+		"healthMax":12,
+		"magicCurrent":0,
+		"magicMax":5,
+		"magicRegen":0.01,
+		"speed":6,
+		"attack":[2,1,0,0,0,0,0,0,0],
+		"attackSpeed":0,
+		"defense":[2,0,0,0,0,0,0],
+		"critChance":0.05
+		},
+	'Hero Barbarian':
+		{
+		"healthCurrent":20,
+		"healthMax":20,
+		"magicCurrent":0,
+		"magicMax":10,
+		"magicRegen":0.01,
+		"speed":6,
+		"attack":[3,0,0,0,0,0,0,0,0],
+		"attackSpeed":0,
+		"defense":[2,0,0,0,0,0,0],
+		"critChance":0.05
+		},
+	'Hero Cleric':
+		{
+		"healthCurrent":20,
+		"healthMax":20,
+		"magicCurrent":0,
+		"magicMax":10,
+		"magicRegen":0.01,
+		"speed":6,
+		"attack":[2,0,0,0,0,0,0,1,0],
+		"attackSpeed":0,
+		"defense":[2,0,0,0,0,0,0],
+		"critChance":0.05
+		},
+	'Hero Houndmaster':
+		{
+		"healthCurrent":15,
+		"healthMax":15,
+		"magicCurrent":0,
+		"magicMax":10,
+		"magicRegen":0.01,
+		"speed":6,
+		"attack":[2,0,0,0,0,0,0,0,0],
+		"attackSpeed":0,
+		"defense":[2,0,0,0,0,0,0],
+		"critChance":0.05
+		},
+	'Hero Knight':
+		{
+		"healthCurrent":20,
+		"healthMax":20,
+		"magicCurrent":0,
+		"magicMax":10,
+		"magicRegen":0.01,
+		"speed":6,
+		"attack":[2,0,0,0,0,0,0,0,0],
+		"attackSpeed":0,
+		"defense":[2,0,0,0,0,0,0],
+		"critChance":0.05
+		},
+	'Hero Occultist':
+		{
+		"healthCurrent":15,
+		"healthMax":15,
+		"magicCurrent":0,
+		"magicMax":8,
+		"magicRegen":0.015,
+		"speed":6,
+		"attack":[2,0,0,0,0,0,0,0,0],
+		"attackSpeed":0,
+		"defense":[2,0,0,0,0,0,0],
+		"critChance":0.1
+		},
+	'Hero Magician':
+		{
+		"healthCurrent":12,
+		"healthMax":12,
+		"magicCurrent":0,
+		"magicMax":15,
+		"magicRegen":0.01,
+		"speed":6,
+		"attack":[2,0,0,0,0,0,0,0,0],
+		"attackSpeed":0,
+		"defense":[2,0,0,0,0,0,0],
+		"critChance":0.05
+		},
+	'Hero Mercenary':
+		{
+		"healthCurrent":20,
+		"healthMax":20,
+		"magicCurrent":0,
+		"magicMax":10,
+		"magicRegen":0.01,
+		"speed":6,
+		"attack":[2,0,0,0,0,0,0,0,0],
+		"attackSpeed":0,
+		"defense":[2,0,0,0,0,0,0],
+		"critChance":0.05
+		},
+	'Hero Specialist':
+		{
+		"healthCurrent":15,
+		"healthMax":15,
+		"magicCurrent":0,
+		"magicMax":10,
+		"magicRegen":0.01,
+		"speed":6,
+		"attack":[2,0,0,0,0,0,0,0,0],
+		"attackSpeed":0,
+		"defense":[2,0,0,0,0,0,0],
+		"critChance":0.05
+		},
+	'Hero Systems Test':
+		{
+		"healthCurrent":20,
+		"healthMax":20,
 		"magicCurrent":10,
 		"magicMax":10,
+		"magicRegen":0.01,
 		"speed":6,
 		"attack":[2,0,0,0,0,0,0,0,0],
 		"attackSpeed":0,
@@ -64,6 +224,7 @@ class StatsTable:
 		"healthMax":10,
 		"magicCurrent":0,
 		"magicMax":0,
+		"magicRegen":0.1,
 		"speed":5,
 		"attack":[0,0,0,0,2,0,0,0,0],
 		"attackSpeed":0,
@@ -76,6 +237,7 @@ class StatsTable:
 		"healthMax":6,
 		"magicCurrent":0,
 		"magicMax":0,
+		"magicRegen":0.1,
 		"speed":8,
 		"attack":[2,0,0,0,0,0.1,0,0,0],
 		"attackSpeed":2,
@@ -88,6 +250,7 @@ class StatsTable:
 		"healthMax":26,
 		"magicCurrent":0,
 		"magicMax":0,
+		"magicRegen":0.1,
 		"speed":10,
 		"attack":[12,4,0,0,0,0.1,0,0,0],
 		"attackSpeed":2,
@@ -100,6 +263,7 @@ class StatsTable:
 		"healthMax":20,
 		"magicCurrent":0,
 		"magicMax":0,
+		"magicRegen":0.2,
 		"speed":5,
 		"attack":[4,0,0,0,0,0,0,0,0],
 		"attackSpeed":-4,
@@ -117,6 +281,7 @@ class Stats:
 
 	def initializeStats(self,statTableID):
 		if statTableID not in StatsTable.data:
+			print "Error: "+statTableID + " was not found."
 			statTableID = "None"
 
 		for stat,value in StatsTable.data[statTableID].items():

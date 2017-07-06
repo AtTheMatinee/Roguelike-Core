@@ -17,7 +17,7 @@ import statusEffects
 import libtcodpy as libtcod
 
 class Actor(Object):
-	def __init__(self, game, x, y, char, name, color, level, faction = None, blocks=True, properNoun = False, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, canEquipArmor = False, canEquipWeapons = False, playerControlled = False):
+	def __init__(self, game, x, y, char, name, color, level, faction = None, blocks=True, properNoun = False, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, spells = [], canEquipArmor = False, canEquipWeapons = False, playerControlled = False):
 		self.game = game
 		self.x = x
 		self.y = y
@@ -52,6 +52,7 @@ class Actor(Object):
 		self.inventorySize = inventorySize
 		self.inventory = []
 		self.drops = drops
+		self.spells = []
 
 		self.equipSlots = [None]*6
 		self.canEquipArmor = canEquipArmor
@@ -101,6 +102,7 @@ class Actor(Object):
 
 	def hasTakenTurn(self):
 		# Magic Regen
+		self.gainMagic(self.stats.get('magicRegen')*self.stats.get('magicMax'))
 
 		# process status effects
 		if self.statusEffects:
@@ -167,6 +169,10 @@ class Actor(Object):
 	def heal(self,healValue):
 		health =  min((self.stats.get("healthCurrent") + healValue), self.stats.get('healthMax'))
 		self.stats.setBaseStat("healthCurrent",health)
+
+	def gainMagic(self,magicGain):
+		magic =  min((self.stats.get("magicCurrent") + magicGain), self.stats.get('magicMax'))
+		self.stats.setBaseStat("magicCurrent",magic)
 
 	def checkDeath(self):
 		if (self.stats.get("healthCurrent") <= 0):
@@ -236,6 +242,27 @@ class Actor(Object):
 			#self.equipSlots[slot] = item
 		self.equipSlots[item.equipSlot] = item
 		self.stats.addModifier(item,item.modifier)
+
+	def findTarget(self):
+		targetX = None
+		targetY = None
+		if self.playerControlled == True:
+			targetX,targetY = self.game.ui.targetTile()
+
+		else:
+			fov = self.game.map.fov_map
+			if libtcod.map_is_in_fov(fov,self.x,self.y) and self.state != None:
+				if self.state.canTargetNemesis(self):
+					target = self.mostRecentAttacker
+
+				elif self.state.hostileToHero(self):
+					target = self.game.hero
+
+			if target != None:
+				targetX = target.x
+				targetY = target.y
+
+		return targetX,targetY
 
 class Hero(Actor):
 	#TODO: the hero gains experience (1 per enemy killed that is a higher level than the hero)

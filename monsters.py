@@ -7,6 +7,22 @@ from actors import Monster
 Monsters
 ====================
 '''
+class Animal(Monster):
+	pass
+
+class Dog(Animal):
+	pass
+
+class Elemental(Monster):
+	def hasTakenTurn(self):
+		self.takeDamage([0,0,0,0,0,0,0,0,2])
+		Monster.hasTakenTurn(self)
+
+	# Takes damage every turn
+	# heals 100% from their element
+	# have a lot of elemental spells
+	# have a spell that casts their elemental status effect on themself so they heal while it's in effect
+
 
 class Ghost(Monster):
 	def takeDamage(self, damage):
@@ -54,12 +70,6 @@ class Ghost(Monster):
 		self.stats.setBaseStat("healthCurrent",health)
 		self.checkDeath()
 
-class Elemental(Monster):
-	def hasTakenTurn(self):
-		self.takeDamage([0,0,0,0,0,0,0,0,2])
-		Monster.hasTakenTurn(self)
 
-	# Takes damage every turn
-	# heals 100% from their element
-	# have a lot of elemental spells
-	# have a spell that casts their elemental status effect on themself so they heal while it's in effect
+class Snakeman(Monster):
+	pass
