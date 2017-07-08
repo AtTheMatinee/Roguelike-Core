@@ -11,6 +11,7 @@ Damage is tied to caster level (and maybe caster damage stat)
 '''
 import libtcodpy as libtcod
 import objects
+import statusEffects
 '''
 ====================
 Spells
@@ -228,6 +229,26 @@ class Explode(ExplosionSpell):
 		self.volume = self.volume = 10 + 3*level
 
 		ExplosionSpell.effect(self,x,y,level)
+
+class TurnInvisible(Spell):
+	def __init__(self, game, name, caster):
+		Spell.__init__(self, game, name, caster)
+
+		self.requiresTarget = False
+		self.range = 1
+		self.magicCost = 50
+
+	def effect(self,x,y,level):
+		timer = 7 + (3*level)
+		self.caster.addStatusEffect(statusEffects.Invisible,timer,True)
+		success = True
+
+		if success == True:
+			self.game.message(self.caster.getName(True).title()+" casts "+self.name+".",libtcod.purple)
+			self.subtractMagicCost()
+
+		return success
+
 
 # ==== Fire ====
 class Firebolt(ProjectileSpell):

@@ -44,8 +44,11 @@ class AI(State):
 			if self.canTargetNemesis(actor):
 				target = actor.mostRecentAttacker
 
-			elif self.hostileToHero(actor):
+			elif (self.hostileToHero(actor) and
+				(self.canTargetHero(actor)) ):
 				target = actor.game.hero
+
+			#elif friendInRange and canTargetNemesis(friend) (attack the friend's nemesis)
 
 		if (target == None):
 			if self.shouldManageEquipment(actor):
@@ -116,7 +119,16 @@ class AI(State):
 	def canTargetNemesis(self,actor):
 		# returns True if the last thing to attack the actor is still alive
 		if ( (actor.mostRecentAttacker != None) and
-			(actor.mostRecentAttacker in actor.game._currentLevel._objects) ):
+			(actor.mostRecentAttacker in actor.game._currentLevel._objects) and
+			(actor.mostRecentAttacker.invisible == False) ):
+			return True
+		else:
+			return False
+
+	def canTargetHero(self,actor):
+		# returns True if the hero is still alive and not invisible
+		if ((actor.game.hero in actor.game._currentLevel._objects) and
+			(actor.game.hero.invisible == False) ):
 			return True
 		else:
 			return False

@@ -16,7 +16,8 @@ class SpellSpawner:
 			'Explode':self.spawnExplode,
 			'Fireball':self.spawnFireball,
 			'Firebolt':self.spawnFirebolt,
-			'Self Heal':self.spawnSelfHeal
+			'Self Heal':self.spawnSelfHeal,
+			'Invisibility':self.spawnInvisibility
 		}
 
 	def spawn(self,caster,key):
@@ -44,4 +45,8 @@ class SpellSpawner:
 
 	def spawnSelfHeal(self,caster):
 		spell = Items.spells.SelfHeal(self.game,"Heal",caster)
+		return spell
+
+	def spawnInvisibility(self,caster):
+		spell = Items.spells.TurnInvisible(self.game,"Invisibility",caster)
 		return spell

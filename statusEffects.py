@@ -198,6 +198,32 @@ class Wet(StatusEffect):
 		self.actor.removeStatusEffect(self)
 		self.game.message(self.actor.getName(True).title()+" is no longer soaked.",libtcod.light_violet)
 
+class Invisible(StatusEffect):
+	def __init__(self,actor,timer):
+		StatusEffect.__init__(self,actor,timer)
+
+		# message
+		if self.actor.invisible == False:
+			self.actor.invisible = True
+
+			self.game.message(self.actor.getName(True).title()+" is invisible.",libtcod.violet)
+
+	def effect(self):
+		if self.timer == 0:
+			self.remove()
+			if not any(isinstance(se,Invisible) for se in self.actor.statusEffects):
+				self.actor.invisible = False
+			return
+
+		if self.actor.invisible == False:
+			self.actor.invisible = True
+
+		if self.timer > 0: self.timer -= 1
+
+	def remove(self):
+		self.actor.removeStatusEffect(self)
+		self.game.message(self.actor.getName(True).title()+" is no longer invisible.",libtcod.light_violet)
+
 # ==== Buffs ====
 
 # ==== Debuffs ====
