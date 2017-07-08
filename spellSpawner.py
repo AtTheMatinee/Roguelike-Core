@@ -13,6 +13,7 @@ class SpellSpawner:
 		self.game = game
 
 		self.spawnMethods = {
+			'Explode':self.spawnExplode,
 			'Fireball':self.spawnFireball,
 			'Firebolt':self.spawnFirebolt,
 			'Self Heal':self.spawnSelfHeal
@@ -28,6 +29,10 @@ class SpellSpawner:
 			print "Error: Cannot locate spell type '"+str(key)+"'"
 
 	# ==== Spawn Methods ====
+
+	def spawnExplode(self,caster):
+		spell = Items.spells.Explode(self.game,"Explode",caster)
+		return spell
 
 	def spawnFireball(self,caster):
 		spell = Items.spells.Fireball(self.game,"Fireball",caster)

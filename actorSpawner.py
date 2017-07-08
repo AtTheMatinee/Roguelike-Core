@@ -117,14 +117,14 @@ class ActorSpawner:
 		hero.deathState = states.DeathState(hero)
 		
 		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Wooden Crossbow',0,False)
+		weapon = self.game.itemSpawner.spawn(x,y,'Light Crossbow',0,False)
 		hero.equipItem(weapon)
 
 		armor = self.game.itemSpawner.spawn(x,y,'Light Armor',0,False)
 		hero.equipItem(armor)
 
 		# add items to inventory
-		for item in [('Potion',0),('Wooden Bolt',0),('Wooden Bolt'),('Steel Bolt',0)]:
+		for item in [('Potion',0),('Wooden Bolt',0),('Wooden Bolt',0),('Steel Bolt',0)]:
 			gear,itemLevel = item
 			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
 			g.moveToInventory(hero)
@@ -368,7 +368,7 @@ class ActorSpawner:
 		return hero
 
 	def spawnHeroTest(self,x,y,level):
-		hero = actors.Hero(self.game,x,y,'@',"Hero",libtcod.white,level,faction = "Hero",stats = actorStats.Stats("Hero"),surviveMortalWound = True, inventorySize = 20, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
+		hero = actors.Hero(self.game,x,y,'@',"Hero",libtcod.white,level,faction = "Hero",stats = actorStats.Stats("Hero Systems Test"),surviveMortalWound = True, inventorySize = 20, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
 		
 		# add equipment
@@ -386,7 +386,7 @@ class ActorSpawner:
 			#g.__class__.identified = True
 
 		# add starting spells
-		for spell in ['Self Heal','Firebolt','Fireball']:
+		for spell in ['Self Heal','Firebolt','Fireball','Explode']:
 			s = self.game.spellSpawner.spawn(hero, spell)
 			hero.spells.append(s)
 

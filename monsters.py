@@ -70,6 +70,8 @@ class Ghost(Monster):
 		self.stats.setBaseStat("healthCurrent",health)
 		self.checkDeath()
 
+class Rougarou(Animal):
+	pass
 
 class Snakeman(Monster):
 	pass

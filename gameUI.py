@@ -3,6 +3,8 @@ gameUI.py
 '''
 import libtcodpy as libtcod
 
+import textbox
+
 import random
 
 from config import *
@@ -14,6 +16,9 @@ import statusEffects
 import Items
 
 import objects
+
+import descriptions
+
 #import actors
 
 #import worldMap
@@ -43,7 +48,8 @@ class UserInterface:
 		# System Initialization
 		# =====================
 		libtcod.console_set_custom_font('arial10x10.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
-		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'python/libtcod tutorial', False) #TODO: Change Game Name
+		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'MIRE', False) 
+		libtcod.sys_set_fps(FRAMERATE_LIMIT)
 		self.con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 		
 		# bottom panel
@@ -90,6 +96,8 @@ class UserInterface:
 		# ====================
 
 		# Menu
+		splash = SplashScreen(self)
+		splash.process()
 		main = MainMenu(self)
 		main.process()
 
@@ -469,7 +477,8 @@ class UserInterface:
 				libtcod.console_set_char_background(self.window, lineX, lineY, UI_PRIMARY_COLOR, libtcod.BKGND_SET)
 
 				if ((self.game._currentLevel.getHasObject(lineX,lineY)) or
-					not libtcod.map_is_in_fov(self.game.map.fov_map, lineX, lineY) ):
+					not libtcod.map_is_in_fov(self.game.map.fov_map, lineX, lineY) or
+					((maxRange != None) and (self.game.hero.chessboardDistance(lineX,lineY) >= maxRange)) ):
 					break
 				lineX,lineY = libtcod.line_step()
 
@@ -477,7 +486,7 @@ class UserInterface:
 
 			if ( (self.mouse.lbutton_pressed) and
 			 (libtcod.map_is_in_fov(self.game.map.fov_map,x,y)) and
-			 (maxRange == None or self.game.hero.distance(x,y) <= maxRange) ):
+			 (maxRange == None or (self.game.hero.chessboardDistance(x,y) <= maxRange)) ):
 				libtcod.console_delete(self.window)
 				return (x,y)
 
@@ -690,6 +699,19 @@ class UserInterface:
 				color = statColors[6+i]
 				libtcod.console_set_default_foreground(panel,color)
 				libtcod.console_print_ex(panel, x, y, libtcod.BKGND_NONE, libtcod.LEFT, text)
+
+		# Experience
+		y += 2
+		exp = hero.experience
+		expToNextLevel = '?'
+		libtcod.console_set_default_foreground(panel,libtcod.white)
+		libtcod.console_print_ex(panel, 3, y, libtcod.BKGND_NONE, libtcod.LEFT, 'EXP: '+str(exp)+'/'+str(expToNextLevel))
+
+		# Floor
+		#y += 2
+		#depth = self.game._currentLevel.levelDepth +1
+		#libtcod.console_print_ex(panel, 3, y, libtcod.BKGND_NONE, libtcod.LEFT, 'Depth: '+str(depth))
+
 
 	def recomputeHeroStatusEffects(self,hero):
 		# use a bitmask to keep track of which status effects the hero is aflicted with.
@@ -962,8 +984,13 @@ class KeyboardCommands:
 		ui.fovRecompute = True
 
 	def FireRangedWeapon(self,ui,hero):
+		if hero.equipSlots[2] != None and isinstance(hero.equipSlots[2],Items.rangedWeapons.RangedWeapon):
+			maxRange = hero.equipSlots[2].maxRange
+		else:
+			maxRange = None
+
 		target = None
-		targetX,targetY = ui.targetTile()
+		targetX,targetY = ui.targetTile(maxRange)
 		if targetX != None:
 			for actor in ui.game._currentLevel._actors:
 				if actor.x == targetX and actor.y == targetY:
@@ -973,11 +1000,12 @@ class KeyboardCommands:
 			hero.setNextCommand(commands.FireRangedWeaponCommand(hero,target))
 
 	def test1(self,ui,hero):
-		objects.PoisonCloud(ui.game, hero.x, hero.y, 'cloud', libtcod.green, 20)
+		pass 
+		#objects.PoisonCloud(ui.game, hero.x, hero.y, 'cloud', libtcod.green, 20)
+		objects.Fire(ui.game, hero.x, hero.y,'torch',libtcod.flame)
 
 	def test2(self,ui,hero):
-		spell = ui.game.spellSpawner.spawn(hero,"Self Heal")
-		spell.cast()
+		pass
 
 class MainMenu:
 	def __init__(self,ui):
@@ -1100,6 +1128,21 @@ class NewGameMenu:
 			'Systems Test'
 		]
 
+		self.descriptions = {
+			'Alchemist':'001',
+			'Arbalest':'002',
+			'Assassin':'003',
+			'Barbarian':'004',
+			'Cleric':'005',
+			'Houndmaster':'006',
+			'Knight':'007',
+			'Occultist':'008',
+			'Magician':'009',
+			'Mercenary':'010',
+			'Specialist':'011',
+			'Systems Test':'000'
+		}
+
 		self.seed = random.random()
 		self.heroName = 'Hero'
 		self.selection = 0
@@ -1144,9 +1187,11 @@ class NewGameMenu:
 		while not libtcod.console_is_window_closed():
 			self.renderLogo()			
 
+			# ==== Render Left Window
 			self.renderLeftWindow()
 
 			# ==== Render Right Window ====
+			self.renderRightWindow()
 
 			# ==== Render Bottom Window ====
 			self.renderBottomWindow()
@@ -1168,10 +1213,26 @@ class NewGameMenu:
 					self.cursor = (self.cursor+1) % (len(self.heroClasses)+4)
 
 				# select options
+				# choose class
 				if ( (self.ui.keyboard.vk == libtcod.KEY_ENTER) and
 					(self.cursor < len(self.heroClasses))):
 					self.selection = self.cursor
 
+				# enter seed
+				if ( (self.ui.keyboard.vk == libtcod.KEY_ENTER) and
+					(self.cursor == len(self.heroClasses))):						
+					
+					text = self.textbox(0,24,1,self.seedX,self.seedY,UI_PRIMARY_COLOR)
+					if len(text) > 0:
+						self.seed = text
+
+				# enter hero name
+				if ( (self.ui.keyboard.vk == libtcod.KEY_ENTER) and
+					(self.cursor == len(self.heroClasses)+3)):
+
+					text = self.textbox(0,18,1,self.heroNameX,self.heroNameY,UI_PRIMARY_COLOR)
+					if len(text) > 0:
+						self.heroName = text
 
 				if ( (self.ui.keyboard.c == ord('c')) or
 					( (self.ui.keyboard.vk == libtcod.KEY_ENTER) and
@@ -1247,6 +1308,8 @@ class NewGameMenu:
 		for i in xrange(10):
 			libtcod.console_put_char_ex(leftWindow, 1+i, y, 196, UI_PRIMARY_COLOR, libtcod.BKGND_NONE)
 		y += 2
+		textboxOffset = y # used to create a text box over the seed
+		
 		# print the seed
 		text = str(self.seed)
 		if self.cursor == len(self.heroClasses):
@@ -1258,9 +1321,53 @@ class NewGameMenu:
 
 		# blit the window to the root
 		x = SCREEN_WIDTH/8
+		self.seedX = x + 2 # used to create a text box over the seed
 		y = min((SCREEN_HEIGHT*3/7),(SCREEN_HEIGHT - leftWindowHeight))
+		self.seedY = y + textboxOffset # used to create a text box over the seed
 		libtcod.console_blit(leftWindow, 0, 0, leftWindowWidth, leftWindowHeight, 0, x, y, 1.0, 0.6)
 		libtcod.console_delete(leftWindow)
+
+	def renderRightWindow(self):
+		rightWindowWidth = 24
+		rightWindowHeight = 32
+
+		# ==== Render Right Window ====
+		rightWindow = libtcod.console_new(rightWindowWidth,rightWindowHeight)
+
+		libtcod.console_set_default_foreground(rightWindow, UI_PRIMARY_COLOR)
+
+
+		# ==== Print Hero Name ====
+		text = str(self.heroName)
+		if self.cursor == len(self.heroClasses)+3:
+			text = '@ '+ text 
+		else:
+			text = '  '+ text
+		libtcod.console_print_ex(rightWindow, rightWindowWidth/2-2, 1, libtcod.BKGND_NONE, libtcod.CENTER, text)
+
+		# ==== Draw line ====
+		for i in xrange(rightWindowWidth-2):
+			libtcod.console_put_char_ex(rightWindow, 1+i, 3, 196, UI_PRIMARY_COLOR, libtcod.BKGND_NONE)
+
+		# ==== Print Class Descriptions ====
+		heroClass = self.heroClasses[self.selection]
+		key = self.descriptions[heroClass]
+		text = descriptions.get(key)
+
+		#libtcod.console_print_ex(rightWindow, 3, 5, libtcod.BKGND_NONE, libtcod.LEFT, text)
+		libtcod.console_print_ex(rightWindow, rightWindowWidth/2, 5, libtcod.BKGND_NONE, libtcod.CENTER, text)
+
+
+		# blit the window to the root
+		x = SCREEN_WIDTH*7/8 - rightWindowWidth
+		self.heroNameX = 4 + x # used to create a text box over the hero name
+
+		y = min((SCREEN_HEIGHT*3/7),(SCREEN_HEIGHT - rightWindowHeight))
+		self.heroNameY = 1 + y # used to create a text box over the hero name
+
+		libtcod.console_blit(rightWindow, 0, 0, rightWindowWidth, rightWindowHeight, 0, x, y, 1.0, 0.6)
+		libtcod.console_delete(rightWindow)
+
 
 	def renderBottomWindow(self):
 		bottomWindowHeight = 7
@@ -1313,6 +1420,12 @@ class NewGameMenu:
 		libtcod.console_blit(bottomWindow, 0, 0, bottomWindowWidth, bottomWindowHeight, 0, x, y, 1.0, 0.6)
 		libtcod.console_delete(bottomWindow)
 
+	def textbox(self,console,width,height,x,y,color):
+		t = textbox.Textbox(width,height)
+		while True:
+			text = t.update(console, x, y, UI_PRIMARY_COLOR)
+			if text != None:
+				return text
 
 class OptionsMenu:
 	def __init__(self,ui):
@@ -1347,11 +1460,23 @@ class SplashScreen:
 	def __init__(self,ui):
 		self.ui = ui
 
+	def process(self):
 		# Plays before the main menu
 		# (C)ontinue (actually works with any key)
 		# Can be skipped by pressing any button
 		# Fades out into the main menu
 
+		logoLength = len(LOGO[0])
+		logo = libtcod.console_new(logoLength,20)
+		
+		y=0
+		for line in LOGO:
+			libtcod.console_print_ex(logo, 0, y, libtcod.BKGND_NONE, libtcod.LEFT, line)
+			y += 1
+
+		logoX = (SCREEN_WIDTH-logoLength)/2
+		libtcod.console_blit(logo,0,0,logoLength,20,0,logoX,10,1,0)
+		libtcod.console_delete(logo)
 
 
 if __name__ == "__main__":
@@ -1409,4 +1534,18 @@ vision cones
 
 Dialogue trees
 	walk into NPCs to talk or press action button
+'''
+'''
+Entrance to the dungeon
+.............
+..#########..
+..#.......#..
+..#.&...&.#..
+..#.......#..
+..#...>...#..
+..#.......#..
+..#.&...&.#..
+..#.......#..
+.............
+
 '''

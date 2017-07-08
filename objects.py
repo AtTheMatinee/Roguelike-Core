@@ -8,6 +8,7 @@ Objects
 ====================
 '''
 import libtcodpy as libtcod
+import random
 import math
 
 class Object(object):
@@ -57,6 +58,9 @@ class Object(object):
 		dx = x-self.x
 		dy = y-self.y
 		return math.sqrt(dx**2 + dy**2)
+
+	def chessboardDistance(self,x,y):
+		return max(abs(self.x-x), abs(self.y-y))
 
 	def getNearbyActors(self):
 		nearbyActors = []
@@ -123,6 +127,51 @@ class Pool(Object):
 					# apply wet status effect to actor
 					actor.addStatusEffect(statusEffects.Wet,15,False)
 
+class Fire(Object):
+	def __init__(self,game,x,y,name,color):
+		self.baseColor = color
+		self.charList = ['&','&','&','&','&','&','&','&',';',"'","`",' ']
+		self.charIndex = 0
+		self.animationFrameCounter = random.randint(0, 60)
+
+		Object.__init__(self, game, x, y, self.charList[0], name, color)
+		self.renderFirst()
+
+	def tick(self):
+		# effect objects within the explosion		
+		for obj in self.game._currentLevel._objects:
+			if obj != self and (obj.x == self.x) and (obj.y == self.y):
+				obj.takeDamage([0,0,4,0,0,0,0,0,0])
+				if isinstance(obj, Pool):
+					self.game.removeObject(self)
+					self.game._currentLevel.removeObject(self)
+
+	def draw(self):
+		if (libtcod.map_is_in_fov(self.game.map.fov_map, self.x, self.y) or
+			(self.alwaysVisible == True) and self.game._currentLevel.getHasBeenExplored(self.x,self.y)):
+
+			self.animationFrameCounter = (self.animationFrameCounter+1) % 90
+			if self.animationFrameCounter == 0:
+				# Advance the animation indices
+				self.charIndex = (self.charIndex+1) % len(self.charList)
+
+				# Advance the animation frames
+				self.char = self.charList[self.charIndex]
+				self.color = self.baseColor * (0.75 + (random.random()/2))
+
+			libtcod.console_set_default_foreground(self.game.ui.con, self.color)
+			libtcod.console_put_char(self.game.ui.con, self.x, self.y, self.char, libtcod.BKGND_NONE)
+
+		elif self.charIndex != 0: 
+			self.charIndex = 0
+
+	def takeDamage(self,damage):
+		phyDam = damage[0]
+		fireDam = damage[2]
+		frostDam = damage[3]
+		if phyDam > fireDam or frostDam > fireDam:
+			self.game.removeObject(self)
+			self.game._currentLevel.removeObject(self)
 
 class Explosion(Object):
 	def __init__(self, game, x, y, color, damage, volume):
@@ -293,3 +342,8 @@ class DamageCloud(Cloud):
 
 	def hitEffect(self,actor):
 		actor.takeDamage(self.damage)
+
+class SmokeCloud(Cloud):
+	pass
+	# renders any object within the cloud invisible
+	# requires that i first make an invisible status effect
