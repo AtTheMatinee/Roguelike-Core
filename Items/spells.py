@@ -17,6 +17,8 @@ Spells
 ====================
 '''
 
+# ==== Spell Templates ====
+
 class Spell:
 	def __init__(self, game, name, caster):
 		self.game = game
@@ -33,7 +35,8 @@ class Spell:
 		# Otherwise the target defaults to the caster
 		if x == None or y == None:
 			if self.requiresTarget == True:
-				x,y = self.caster.findTarget()
+				x,y = self.caster.findTarget(self.range)
+				if x == None: return False # target tile was aborted
 			else:
 				x = self.caster.x
 				y = self.caster.y
@@ -69,11 +72,16 @@ class ProjectileSpell(Spell):
 
 		self.magicCost = 12
 		self.requiresTarget = True
+		self.range = 10
 
 		self.damage = [5,0,0,0,0,0,0,0,0]
 	
 	def effect(self,x,y,level):
 		success = False
+
+		if self.caster.chessboardDistance(x,y) > self.range:
+			self.game.message("Target is too far away.")
+			return False
 
 		# Check for los to tile
 		libtcod.line_init(self.caster.x, self.caster.y, x, y)
@@ -103,6 +111,26 @@ class ProjectileSpell(Spell):
 
 		return success
 
+class ExplosionSpell(Spell):
+	def __init__(self, game, name, caster):
+		Spell.__init__(self, game, name, caster)
+
+		self.magicCost = 12
+		self.requiresTarget = False
+
+		self.damage = [20,10,2,0,0,0,0,0,0]
+		self.color = libtcod.yellow
+		self.volume = 20
+
+	def effect(self,x,y,level):
+		objects.Explosion(self.game,x,y,self.color,self.damage,self.volume)
+		success = True
+
+		if success == True:
+			self.game.message(self.caster.getName(True).title()+" casts "+self.name+".",libtcod.purple)
+			self.subtractMagicCost()
+
+		return success
 
 class ExplodingProjectileSpell(Spell):
 	def __init__(self, game, name, caster):
@@ -110,6 +138,7 @@ class ExplodingProjectileSpell(Spell):
 
 		self.magicCost = 24
 		self.requiresTarget = True
+		self.range = 6
 
 		self.damage = [20,10,0,0,0,0,0,0,0]
 		self.color = libtcod.yellow
@@ -117,6 +146,10 @@ class ExplodingProjectileSpell(Spell):
 	
 	def effect(self,x,y,level):
 		success = False
+
+		if self.caster.chessboardDistance(x,y) > self.range:
+			self.game.message("Target is too far away.")
+			return False
 
 		# Check for los to tile
 		libtcod.line_init(self.caster.x, self.caster.y, x, y)
@@ -143,6 +176,27 @@ class ExplodingProjectileSpell(Spell):
 
 class CloudSpell(Spell):
 	# Duration of cloud is tied to actor level
+	def __init__(self, game, name, caster):
+		Spell.__init__(self, game, name, caster)
+
+		self.magicCost = 12
+		self.requiresTarget = False
+
+		self.color = libtcod.gray
+		self.volume = 20
+
+	def effect(self,x,y,level):
+		objects.Cloud(self.game, x, y, 'cloud', self.color, self.volume)
+		success = True
+
+		if success == True:
+			self.game.message(self.caster.getName(True).title()+" casts "+self.name+".",libtcod.purple)
+			self.subtractMagicCost()
+
+		return success
+
+
+class PoolSpell(Spell):
 	pass
 
 class ProjectileCloudSpell(Spell):
@@ -152,7 +206,7 @@ class TrapSpell(Spell):
 	pass
 
 class ConeSpell(Spell):
-	# Uses raycasting to apply an effect in a cone in a chosen direction
+	# Uses raycasting to apply a damage effect in a cone in a chosen direction
 	pass
 
 '''
@@ -164,6 +218,16 @@ Spells
 class UpgradeItem(Spell):
 	# upgrades a random stat on an item
 	pass
+
+class Explode(ExplosionSpell):
+	def effect(self,x,y,level):
+		physicalDam = 6 + (3*level)
+		armorPenetration = level
+		fireDam = level
+		self.damage = [physicalDam,armorPenetration,fireDam,0,0,0,0,0,0]
+		self.volume = self.volume = 10 + 3*level
+
+		ExplosionSpell.effect(self,x,y,level)
 
 # ==== Fire ====
 class Firebolt(ProjectileSpell):
@@ -266,5 +330,14 @@ class LightningStorm(Spell):
 	pass
 
 # ==== Unholy ====
-	# Inflict unholy damage and Bleed
+class Bloodlet(Spell):
+	# inflicts damage and 1.0 bleed damage
+	pass
+
+class Decemation(Spell):
+	# sets both the caster and target's hp to the lower of the two's previous hp
+	pass
+
 # ==== Status ====
+
+# ==== Misc ====

@@ -214,7 +214,7 @@ class ItemSpawner:
 	def spawnLightCrossbow(self,x,y,level):
 		modifier = {}
 		ammoTypes = [Items.rangedWeapons.Bolts]
-		item = Items.rangedWeapons.RangedWeapon(self.game, x, y, chr(24), "Light Crossbow", libtcod.azure, level, 2, modifier, 10, 6, -4, ammoTypes, blocks=False)
+		item = Items.rangedWeapons.RangedWeapon(self.game, x, y, chr(24), "Light Crossbow", libtcod.azure, level, 2, modifier, 8, 6, -4, ammoTypes, blocks=False)
 		return item
 
 	def spawnMace(self,x,y,level):

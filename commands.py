@@ -217,7 +217,9 @@ class FireRangedWeaponCommand(Command):
 				while (not lineX is None) and not (self.actor.game._currentLevel.getBlocksMovement(lineX,lineY)):
 					x = lineX
 					y = lineY
-					if (self.actor.game._currentLevel.getHasObject(x,y)):
+					if ( (self.actor.game._currentLevel.getHasObject(x,y)) or
+						(self.actor.chessboardDistance(x,y) >= self.weapon.maxRange)):
+
 						break
 					lineX,lineY = libtcod.line_step()
 

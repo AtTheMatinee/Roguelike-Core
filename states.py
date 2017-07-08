@@ -443,6 +443,7 @@ class DeathState:
 		self.owner = owner
 	
 	def process(self):
+		self.giveExperience(self.owner)
 		o = self.owner
 		del self.owner
 
@@ -463,3 +464,17 @@ class DeathState:
 		o.deathState = None
 		del o.statusEffects[:]
 		del o
+
+	def giveExperience(self,owner):
+		if ((owner.mostRecentAttacker != None) and 
+			(owner.level > owner.mostRecentAttacker.level)):
+			owner.mostRecentAttacker.experience += 1
+
+class ExplodeOnDeathState(DeathState):
+	pass
+
+class DropBombsOnDeath(DeathState):
+	pass
+
+class SpawnMobOnDeath(DeathState):
+	pass

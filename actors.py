@@ -34,12 +34,14 @@ class Actor(Object):
 		self.nearbyObjects = self.getNearbyObjects()
 		
 		self.mostRecentAttacker = None
+		self.experience = 0
 		self.surviveMortalWound = surviveMortalWound
 		self.mortalWound = False
 		self.hadLastChance = False
 		self.canBePushed = True
 
 		self.dead = False
+		self.invisible = False
 
 		self.game.addObject(self)
 		self.game._currentLevel.addObject(self)
@@ -134,12 +136,14 @@ class Actor(Object):
 
 		# ==== Fire ====
 		fireDam = damage[2] - float(damage[2]*defense[1]) # inflicts inflamed
-		if (fireDam >= 1) and (random.random() <= 0.05):
+		if ((fireDam >= 1) and (random.random() <= 0.05) or 
+			any(isinstance(se, statusEffects.Flamable) for se in self.statusEffects) ):
 			self.addStatusEffect(statusEffects.Flaming,10,False)
 
 		# ==== Frost ====
 		frostDam = damage[3] - float(damage[3]*defense[2]) # inflicts frozen
-		if (frostDam >= 1) and (random.random() <= 0.05):
+		if ((frostDam >= 1) and (random.random() <= 0.05) or 
+			any(isinstance(se, statusEffects.Wet) for se in self.statusEffects) ):
 			self.addStatusEffect(statusEffects.Frozen,10,False)
 
 		# ==== Poison ====
@@ -190,6 +194,7 @@ class Actor(Object):
 	def death(self):
 		if self.dead == False:
 			self.dead = True
+
 			if self.deathState != None:
 				self.deathState.process()
 			else:
@@ -243,11 +248,11 @@ class Actor(Object):
 		self.equipSlots[item.equipSlot] = item
 		self.stats.addModifier(item,item.modifier)
 
-	def findTarget(self):
+	def findTarget(self,range = None):
 		targetX = None
 		targetY = None
 		if self.playerControlled == True:
-			targetX,targetY = self.game.ui.targetTile()
+			targetX,targetY = self.game.ui.targetTile(range)
 
 		else:
 			fov = self.game.map.fov_map
@@ -265,7 +270,6 @@ class Actor(Object):
 		return targetX,targetY
 
 class Hero(Actor):
-	#TODO: the hero gains experience (1 per enemy killed that is a higher level than the hero)
 	def getNearbyActors(self):
 		nearbyActors = []
 		for actor in self.game._currentLevel._actors:
