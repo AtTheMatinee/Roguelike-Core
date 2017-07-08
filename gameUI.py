@@ -1005,6 +1005,7 @@ class KeyboardCommands:
 		objects.Fire(ui.game, hero.x, hero.y,'torch',libtcod.flame)
 
 	def test2(self,ui,hero):
+		#objects.SmokeCloud(ui.game, hero.x, hero.y, 'smoke', libtcod.dark_gray, 20)
 		pass
 
 class MainMenu:
@@ -1522,7 +1523,7 @@ Traps "^" or "*"
 		block
 		monefield
 Bonfires - object
-Regular Fires - object
+
 Oil - object, makes things flamable
 Alters - object
 
@@ -1534,6 +1535,16 @@ vision cones
 
 Dialogue trees
 	walk into NPCs to talk or press action button
+
+Particle effect engine
+	updated every ui.renderAll cycle
+	blits to a new overlay panel
+	iterates over a list of particles, updating and drawing them
+	particles
+		<> have an apparance, which can be changed by the update method
+		<> have a delay, only after which they begin rendering
+		<> have a duration, which counts down after the delay reaches 0
+		<> are removed from the list of particles when duration reaches zero
 '''
 '''
 Entrance to the dungeon

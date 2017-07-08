@@ -6,7 +6,7 @@ actors.py
 Actors
 ====================
 '''
-from objects import Object
+from objectClass import Object
 
 import random
 
@@ -95,6 +95,12 @@ class Actor(Object):
 	def gainEnergy(self):
 		self.energy += self.stats.get("speed")
 		return (self.energy >= self.game.turnCost)
+
+	def draw(self):
+		if self.invisible == True:
+			return
+
+		Object.draw(self)
 
 	def needsInput(self):
 		if not self.playerControlled:
@@ -203,6 +209,9 @@ class Actor(Object):
 				self.game._currentLevel.setHasObjectFalse(self.x,self.y)
 				self.game._currentLevel.removeActor(self)
 
+	def levelUp(self):
+		pass
+
 	def dropLoot(self):
 		# Drop Inventory and Equipment
 		for i in xrange(len(self.equipSlots) -1):
@@ -260,7 +269,7 @@ class Actor(Object):
 				if self.state.canTargetNemesis(self):
 					target = self.mostRecentAttacker
 
-				elif self.state.hostileToHero(self):
+				elif self.state.hostileToHero(self) and self.state.canTargetHero(self):
 					target = self.game.hero
 
 			if target != None:
@@ -285,6 +294,18 @@ class Hero(Actor):
 		return nearbyObjects
 
 		libtcod.map_is_in_fov(self.game.map.fov_map, x, y)
+
+	def draw(self):
+		if (libtcod.map_is_in_fov(self.game.map.fov_map, self.x, self.y) or
+			(self.alwaysVisible == True) and self.game._currentLevel.getHasBeenExplored(self.x,self.y)):
+			color = self.color
+
+			if self.invisible == True:
+				color *= 0.5
+				color = libtcod.pink
+
+			libtcod.console_set_default_foreground(self.game.ui.con, color)
+			libtcod.console_put_char(self.game.ui.con, self.x, self.y, self.char, libtcod.BKGND_NONE)
 
 	def hasTakenTurn(self):
 		Actor.hasTakenTurn(self)

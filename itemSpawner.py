@@ -27,9 +27,10 @@ class ItemSpawner:
 		'Item':[None,['Potion','Equipment','Ammo']], #'_Special','Food','Magic Item'
 
 		'Potion':['Item',['Medicine','Toxin']], #'_Special'
-		'Medicine':['Potion',['Health Potion','Antidote']],
+		'Medicine':['Potion',['Health Potion','Antidote','Invisibility Potion']],
 		'Toxin':['Potion',['Poison','Firebrew Potion','Permafrost Potion']],
 		'Health Potion':['Medicine',[]],
+		'Invisibility Potion':['Medicine',[]],
 		'Poison':['Toxin',[]],
 		'Firebrew Potion':['Toxin',[]],
 		'Permafrost Potion':['Toxin',[]],
@@ -117,6 +118,7 @@ class ItemSpawner:
 		'Antidote':self.spawnAntidote,
 		'Firebrew Potion':self.spawnFirebrewPotion,
 		'Permafrost Potion':self.spawnPermafrostPotion,
+		'Invisibility Potion':self.spawnInvisibilityPotion,
 		'Dagger':self.spawnDagger,
 		'Mace':self.spawnMace,
 		'Spear':self.spawnSpear,
@@ -209,6 +211,10 @@ class ItemSpawner:
 
 	def spawnHealthPotion(self,x,y,level):
 		item = Items.potions.HealthPotion(self.game, x, y, '!', "Health Potion", libtcod.azure, level, blocks=False)
+		return item
+
+	def spawnInvisibilityPotion(self,x,y,level):
+		item = Items.potions.InvisibilityPotion(self.game, x, y, '!', "Invisibility Potion", libtcod.azure, level, blocks=False)
 		return item
 
 	def spawnLightCrossbow(self,x,y,level):

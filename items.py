@@ -1,7 +1,7 @@
 '''
 items.py
 '''
-from objects import Object
+from objectClass import Object
 import actors
 import commands
 '''

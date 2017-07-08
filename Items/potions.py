@@ -161,3 +161,19 @@ class GhostEssence(Potion):
 			actor.game.message("You have identified "+self.getName(True),libtcod.cyan)
 
 		return True
+
+class InvisibilityPotion(Potion):
+	def __init__(self, game, x, y, char, name, color, level, blocks=False):
+		Potion.__init__(self, game, x, y, char, name, color, level, blocks=False)
+
+	def use(self,actor):
+		timer = 7 + (3*self.level)
+		actor.addStatusEffect(statusEffects.Invisible, timer, True)
+
+		self.destroy(actor)
+
+		if self.__class__.identified == False:
+			self.__class__.identified = True
+			actor.game.message("You have identified "+self.getName(True),libtcod.cyan)
+
+		return True

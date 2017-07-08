@@ -379,14 +379,14 @@ class ActorSpawner:
 		hero.equipItem(armor)
 
 		# add items to inventory
-		for item in [("Health Potion",0),('Potion',0),('Potion',0),('Light Crossbow',0),('Wooden Bolt',0),('Steel Bolt',0)]:
+		for item in [("Health Potion",0),('Potion',0),('Invisibility Potion',0),('Light Crossbow',0),('Wooden Bolt',0),('Steel Bolt',0)]:
 			gear,itemLevel = item
 			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
 			g.moveToInventory(hero)
 			#g.__class__.identified = True
 
 		# add starting spells
-		for spell in ['Self Heal','Firebolt','Fireball','Explode']:
+		for spell in ['Self Heal','Firebolt','Fireball','Explode','Invisibility']:
 			s = self.game.spellSpawner.spawn(hero, spell)
 			hero.spells.append(s)
 
