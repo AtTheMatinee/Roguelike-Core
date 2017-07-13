@@ -43,8 +43,8 @@ class StatsTable:
 		"magicCurrent":0,
 		"magicMax":20,
 		"magicRegen":0.5,
-		"speed":6,
-		"attack":[4.0,0,0,0,0,0,0,4,0],
+		"speed":5,
+		"attack":[2.0,0,0,0,0,0,0,4,0],
 		"attackSpeed":0,
 		"defense":[0,0.5,0.5,1,1,-1,-1],
 		"critChance":0

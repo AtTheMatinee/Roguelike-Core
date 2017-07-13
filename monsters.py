@@ -2,6 +2,7 @@
 monsters.py
 '''
 from actors import Monster
+import random
 '''
 ====================
 Monsters

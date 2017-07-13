@@ -353,6 +353,7 @@ class ThrowCommand(Command):
 		self.x = x
 		self.y = y
 		self.item = item
+		# TODO: if the item is ammo, create a new ammo object of that type and throw that instead (after decrimenting the ammo number)
 
 		self.energyCost = 16
 
@@ -489,7 +490,6 @@ class DropCommand(Command):
 
 
 class EquipCommand(Command):
-	# TODO: Implement multi-slot equipment
 	
 	def __init__(self,actor,item):
 		self.actor = actor
@@ -685,6 +685,12 @@ class GoDownStairsCommand(Command):
 
 		return success, alternative
 
+class LevelUp(Command):
+	def __init__(self,actor,levels):
+		self.actor = actor
+		self.levels = levels
+
+		self.energyCost = 12
 #class PushedCommand(Command):
 
 

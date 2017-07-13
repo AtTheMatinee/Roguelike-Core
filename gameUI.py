@@ -74,15 +74,17 @@ class UserInterface:
 		# Hero Panel status tracker
 		self.reevaluateHeroStatusEffects = False
 		self.heroStatusEffects = 0
-		self._SEPoisoned = 1
-		self._SEBleeding = 2
-		self._SEFrozen = 4
-		self._SEFlaming = 8
-		self._SEWet = 16
-		self._SEFlamable = 32
-		#self._SEStunned = 256
-		#self._SEConfised = 128
-		self._SEMortallyWounded = 64
+		self._SEPoisoned = 2**0
+		self._SEBleeding = 2**1
+		self._SEFrozen = 2**2
+		self._SEFlaming = 2**3
+		self._SEWet = 2**4
+		self._SEFlamable = 2**5
+		self._SEMortallyWounded = 2**6
+		self._SEInvisible = 2**7
+		self._SERegenerating = 2**8
+		self._SEConfused = 2**9
+		self._SEAfraid = 2**10
 
 
 		self.setColorScheme(ColorScheme.DEFAULT)
@@ -93,6 +95,7 @@ class UserInterface:
 		self.mouse = libtcod.Mouse()
 
 		# ====================
+		self.visibleTrace = False
 		# ====================
 
 		# Menu
@@ -264,7 +267,7 @@ class UserInterface:
 			for y in range(MAP_HEIGHT):
 				for x in range(MAP_WIDTH):
 					visible = libtcod.map_is_in_fov(self.game.map.fov_map, x, y)
-					wall = self.game._currentLevel.getBlocksSight(x,y)
+					wall = self.game._currentLevel.getBlocksMovement(x,y)
 					if not visible:
 						# outside of FOV
 						if self.game._currentLevel.getHasBeenExplored(x,y) == True:
@@ -355,19 +358,14 @@ class UserInterface:
 		self.generateNoiseMap()
 
 	def loadGame(self):
-		self._playing = 0
-		self._inventoryMenu = 1
 		self._gameState = self._playing
 
-		self.game = gameLoop.GameLoop(self,MAP_WIDTH,MAP_HEIGHT,seed)
+		self.game = gameLoop.GameLoop(self,MAP_WIDTH,MAP_HEIGHT,None)
+		self.game.loadGame()
 
 		self.fovRecompute = True
 		self.generateNoiseMap()
 
-		# Load old game._messages
-		# Load old game.hero
-		# Load old game._currentLevel
-		# Load old game._currentActor
 
 	def renderStatusBar(self,panel,x, y, total_width, name, value, maxValue, bar_color, back_color):
 		if maxValue <= 0: 
@@ -477,6 +475,7 @@ class UserInterface:
 				libtcod.console_set_char_background(self.window, lineX, lineY, UI_PRIMARY_COLOR, libtcod.BKGND_SET)
 
 				if ((self.game._currentLevel.getHasObject(lineX,lineY)) or
+					(self.game._currentLevel.getBlocksSight(lineX,lineY)) or
 					not libtcod.map_is_in_fov(self.game.map.fov_map, lineX, lineY) or
 					((maxRange != None) and (self.game.hero.chessboardDistance(lineX,lineY) >= maxRange)) ):
 					break
@@ -602,7 +601,7 @@ class UserInterface:
 		if listLength > 0:
 			i = 0
 			for actor in self.game.hero.nearbyActors: #TODO: calculate how many monsters I can fit here
-				y = 19 + i*6
+				y = 23 + i*6
 				if y >= height - 6: break
 				if self.game.factions.getRelationship(self.game.hero.faction, actor.faction) == self.game.factions._hostile:
 					self.renderMonsterInformation(panel,width,y,actor,False)
@@ -749,7 +748,26 @@ class UserInterface:
 			self.heroStatusEffects = self.heroStatusEffects | self._SEMortallyWounded
 		else:
 			self.heroStatusEffects = self.heroStatusEffects & ~ self._SEMortallyWounded
-		# Confused
+
+		if any(isinstance(se, statusEffects.Invisible) for se in hero.statusEffects):
+			self.heroStatusEffects = self.heroStatusEffects | self._SEInvisible
+		else:
+			self.heroStatusEffects = self.heroStatusEffects & ~ self._SEInvisible
+
+		if any(isinstance(se, statusEffects.Regenerating) for se in hero.statusEffects):
+			self.heroStatusEffects = self.heroStatusEffects | self._SERegenerating
+		else:
+			self.heroStatusEffects = self.heroStatusEffects & ~ self._SERegenerating
+
+		if any(isinstance(se, statusEffects.Confused) for se in hero.statusEffects):
+			self.heroStatusEffects = self.heroStatusEffects | self._SEConfused
+		else:
+			self.heroStatusEffects = self.heroStatusEffects & ~ self._SEConfused
+
+		if any(isinstance(se, statusEffects.Afraid) for se in hero.statusEffects):
+			self.heroStatusEffects = self.heroStatusEffects | self._SEAfraid
+		else:
+			self.heroStatusEffects = self.heroStatusEffects & ~ self._SEAfraid
 		# Stunned
 
 		self.reevaluateHeroStatusEffects = False
@@ -777,6 +795,18 @@ class UserInterface:
 
 		if bool((self.heroStatusEffects & self._SEMortallyWounded) != 0):
 			statusEffects.update({'MWND':libtcod.red})
+
+		if bool((self.heroStatusEffects & self._SEInvisible) != 0):
+			statusEffects.update({'INVS':libtcod.gray})
+
+		if bool((self.heroStatusEffects & self._SERegenerating) != 0):
+			statusEffects.update({'RGNR':libtcod.magenta})
+
+		if bool((self.heroStatusEffects & self._SEConfused) != 0):
+			statusEffects.update({'CONF':libtcod.yellow})
+
+		if bool((self.heroStatusEffects & self._SEAfraid) != 0):
+			statusEffects.update({'FEAR':libtcod.han})
 
 		return statusEffects
 
@@ -952,7 +982,7 @@ class KeyboardCommands:
 
 	def Wait(self,ui,hero):
 		hero.setNextCommand(commands.WaitCommand(hero))
-		ui.fovRecompute = False
+		ui.fovRecompute = True
 
 	def PickUpItem(self,ui,hero):
 		hero.setNextCommand(commands.PickUpCommand(hero, hero.x, hero.y))
@@ -998,14 +1028,16 @@ class KeyboardCommands:
 
 		if target != None:
 			hero.setNextCommand(commands.FireRangedWeaponCommand(hero,target))
+			ui.fovRecompute = True
+
 
 	def test1(self,ui,hero):
 		pass 
 		#objects.PoisonCloud(ui.game, hero.x, hero.y, 'cloud', libtcod.green, 20)
-		objects.Fire(ui.game, hero.x, hero.y,'torch',libtcod.flame)
+		#objects.Fire(ui.game, hero.x, hero.y,'torch',libtcod.flame)
 
 	def test2(self,ui,hero):
-		#objects.SmokeCloud(ui.game, hero.x, hero.y, 'smoke', libtcod.dark_gray, 20)
+		#objects.SmokeCloud(ui.game, hero.x, hero.y, 'smoke', libtcod.dark_grey, 20)
 		pass
 
 class MainMenu:
@@ -1062,12 +1094,28 @@ class MainMenu:
 					self.cursor = (self.cursor+1) % len(options)
 
 				# select option
+
+				# ==== Continue Game ====
 				if ( (self.ui.keyboard.c == ord('c')) or
 					( (self.ui.keyboard.vk == libtcod.KEY_ENTER) and
 					(self.cursor == 0) ) ):
 					self.clearConsoles()
-					pass
+					
+					try:
+						self.ui.loadGame()
 
+					except:
+						print "Cannot load save"
+						n = NewGameMenu(self.ui)
+						heroClass,seed,heroName = n.process()
+
+						if heroClass != None:
+							self.ui.newGame(heroClass,seed,heroName)
+							self.ui.mainLoop()
+					else:
+						self.ui.mainLoop()
+
+				# ==== New Game ====
 				if ( (self.ui.keyboard.c == ord('n')) or
 					( (self.ui.keyboard.vk == libtcod.KEY_ENTER) and
 					(self.cursor == 1) ) ):
@@ -1079,13 +1127,14 @@ class MainMenu:
 						self.ui.newGame(heroClass,seed,heroName) # (heroClass,seed)
 						self.ui.mainLoop()
 					
-
+				# ==== Options ====
 				if ( (self.ui.keyboard.c == ord('o')) or
 					( (self.ui.keyboard.vk == libtcod.KEY_ENTER) and
 					(self.cursor == 2) ) ):
 					self.clearConsoles()
 					pass
 
+				# ==== Exit ====
 				elif ( (self.ui.keyboard.c == ord('e')) or 
 					( (self.ui.keyboard.vk == libtcod.KEY_ENTER) and
 					(self.cursor == 3) )  ):
@@ -1150,41 +1199,6 @@ class NewGameMenu:
 		self.cursor = 0
 
 	def process(self):
-		'''
-		LeftWindow:
-
-		  Class  
-		_________
-		Alchemist
-		Arbalest
-		Assassin
-		Barbarian
-		Cleric
-		Houndmaster TODO
-		Knight
-		Occultist
-		Magician
-		Mercenary
-		Specialist
-		Systems Test
-
-		  Seed  
-		________
-		3829094375
-
-		==============
-
-		BottomWindow: 
-
-		(C)ontinue | (R)eturn
-
-		RightWindow:
-		'Hero Name'
-
-		wordwraped description in
-		bordered text box.
-
-		'''
 		while not libtcod.console_is_window_closed():
 			self.renderLogo()			
 
@@ -1486,6 +1500,8 @@ if __name__ == "__main__":
 
 '''
 TODO:
+Boar
+Grunch
 Gough Ghast - boss
 Sir Kalagrain - boss, Knight
 Deacon Deleto - boss, Occultist 
