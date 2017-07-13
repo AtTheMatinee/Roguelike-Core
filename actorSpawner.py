@@ -3,6 +3,7 @@ actorSpawner.py
 '''
 import random
 import actors
+import monsters
 import actorStats
 import states
 import libtcodpy as libtcod
@@ -65,431 +66,469 @@ class ActorSpawner:
 			Champion
 		'''
 
-	def spawn(self,x,y,key):
+	def spawn(self,x,y,key, new = True):
 		level = 0
 		if key in self.spawnMethods:
-			actor = self.spawnMethods[key](x,y,level)
+			actor = self.spawnMethods[key](x,y,level,new)
 
 			# give the actor a reference to its own spawn key
 			actor._spawnKey = key
 			return actor
 
 
-	def spawnAngel(self,x,y,level):
+	def spawnAngel(self,x,y,level,new):
 		pass
 
-	def spawnAutomaton(self,x,y,level):
+	def spawnAutomaton(self,x,y,level,new):
+		# Drops bombs
 		pass
 
-	def spawnCultist(self,x,y,level):
+	def spawnCultist(self,x,y,level,new):
 		pass
 
-	def spawnDemon(self,x,y,level):
+	def spawnDemon(self,x,y,level,new):
 		pass
 
-	def spawnHeroAlchemist(self,x,y,level):
+	def spawnHeroAlchemist(self,x,y,level,new):
 		hero = actors.Hero(self.game,x,y,'@',"Hero",libtcod.white,level,faction = "Hero",stats = actorStats.Stats("Hero Alchemist"),surviveMortalWound = True, inventorySize = 20, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
 		
-		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Light Weapon',0,False)
-		hero.equipItem(weapon)
+		if new == True:
+			# add equipment
+			weapon = self.game.itemSpawner.spawn(x,y,'Light Weapon',0,False)
+			hero.equipItem(weapon)
 
-		#armor = self.game.itemSpawner.spawn(x,y,'Robes',0,False)
-		#hero.equipItem(armor)
+			#armor = self.game.itemSpawner.spawn(x,y,'Robes',0,False)
+			#hero.equipItem(armor)
 
-		# add items to inventory
-		for item in [("Health Potion",0),('Medicine',0),('Toxin',0),('Potion',0)]:
-			gear,itemLevel = item
-			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
-			g.moveToInventory(hero)
-			g.__class__.identified = True
+			# add items to inventory
+			for item in [("Health Potion",0),('Medicine',0),('Toxin',0),('Potion',0)]:
+				gear,itemLevel = item
+				g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
+				g.moveToInventory(hero)
+				g.__class__.identified = True
 
-		# add starting spells
-		for spell in []:
-			s = self.game.spellSpawner.spawn(hero, spell)
-			hero.spells.append(s)
+			# add starting spells
+			for spell in []:
+				s = self.game.spellSpawner.spawn(hero, spell)
+				hero.spells.append(s)
 
 		return hero
 
-	def spawnHeroArbalest(self,x,y,level):
+	def spawnHeroArbalest(self,x,y,level,new):
 		hero = actors.Hero(self.game,x,y,'@',"Hero",libtcod.white,level,faction = "Hero",stats = actorStats.Stats("Hero Arbalest"),surviveMortalWound = True, inventorySize = 20, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
 		
-		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Light Crossbow',0,False)
-		hero.equipItem(weapon)
+		if new == True:
+			# add equipment
+			weapon = self.game.itemSpawner.spawn(x,y,'Light Crossbow',0,False)
+			hero.equipItem(weapon)
 
-		armor = self.game.itemSpawner.spawn(x,y,'Light Armor',0,False)
-		hero.equipItem(armor)
+			armor = self.game.itemSpawner.spawn(x,y,'Light Armor',0,False)
+			hero.equipItem(armor)
 
-		# add items to inventory
-		for item in [('Potion',0),('Wooden Bolt',0),('Wooden Bolt',0),('Steel Bolt',0)]:
-			gear,itemLevel = item
-			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
-			g.moveToInventory(hero)
-			#g.__class__.identified = True
+			# add items to inventory
+			for item in [('Potion',0),('Wooden Bolt',0),('Wooden Bolt',0),('Steel Bolt',0)]:
+				gear,itemLevel = item
+				g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
+				g.moveToInventory(hero)
+				#g.__class__.identified = True
 
-		# add starting spells
-		for spell in []:
-			s = self.game.spellSpawner.spawn(hero, spell)
-			hero.spells.append(s)
+			# add starting spells
+			for spell in []:
+				s = self.game.spellSpawner.spawn(hero, spell)
+				hero.spells.append(s)
 
 		return hero
 
-	def spawnHeroAssassin(self,x,y,level):
+	def spawnHeroAssassin(self,x,y,level,new):
 		hero = actors.Hero(self.game,x,y,'@',"Hero",libtcod.white,level,faction = "Hero",stats = actorStats.Stats("Hero Assassin"),surviveMortalWound = True, inventorySize = 20, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
 		
-		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Dagger',0,False)
-		hero.equipItem(weapon)
+		if new == True:
+			# add equipment
+			weapon = self.game.itemSpawner.spawn(x,y,'Dagger',0,False)
+			hero.equipItem(weapon)
 
-		#armor = self.game.itemSpawner.spawn(x,y,'Armor',0,False)
-		#hero.equipItem(armor)
+			#armor = self.game.itemSpawner.spawn(x,y,'Armor',0,False)
+			#hero.equipItem(armor)
 
-		# add items to inventory
-		for item in [("Poison",0),('Poison',1)]:
-			gear,itemLevel = item
-			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
-			g.moveToInventory(hero)
-			g.__class__.identified = True
+			# add items to inventory
+			for item in [("Poison",0),('Poison',1)]:
+				gear,itemLevel = item
+				g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
+				g.moveToInventory(hero)
+				g.__class__.identified = True
 
-		# add starting spells
-		for spell in []:
-			s = self.game.spellSpawner.spawn(hero, spell)
-			hero.spells.append(s)
+			# add starting spells
+			for spell in []:
+				s = self.game.spellSpawner.spawn(hero, spell)
+				hero.spells.append(s)
 
 		return hero
 
-	def spawnHeroBarbarian(self,x,y,level):
+	def spawnHeroBarbarian(self,x,y,level,new):
 		hero = actors.Hero(self.game,x,y,'@',"Hero",libtcod.white,level,faction = "Hero",stats = actorStats.Stats("Hero Barbarian"),surviveMortalWound = True, inventorySize = 20, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
 		
-		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Heavy Weapon',0,False)
-		hero.equipItem(weapon)
+		if new == True:
+			# add equipment
+			weapon = self.game.itemSpawner.spawn(x,y,'Heavy Weapon',0,False)
+			hero.equipItem(weapon)
 
-		armor = self.game.itemSpawner.spawn(x,y,'Light Armor',0,False)
-		hero.equipItem(armor)
+			armor = self.game.itemSpawner.spawn(x,y,'Light Armor',0,False)
+			hero.equipItem(armor)
 
-		# add items to inventory
-		for item in []:
-			gear,itemLevel = item
-			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
-			g.moveToInventory(hero)
-			#g.__class__.identified = True
+			# add items to inventory
+			for item in []:
+				gear,itemLevel = item
+				g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
+				g.moveToInventory(hero)
+				#g.__class__.identified = True
 
-		# add starting spells
-		for spell in []:
-			s = self.game.spellSpawner.spawn(hero, spell)
-			hero.spells.append(s)
+			# add starting spells
+			for spell in []:
+				s = self.game.spellSpawner.spawn(hero, spell)
+				hero.spells.append(s)
 
 		return hero
 
-	def spawnHeroCleric(self,x,y,level):
+	def spawnHeroCleric(self,x,y,level,new):
 		hero = actors.Hero(self.game,x,y,'@',"Hero",libtcod.white,level,faction = "Hero",stats = actorStats.Stats("Hero Cleric"),surviveMortalWound = True, inventorySize = 20, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
 		
-		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Mace',0,False)
-		hero.equipItem(weapon)
+		if new == True:
+			# add equipment
+			weapon = self.game.itemSpawner.spawn(x,y,'Mace',0,False)
+			hero.equipItem(weapon)
 
-		#armor = self.game.itemSpawner.spawn(x,y,'Church Robes',0,False)
-		#hero.equipItem(armor)
+			#armor = self.game.itemSpawner.spawn(x,y,'Church Robes',0,False)
+			#hero.equipItem(armor)
 
-		# add items to inventory
-		for item in []:
-			gear,itemLevel = item
-			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
-			g.moveToInventory(hero)
-			#g.__class__.identified = True
+			# add items to inventory
+			for item in []:
+				gear,itemLevel = item
+				g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
+				g.moveToInventory(hero)
+				#g.__class__.identified = True
 
-		# add starting spells
-		for spell in ['Self Heal']:
-			s = self.game.spellSpawner.spawn(hero, spell)
-			hero.spells.append(s)
+			# add starting spells
+			for spell in ['Self Heal']:
+				s = self.game.spellSpawner.spawn(hero, spell)
+				hero.spells.append(s)
 
 		return hero
 
-	def spawnHeroHoundmaster(self,x,y,level):
+	def spawnHeroHoundmaster(self,x,y,level,new):
 		hero = actors.Hero(self.game,x,y,'@',"Hero",libtcod.white,level,faction = "Hero",stats = actorStats.Stats("Hero Houndmaster"),surviveMortalWound = True, inventorySize = 20, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
 		
-		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Melee Weapon',0,False)
-		hero.equipItem(weapon)
+		if new == True:
+			# add equipment
+			weapon = self.game.itemSpawner.spawn(x,y,'Melee Weapon',0,False)
+			hero.equipItem(weapon)
 
-		#armor = self.game.itemSpawner.spawn(x,y,'Armor',0,False)
-		#hero.equipItem(armor)
+			#armor = self.game.itemSpawner.spawn(x,y,'Armor',0,False)
+			#hero.equipItem(armor)
 
-		# add items to inventory
-		for item in []:
-			gear,itemLevel = item
-			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
-			g.moveToInventory(hero)
-			#g.__class__.identified = True
+			# add items to inventory
+			for item in []:
+				gear,itemLevel = item
+				g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
+				g.moveToInventory(hero)
+				#g.__class__.identified = True
 
-		# add starting spells
-		for spell in []: # Charm Dog Spell
-			s = self.game.spellSpawner.spawn(hero, spell)
-			hero.spells.append(s)
+			# add starting spells
+			for spell in []: # Charm Dog Spell
+				s = self.game.spellSpawner.spawn(hero, spell)
+				hero.spells.append(s)
 
-		# spawn dogs
+			# spawn dogs
 
 		return hero
 
-	def spawnHeroKnight(self,x,y,level):
+	def spawnHeroKnight(self,x,y,level,new):
 		hero = actors.Hero(self.game,x,y,'@',"Hero",libtcod.white,level,faction = "Hero",stats = actorStats.Stats("Hero Knight"),surviveMortalWound = True, inventorySize = 20, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
 		
-		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Sword',1,False)
-		hero.equipItem(weapon)
+		if new == True:
+			# add equipment
+			weapon = self.game.itemSpawner.spawn(x,y,'Sword',1,False)
+			hero.equipItem(weapon)
 
-		# shield = self.game.itemSpawner.spawn(x,y,'Shield',0,False)
-		# hero.equipItem(shield)
+			# shield = self.game.itemSpawner.spawn(x,y,'Shield',0,False)
+			# hero.equipItem(shield)
 
-		armor = self.game.itemSpawner.spawn(x,y,'Armor',1,False)
-		hero.equipItem(armor)
+			armor = self.game.itemSpawner.spawn(x,y,'Armor',1,False)
+			hero.equipItem(armor)
 
-		# add items to inventory
-		for item in []:
-			gear,itemLevel = item
-			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
-			g.moveToInventory(hero)
-			#g.__class__.identified = True
+			# add items to inventory
+			for item in []:
+				gear,itemLevel = item
+				g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
+				g.moveToInventory(hero)
+				#g.__class__.identified = True
 
-		# add starting spells
-		for spell in []:
-			s = self.game.spellSpawner.spawn(hero, spell)
-			hero.spells.append(s)
+			# add starting spells
+			for spell in []:
+				s = self.game.spellSpawner.spawn(hero, spell)
+				hero.spells.append(s)
 
 		return hero
 
-	def spawnHeroOccultist(self,x,y,level):
+	def spawnHeroOccultist(self,x,y,level,new):
 		hero = actors.Hero(self.game,x,y,'@',"Hero",libtcod.white,level,faction = "Hero",stats = actorStats.Stats("Hero Occultist"),surviveMortalWound = True, inventorySize = 20, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
 		
-		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Light Weapon',0,False)
-		hero.equipItem(weapon)
+		if new == True:
+			# add equipment
+			weapon = self.game.itemSpawner.spawn(x,y,'Light Weapon',0,False)
+			hero.equipItem(weapon)
 
-		#armor = self.game.itemSpawner.spawn(x,y,'Robes',0,False)
-		#hero.equipItem(armor)
+			#armor = self.game.itemSpawner.spawn(x,y,'Robes',0,False)
+			#hero.equipItem(armor)
 
-		# add items to inventory
-		for item in []:
-			gear,itemLevel = item
-			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
-			g.moveToInventory(hero)
-			#g.__class__.identified = True
+			# add items to inventory
+			for item in []:
+				gear,itemLevel = item
+				g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
+				g.moveToInventory(hero)
+				#g.__class__.identified = True
 
-		# add starting spells
-		for spell in ['Self Heal','Firebolt','Fireball']:
-			s = self.game.spellSpawner.spawn(hero, spell)
-			hero.spells.append(s)
+			# add starting spells
+			for spell in ['Self Heal','Firebolt','Fireball']:
+				s = self.game.spellSpawner.spawn(hero, spell)
+				hero.spells.append(s)
 
 		return hero
 
-	def spawnHeroMagician(self,x,y,level):
+	def spawnHeroMagician(self,x,y,level,new):
 		hero = actors.Hero(self.game,x,y,'@',"Hero",libtcod.white,level,faction = "Hero",stats = actorStats.Stats("Hero Magician"),surviveMortalWound = True, inventorySize = 20, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
 		
-		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Light Weapon',0,False)
-		hero.equipItem(weapon)
+		if new == True:
+			# add equipment
+			weapon = self.game.itemSpawner.spawn(x,y,'Light Weapon',0,False)
+			hero.equipItem(weapon)
 
-		#armor = self.game.itemSpawner.spawn(x,y,'Armor',0,False)
-		#hero.equipItem(armor)
+			#armor = self.game.itemSpawner.spawn(x,y,'Armor',0,False)
+			#hero.equipItem(armor)
 
-		# add items to inventory
-		for item in []:
-			gear,itemLevel = item
-			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
-			g.moveToInventory(hero)
-			#g.__class__.identified = True
+			# add items to inventory
+			for item in []:
+				gear,itemLevel = item
+				g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
+				g.moveToInventory(hero)
+				#g.__class__.identified = True
 
-		# add starting spells
-		for spell in ['Self Heal','Firebolt','Fireball']:
-			s = self.game.spellSpawner.spawn(hero, spell)
-			hero.spells.append(s)
+			# add starting spells
+			for spell in ['Self Heal','Firebolt','Fireball']:
+				s = self.game.spellSpawner.spawn(hero, spell)
+				hero.spells.append(s)
 
 		return hero
 
-	def spawnHeroMercenary(self,x,y,level):
+	def spawnHeroMercenary(self,x,y,level,new):
 		hero = actors.Hero(self.game,x,y,'@',"Hero",libtcod.white,level,faction = "Hero",stats = actorStats.Stats("Hero Mercenary"),surviveMortalWound = True, inventorySize = 20, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
 		
-		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Melee Weapon',0,False)
-		hero.equipItem(weapon)
+		if new == True:	
+			# add equipment
+			weapon = self.game.itemSpawner.spawn(x,y,'Melee Weapon',0,False)
+			hero.equipItem(weapon)
 
-		armor = self.game.itemSpawner.spawn(x,y,'Armor',0,False)
-		hero.equipItem(armor)
+			armor = self.game.itemSpawner.spawn(x,y,'Armor',0,False)
+			hero.equipItem(armor)
 
-		# add items to inventory
-		for item in [("Medicine",0)]:
-			gear,itemLevel = item
-			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
-			g.moveToInventory(hero)
-			#g.__class__.identified = True
+			# add items to inventory
+			for item in [("Medicine",0)]:
+				gear,itemLevel = item
+				g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
+				g.moveToInventory(hero)
+				#g.__class__.identified = True
 
-		# add starting spells
-		for spell in ['Self Heal','Firebolt','Fireball']:
-			s = self.game.spellSpawner.spawn(hero, spell)
-			hero.spells.append(s)
+			# add starting spells
+			for spell in ['Self Heal','Firebolt','Fireball']:
+				s = self.game.spellSpawner.spawn(hero, spell)
+				hero.spells.append(s)
 
 		return hero
 
-	def spawnHeroSpecialist(self,x,y,level):
+	def spawnHeroSpecialist(self,x,y,level,new):
 		hero = actors.Hero(self.game,x,y,'@',"Hero",libtcod.white,level,faction = "Hero",stats = actorStats.Stats("Hero Specialist"),surviveMortalWound = True, inventorySize = 20, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
 		
-		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Light Weapon',0,False)
-		hero.equipItem(weapon)
+		if new == True:
+			# add equipment
+			weapon = self.game.itemSpawner.spawn(x,y,'Light Weapon',0,False)
+			hero.equipItem(weapon)
 
-		armor = self.game.itemSpawner.spawn(x,y,'Light Armor',0,False)
-		hero.equipItem(armor)
+			armor = self.game.itemSpawner.spawn(x,y,'Light Armor',0,False)
+			hero.equipItem(armor)
 
-		# add items to inventory
-		for item in []: # spellbombs
-			gear,itemLevel = item
-			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
-			g.moveToInventory(hero)
-			#g.__class__.identified = True
+			# add items to inventory
+			for item in [('Smokebomb',0),('Grenade',0),('Bomb',0)]: # spellbombs
+				gear,itemLevel = item
+				g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
+				g.moveToInventory(hero)
+				g.__class__.identified = True
 
-		# add starting spells
-		for spell in []:
-			s = self.game.spellSpawner.spawn(hero, spell)
-			hero.spells.append(s)
+			# add starting spells
+			for spell in []:
+				s = self.game.spellSpawner.spawn(hero, spell)
+				hero.spells.append(s)
 
 		return hero
 
-	def spawnHeroTest(self,x,y,level):
+	def spawnHeroTest(self,x,y,level,new):
 		hero = actors.Hero(self.game,x,y,'@',"Hero",libtcod.white,level,faction = "Hero",stats = actorStats.Stats("Hero Systems Test"),surviveMortalWound = True, inventorySize = 20, canEquipArmor = True, canEquipWeapons = True, playerControlled = True)
 		hero.deathState = states.DeathState(hero)
 		
-		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Melee Weapon',0,False)
-		hero.equipItem(weapon)
+		if new == True:
+			# add equipment
+			weapon = self.game.itemSpawner.spawn(x,y,'Melee Weapon',0,False)
+			hero.equipItem(weapon)
 
-		armor = self.game.itemSpawner.spawn(x,y,'Armor',0,False)
-		hero.equipItem(armor)
+			armor = self.game.itemSpawner.spawn(x,y,'Armor',0,False)
+			hero.equipItem(armor)
 
-		# add items to inventory
-		for item in [("Health Potion",0),('Potion',0),('Invisibility Potion',0),('Light Crossbow',0),('Wooden Bolt',0),('Steel Bolt',0)]:
-			gear,itemLevel = item
-			g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
-			g.moveToInventory(hero)
-			#g.__class__.identified = True
+			# add items to inventory
+			for item in [("Health Potion",0),('Potion',0),('Invisibility Potion',0),('Light Crossbow',0),('Wooden Bolt',0),('Smokebomb',0),('Grenade',0)]:
+				gear,itemLevel = item
+				g = self.game.itemSpawner.spawn(x,y,gear,itemLevel,False)
+				g.moveToInventory(hero)
+				#g.__class__.identified = True
 
-		# add starting spells
-		for spell in ['Self Heal','Firebolt','Fireball','Explode','Invisibility']:
-			s = self.game.spellSpawner.spawn(hero, spell)
-			hero.spells.append(s)
+			# add starting spells
+			for spell in ['Self Heal','Firebolt','Fireball','Explode','Invisibility']:
+				s = self.game.spellSpawner.spawn(hero, spell)
+				hero.spells.append(s)
 
+			allStatusEffects = False
+			import statusEffects
+			if allStatusEffects == True:
+				#import statusEffects
+				for SE in [statusEffects.Flaming,statusEffects.Wet,statusEffects.Invisible,statusEffects.Poisoned,
+					statusEffects.Bleeding,statusEffects.Flamable,statusEffects.Regenerating,statusEffects.MortallyWounded,
+					statusEffects.Frozen,statusEffects.Afraid,statusEffects.Confused]:
+					hero.addStatusEffect(SE,1,False)
+				
 		return hero
 
 
-	def spawnFireElemental(self,x,y,level):
+	def spawnFireElemental(self,x,y,level,new):
 		pass
 
-	def spawnFrostElemental(self,x,y,level):
+	def spawnFrostElemental(self,x,y,level,new):
 		pass
 
-	def spawnGargoyle(self,x,y,level):
+	def spawnGargoyle(self,x,y,level,new):
 		pass
 
-	def spawnGhost(self,x,y,level):
+	def spawnGhost(self,x,y,level,new):
+		# Fear spell, Find Player Spell, Invisibility Spell, debuff spell
 		level = 3
 
-		lootDrops = {'Potion':1}
-		ghost = monsters.Ghost(self.game,x,y,'g',"Ghost",libtcod.light_cyan,level,faction = "Ghosts",stats = actorStats.Stats("Ghost"),state = states.AI(0.7,0.5,0.5,1,0,0),drops = lootDrops)
+		lootDrops = {'Potion':1,'Invisibility Potion':1} # Scrolls
+		ghost = monsters.Ghost(self.game,x,y,'g',"Ghost",libtcod.lightest_cyan,level,faction = "Ghosts",stats = actorStats.Stats("Ghost"),state = states.AI(0.7,0.6,0.4,0.5,0,0),drops = lootDrops)
 		ghost.deathState = states.DeathState(ghost)
+
+		if new == True:
+			# add starting spells
+			for spell in ['Locate Player','Invisibility','Fear']:
+				s = self.game.spellSpawner.spawn(ghost, spell)
+				ghost.spells.append(s)
+
 		return ghost
 
-	def spawnGolem(self,x,y,level):
+	def spawnGolem(self,x,y,level,new):
+		# drops spellbombs
 		pass
 
-	def spawnKnight(self,x,y,level):
+	def spawnKnight(self,x,y,level,new):
 		pass
 
-	def spawnChest(self,x,y,level):
+	def spawnChest(self,x,y,level,new):
+		# Spell Mimic, something else that really nasty
 		pass
 
-	def spawnMirehound(self,x,y,level):
+	def spawnMirehound(self,x,y,level,new):
 		lootDrops = {'Health Potion':2}
-		mirehound = actors.Monster(self.game,x,y,'h',"Mirehound",libtcod.light_amber,level,faction = "Mirehounds",stats = actorStats.Stats("Mirehound"),state = states.AI(0.7,0.5,0.5,1,0,0),drops = lootDrops)
+		mirehound = monsters.Dog(self.game,x,y,'h',"Mirehound",libtcod.light_amber,level,faction = "Mirehounds",stats = actorStats.Stats("Mirehound"),state = states.AI(0.7,0.5,0.5,1,0,0),drops = lootDrops)
 		mirehound.deathState = states.DeathState(mirehound)
 		return mirehound
 
-	def spawnPlagueRat(self,x,y,level):
-		lootDrops = {'Health Potion':4} # antidote
-		plagueRat = actors.Monster(self.game,x,y,'r',"Plague Rat",libtcod.light_amber,level,faction = "Plague Rats",stats = actorStats.Stats("Plague Rat"),state = states.AI(0.7,0.5,0.5,1,0,0))
+	def spawnPlagueRat(self,x,y,level,new):
+		lootDrops = {'Health Potion':2,'Antidote':3} # antidote
+		plagueRat = monsters.Animal(self.game,x,y,'r',"Plague Rat",libtcod.light_amber,level,faction = "Plague Rats",stats = actorStats.Stats("Plague Rat"),state = states.AI(0.7,0.5,0.5,1,0,0))
 		plagueRat.deathState = states.DeathState(plagueRat)
 		return plagueRat
 
-	def spawnRougarou(self,x,y,level):
-		rougarou = actors.Monster(self.game,x,y,'R',"Rougarou",libtcod.grey,level,stats = actorStats.Stats("Rougarou"),state = states.AI(1,0.5,0.5,1,0,0))
+	def spawnRougarou(self,x,y,level,new):
+		rougarou = monsters.Rougarou(self.game,x,y,'R',"Rougarou",libtcod.grey,level,stats = actorStats.Stats("Rougarou"),state = states.AI(1,0.5,0.5,1,0,0))
 		return rougarou
 
-	def spawnSnakeman(self,x,y,level):
+	def spawnSnakeman(self,x,y,level,new):
 		level = 1
 
 		lootDrops = {'Sword':5,'Health Potion':2}
-		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman",libtcod.desaturated_sea,level,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI(0.9,0.5,0.5,1,0,0),drops = lootDrops, inventorySize = 4, canEquipArmor = True, canEquipWeapons = True)
+		snakeman = monsters.Snakeman(self.game,x,y,'S',"Snakeman",libtcod.desaturated_sea,level,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI(0.9,0.5,0.5,1,0,0),drops = lootDrops, inventorySize = 4, canEquipArmor = True, canEquipWeapons = True)
 		snakeman.deathState = states.DeathState(snakeman)
 
-		# add equipment
-		if random.random() <= .2:
-			weapon = self.game.itemSpawner.spawn(x,y,'Serpent Sword',level,False)
-			weapon.moveToInventory(snakeman)
+		if new == True:
+			# add equipment
+			if random.random() <= .2:
+				weapon = self.game.itemSpawner.spawn(x,y,'Serpent Sword',level,False)
+				weapon.moveToInventory(snakeman)
 
 		return snakeman
 
-	def spawnSnakemanArcher(self,x,y,level):
-		level = 1
+	def spawnSnakemanArcher(self,x,y,level,new):
+		level = 2
 
 		lootDrops = {'Wooden Bolts':5,'Health Potion':2}
-		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman Archer",libtcod.red,level,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI(0.9,0.8,0.8,1,7,2),drops = lootDrops, inventorySize = 4, canEquipArmor = True, canEquipWeapons = True)
+		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman Archer",libtcod.desaturated_red,level,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI(0.9,0.8,0.8,0.5,7,2),drops = lootDrops, inventorySize = 4, canEquipArmor = True, canEquipWeapons = True)
 		snakeman.deathState = states.DeathState(snakeman)
 
-		for name, level in [('Light Crossbow',0),('Steel Bolt',0),('Wooden Bolt',0)]:
-			item = self.game.itemSpawner.spawn(x,y,name,level,False)
-			item.moveToInventory(snakeman)
+		if new == True:
+			for name, level in [('Light Crossbow',0),('Steel Bolt',0),('Wooden Bolt',0)]:
+				item = self.game.itemSpawner.spawn(x,y,name,level,False)
+				item.moveToInventory(snakeman)
 
-		# add equipment
-		if random.random() <= .2:
+			# add equipment
+			if random.random() <= .2:
+				weapon = self.game.itemSpawner.spawn(x,y,'Serpent Sword',level,False)
+				weapon.moveToInventory(snakeman)
+
+		return snakeman
+
+	def spawnSnakemanChampion(self,x,y,level,new):
+		level = 3
+
+		lootDrops = {'Sword':5,'Health Potion':2} #shield
+		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman Champion",libtcod.desaturated_blue,level,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI(0.9,0.5,0.5,1,0,0),drops = lootDrops, inventorySize = 4,surviveMortalWound = False, canEquipArmor = True, canEquipWeapons = True)
+		snakeman.deathState = states.DeathState(snakeman)
+		
+		if new == True:
+			# add equipment
 			weapon = self.game.itemSpawner.spawn(x,y,'Serpent Sword',level,False)
-			weapon.moveToInventory(snakeman)
+			snakeman.equipItem(weapon)
+
+			# Shield
+			# Armor
 
 		return snakeman
 
-	def spawnSnakemanChampion(self,x,y,level):
-		level = 1
-
-		lootDrops = {'Sword':5,'Health Potion':2}
-		snakeman = actors.Monster(self.game,x,y,'S',"Snakeman Champion",libtcod.desaturated_sea,level,faction = "Snakemen",stats = actorStats.Stats("Snakeman"),state = states.AI(0.9,0.5,0.5,1,0,0),drops = lootDrops, inventorySize = 4, canEquipArmor = True, canEquipWeapons = True)
-		snakeman.deathState = states.DeathState(snakeman)
-
-		# add equipment
-		weapon = self.game.itemSpawner.spawn(x,y,'Serpent Sword',level,False)
-		snakeman.equipItem(weapon)
-
-		# Shield
-		# Armor
-
-		return snakeman
-
-	def spawnSwampHag(self,x,y,level):
+	def spawnSwampHag(self,x,y,level,new):
+		# uses poisoned mire spells
+		# drops scrolls and occasionally wands
 		pass
 
-	def spawnWitch(self,x,y,level):
+	def spawnWitch(self,x,y,level,new):
+		# drops scrolls, wands, magical equipment, and occasionally spellbooks
 		pass
 
-	def spawnWyrm(self,x,y,level):
+	def spawnWyrm(self,x,y,level,new):
 		pass
 		# Wyrms can be fire or frost elementals
 
@@ -498,3 +537,6 @@ class MobSpawner:
 	def __init__(self,game):
 		self.game = game
 		self.actorSpawner = ActorSpawner(game)
+
+	def spawnMob(self,level):
+		pass

@@ -17,7 +17,6 @@ class Item(Object):
 
 		self.level = level
 
-		self.game.addObject(self)
 		self.game._currentLevel.addItem(self)
 
 		self.renderFirst()
@@ -62,6 +61,7 @@ class Item(Object):
 	def use(self,actor):
 		if self in actor.inventory:
 			actor.inventory.remove(self)
+			self.game.removeObject(self)
 			actor.game.message(actor.name +" uses "+self.getName(True))
 		return True
 
@@ -73,6 +73,20 @@ class Item(Object):
 
 	def upgrade(self,level):
 		pass
+
+	def saveData(self):
+		data = Object.saveData(self)
+		data['dataType'] = 'Item'
+		data['_spawnKey'] = self._spawnKey
+		data['level'] = self.level
+
+		return data
+
+	def loadData(self,data):
+		Object.loadData(self,data)
+		self.level = data['level']
+
+		return True
 
 
 class Equipment(Item):
@@ -124,6 +138,20 @@ class Equipment(Item):
 			else:
 				# add the new modType
 				self.modifier.update(mod)
+
+	def saveData(self):
+		data = Item.saveData(self)
+		data['canBeUnequipped'] = self.canBeUnequipped
+		data['modifier'] = self.modifier
+
+		return data
+
+	def loadData(self,data):
+		Item.loadData(self,data)
+		self.canBeUnequipped = data['canBeUnequipped']
+		self.modifier = data['modifier']
+		
+		return True
 
 
 class DogWhistle(Item):

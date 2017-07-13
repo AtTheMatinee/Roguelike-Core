@@ -17,18 +17,12 @@ import statusEffects
 import libtcodpy as libtcod
 
 class Actor(Object):
-	def __init__(self, game, x, y, char, name, color, level, faction = None, blocks=True, properNoun = False, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, spells = [], canEquipArmor = False, canEquipWeapons = False, playerControlled = False):
-		self.game = game
-		self.x = x
-		self.y = y
-		self.char = char
-		self.name = name
-		self.color = color
+	def __init__(self, game, x, y, char, name, color, level, faction = None, blocks=True, properNoun = False, alwaysVisible = False, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, spells = [], canEquipArmor = False, canEquipWeapons = False, playerControlled = False):
+		Object.__init__(self,game,x,y,char,name,color,blocks, properNoun, alwaysVisible)
 		self.level = level
 		self.faction = faction
-		self.blocks = blocks
-		self.properNoun = properNoun
-		self.alwaysVisible = False
+		self.game._currentLevel.setHasObjectTrue(x,y)
+
 
 		self.nearbyActors = self.getNearbyActors()
 		self.nearbyObjects = self.getNearbyObjects()
@@ -43,9 +37,6 @@ class Actor(Object):
 		self.dead = False
 		self.invisible = False
 
-		self.game.addObject(self)
-		self.game._currentLevel.addObject(self)
-		self.game._currentLevel.setHasObjectTrue(x,y)
 
 		self.energy = 0
 
@@ -144,12 +135,18 @@ class Actor(Object):
 		fireDam = damage[2] - float(damage[2]*defense[1]) # inflicts inflamed
 		if ((fireDam >= 1) and (random.random() <= 0.05) or 
 			any(isinstance(se, statusEffects.Flamable) for se in self.statusEffects) ):
+			for se in self.statusEffects:
+				if (isinstance(se, statusEffects.Flamable)):
+					se.remove()
 			self.addStatusEffect(statusEffects.Flaming,10,False)
 
 		# ==== Frost ====
 		frostDam = damage[3] - float(damage[3]*defense[2]) # inflicts frozen
 		if ((frostDam >= 1) and (random.random() <= 0.05) or 
 			any(isinstance(se, statusEffects.Wet) for se in self.statusEffects) ):
+			for se in self.statusEffects:
+				if (isinstance(se, statusEffects.Wet)):
+					se.remove()
 			self.addStatusEffect(statusEffects.Frozen,10,False)
 
 		# ==== Poison ====
@@ -278,6 +275,88 @@ class Actor(Object):
 
 		return targetX,targetY
 
+	def levelUp(self,levels):
+		pass
+
+	def saveData(self):
+		data = Object.saveData(self)
+		data['dataType'] = 'Actor'
+		data['class'] = self.__class__
+		data['_spawnKey'] = self._spawnKey
+		data['level'] = self.level
+		data['faction'] = self.faction
+		
+		data['experience'] = self.experience
+		data['surviveMortalWound'] = self.surviveMortalWound
+
+		data['energy'] = self.energy
+
+		data['stats'] = self.stats.statBase
+
+		data['inventorySize'] = self.inventorySize
+
+		data['canEquipArmor'] = self.canEquipArmor
+		data['canEquipWeapons'] = self.canEquipWeapons
+
+		data['playerControlled'] = self.playerControlled
+
+		# ==== Special Variables ====
+		data['inventory'] = []
+		for item in self.inventory:
+			# store index reference in game._objects
+			index = self.game._objects.index(item)
+			data['inventory'].append(index)
+
+		data['spells'] = []
+		for spell in self.spells:
+			spellData = spell.saveData()
+			data['spells'].append(spellData)
+
+		data['equipment'] = [None]*len(self.equipSlots)
+		for i in xrange(len(self.equipSlots)):
+			# store index reference in game._objects
+			if self.equipSlots[i] != None:
+				item = self.equipSlots[i]
+
+				index = self.game._objects.index(item)
+
+				data['equipment'][i] = index
+
+		data['statusEffects'] = []
+		for statusEffect in self.statusEffects:
+			data = statusEffect.saveData()
+			data['statusEffects'].append(data)
+
+		return data
+
+	def loadData(self,data):
+		Object.loadData(self,data)
+		# loading Inventory and equipment are handled elsewhere, since they can only be managed after every game object has been recreated
+		self.level = data['level']
+		self.faction = data['faction']
+		self.experience = data['experience']
+		self.surviveMortalWound = data['surviveMortalWound']
+		self.energy = data['energy']
+		self.stats.statBase = data['stats']
+		self.inventorySize = data['inventorySize']
+		self.canEquipArmor = data['canEquipArmor']
+		self.canEquipWeapons = data['canEquipWeapons']
+		self.playerControlled = data['playerControlled']
+
+		# Spells
+		for spell in data['spells']:
+			key = spell['_spawnKey']
+			s = self.game.spellSpawner.spawn(self,key)
+			self.spells.append(s)
+
+		# Status Effects
+		for SE in data['statusEffects']:
+			SEClass = SE['class']
+			timer = SE['timer']
+			self.addStatusEffect(SEClass,timer,True)
+
+		return True
+
 class Hero(Actor):
 	def getNearbyActors(self):
 		nearbyActors = []
@@ -302,7 +381,6 @@ class Hero(Actor):
 
 			if self.invisible == True:
 				color *= 0.5
-				color = libtcod.pink
 
 			libtcod.console_set_default_foreground(self.game.ui.con, color)
 			libtcod.console_put_char(self.game.ui.con, self.x, self.y, self.char, libtcod.BKGND_NONE)

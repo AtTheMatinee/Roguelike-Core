@@ -24,17 +24,18 @@ class ItemSpawner:
 			so that the item can mutate into similar items, but other items cannot mutate into it.
 		'''
 		self._lootHeirarchy = {
-		'Item':[None,['Potion','Equipment','Ammo']], #'_Special','Food','Magic Item'
+		'Item':[None,['Potion','Equipment','Ammo','Bomb']], #'_Special','Food','Magic Item'
 
 		'Potion':['Item',['Medicine','Toxin']], #'_Special'
-		'Medicine':['Potion',['Health Potion','Antidote','Invisibility Potion']],
+		'Medicine':['Potion',['Health Potion','Antidote','Invisibility Potion','Regeneration Potion']],
 		'Toxin':['Potion',['Poison','Firebrew Potion','Permafrost Potion']],
+		'Antidote':['Medicine',[]],
 		'Health Potion':['Medicine',[]],
 		'Invisibility Potion':['Medicine',[]],
+		'Regeneration Potion':['Medicine',[]],
 		'Poison':['Toxin',[]],
 		'Firebrew Potion':['Toxin',[]],
 		'Permafrost Potion':['Toxin',[]],
-		'Antidote':['Medicine',[]],
 
 		'Equipment':['Item',['Weapon','Armor']], # Rings
 
@@ -52,14 +53,18 @@ class ItemSpawner:
 		'Light Crossbow':['Ranged Weapon',[]],
 
 
-		'Armor':['Equipment',['Light Armor']], # 'Heavy Armor'
+		'Armor':['Equipment',['Light Armor']], # 'Heavy Armor', 'Clothes'
 		'Light Armor':['Armor',['Hauberk','Quilted Jacket']],
 		'Hauberk':['Light Armor',[]],
 		'Quilted Jacket':['Light Armor',[]],
 
 		'Ammo':['Item',['Wooden Bolt','Steel Bolt']],
 		'Wooden Bolt':['Ammo',[]],
-		'Steel Bolt':['Ammo',[]]
+		'Steel Bolt':['Ammo',[]],
+
+		'Bomb':['Items',['Grenade','Smokebomb']],
+		'Grenade':['Bomb',[]],
+		'Smokebomb':['Bomb',[]]
 		}
 		'''
 		Food
@@ -119,6 +124,7 @@ class ItemSpawner:
 		'Firebrew Potion':self.spawnFirebrewPotion,
 		'Permafrost Potion':self.spawnPermafrostPotion,
 		'Invisibility Potion':self.spawnInvisibilityPotion,
+		'Regeneration Potion':self.spawnRegenerationPotion,
 		'Dagger':self.spawnDagger,
 		'Mace':self.spawnMace,
 		'Spear':self.spawnSpear,
@@ -129,7 +135,9 @@ class ItemSpawner:
 		'Quilted Jacket':self.spawnQuiltedJacket,
 		'Serpent Armor':self.spawnHealthPotion,
 		'Wooden Bolt':self.spawnWoodenBolt,
-		'Steel Bolt':self.spawnSteelBolt
+		'Steel Bolt':self.spawnSteelBolt,
+		'Grenade':self.spawnGrenade,
+		'Smokebomb':self.spawnSmokebomb
 		}
 	
 	def getRandomLoot(self,item,canRandomize):
@@ -202,6 +210,10 @@ class ItemSpawner:
 		item = Items.potions.Firebrew(self.game, x, y, '!', "Firebrew Potion", libtcod.azure, level, blocks=False)
 		return item
 
+	def spawnGrenade(self,x,y,level):
+		item = Items.bombs.Grenade(self.game, x, y, '*', 'Grenade', libtcod.azure, level, 3)
+		return item
+
 	def spawnHauberk(self,x,y,level):
 		modifier = {
 		'add':{'defense':[1.5,0,0,0,0.2,0,0]}
@@ -245,6 +257,10 @@ class ItemSpawner:
 		item = Items.armor.Hauberk(self.game, x, y, ']', "Quilted Jacket", libtcod.azure, level,  0, modifier)
 		return item
 
+	def spawnRegenerationPotion(self,x,y,level):
+		item = Items.potions.RegenerationPotion(self.game, x, y, '!', "Regeneration Potion", libtcod.azure, level, blocks=False)
+		return item
+
 	def spawnSerpentArmor(self,x,y,level):
 		pass
 		# Special varient of the chest plate armour
@@ -256,13 +272,17 @@ class ItemSpawner:
 		item.upgradePhysicalDamage = [1.0, 0,0,0,0,0,0,0,0]
 		return item
 
+	def spawnSmokebomb(self,x,y,level):
+		item = Items.bombs.Smokebomb(self.game, x, y, '*', 'Smokebomb', libtcod.azure, level, 1)
+		return item
+
 	def spawnSpear(self,x,y,level):
 		modifier = {'add':{'attack':[5.0,0,0,0,0,0.1,0,0,0]}}
 		item = Items.weapons.Spear(self.game, x, y, chr(24), "Spear", libtcod.azure, level, 1, modifier)
 		return item
 
 	def spawnSteelBolt(self,x,y,level):
-		number = 7 #random.randint(4,10)
+		number = random.randint(4,10)
 		damage = [4,1,0,0,0,0,0,0,0]
 		item = Items.rangedWeapons.Bolts(self.game, x, y, '/', "Steel Bolt", libtcod.azure, level, number, damage)
 		return item
@@ -273,7 +293,7 @@ class ItemSpawner:
 		return item
 
 	def spawnWoodenBolt(self,x,y,level):
-		number = 7 #random.randint(4,14)
+		number = random.randint(4,14)
 		damage = [3,0,0,0,0,0,0,0,0]
 		item = Items.rangedWeapons.Bolts(self.game, x, y, '/', "Wooden Bolt", libtcod.azure, level, number, damage)
 		return item
