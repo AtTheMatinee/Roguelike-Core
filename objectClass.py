@@ -10,6 +10,7 @@ Object
 '''
 
 class Object(object):
+	identified = True
 	def __init__(self, game, x, y, char, name, color, blocks=False, properNoun = False, alwaysVisible = False):
 		self.game = game
 		self.x = x
@@ -82,3 +83,31 @@ class Object(object):
 	def takeDamage(self, damage):
 		# damage = [physical, armorPenetration, fire, frost, poison, bleed, holy, unholy, unblockable]
 		pass
+
+	def saveData(self):
+		data = {
+		'dataType':'Object',
+		'class':self.__class__,
+		'x':self.x,
+		'y':self.y,
+		'char':self.char,
+		'name':self.name,
+		'color':self.color,
+		'blocks':self.blocks,
+		'properNoun':self.properNoun,
+		'alwaysVisible':self.alwaysVisible,
+		}
+
+		return data
+
+	def loadData(self,data):
+		self.game._currentLevel.setHasObjectFalse(self.x, self.y)
+		self.x = data['x']
+		self.y = data['y']
+		self.char = data['char']
+		self.name = data['name']
+		self.color = data['color']
+		self.blocks = data['blocks']
+		self.properNoun = data['properNoun']
+		self.alwaysVisible = data['alwaysVisible']
+		return True

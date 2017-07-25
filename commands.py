@@ -151,8 +151,8 @@ class AttackCommand(Command):
 		if self.actor == self.actor.game.hero or self.target == self.actor.game.hero:
 			self.actor.game.message(self.actor.getName(True).title() + " attacks " + self.target.getName(True))
 
-		self.target.takeDamage(attack)
 		self.target.mostRecentAttacker = self.actor
+		self.target.takeDamage(attack)
 		# TODO: Update faction opinions accordingly
 
 		self.actor.energy -= self.energyCost
@@ -353,6 +353,7 @@ class ThrowCommand(Command):
 		self.x = x
 		self.y = y
 		self.item = item
+		# TODO: if the item is ammo, create a new ammo object of that type and throw that instead (after decrimenting the ammo number)
 
 		self.energyCost = 16
 
@@ -489,7 +490,6 @@ class DropCommand(Command):
 
 
 class EquipCommand(Command):
-	# TODO: Implement multi-slot equipment
 	
 	def __init__(self,actor,item):
 		self.actor = actor
@@ -684,6 +684,40 @@ class GoDownStairsCommand(Command):
 			alternative = None
 
 		return success, alternative
+
+class LevelUpCommand(Command):
+	def __init__(self,actor,stat):
+		self.actor = actor
+		self.stat = stat
+
+		self.energyCost = 12
+
+		self.levelUp = {
+		'healthMax':3,
+		'magicMax':3,
+		'attack':[1.5,0,0,0,0,0,0,0,0,0],
+		'defense':[0.5,0,0,0,0,0,0],
+		'speed':1,
+		'magicRegen':0.025,
+		'critChance':0.02
+		}
+
+	def perform(self):
+		success = False
+		alternative = None
+
+		if self.actor.experience >= self.actor.game.experiencePerLevel:
+			base = self.actor.stats.getBaseStat(self.stat)
+			if base != None:
+				newStat = base + self.levelUp[self.stat]
+				self.actor.stats.setBaseStat(self.stat,newStat)
+
+				# subtract the spent experience
+				self.actor.experience -= self.actor.game.experiencePerLevel
+				success = True
+
+		return success, alternative
+
 
 #class PushedCommand(Command):
 

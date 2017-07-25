@@ -2,12 +2,16 @@
 monsters.py
 '''
 from actors import Monster
+import random
 '''
 ====================
 Monsters
 ====================
 '''
 class Animal(Monster):
+	pass
+
+class Bloat(Monster):
 	pass
 
 class Dog(Animal):

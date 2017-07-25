@@ -1,11 +1,6 @@
 '''
 actors.py
 '''
-'''
-====================
-Actors
-====================
-'''
 from objectClass import Object
 
 import random
@@ -16,22 +11,23 @@ import statusEffects
 
 import libtcodpy as libtcod
 
+'''
+====================
+Actor Class
+====================
+'''
+
 class Actor(Object):
-	def __init__(self, game, x, y, char, name, color, level, faction = None, blocks=True, properNoun = False, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, spells = [], canEquipArmor = False, canEquipWeapons = False, playerControlled = False):
-		self.game = game
-		self.x = x
-		self.y = y
-		self.char = char
-		self.name = name
-		self.color = color
+	def __init__(self, game, x, y, char, name, color, level, faction = None, blocks=True, properNoun = False, alwaysVisible = False, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, spells = [], canEquipArmor = False, canEquipWeapons = False, playerControlled = False):
+		Object.__init__(self,game,x,y,char,name,color,blocks, properNoun, alwaysVisible)
 		self.level = level
 		self.faction = faction
-		self.blocks = blocks
-		self.properNoun = properNoun
-		self.alwaysVisible = False
+		self.game._currentLevel.setHasObjectTrue(x,y)
 
-		self.nearbyActors = self.getNearbyActors()
-		self.nearbyObjects = self.getNearbyObjects()
+
+		self.nearbyActors = []
+		self.nearbyObjects = []
+		self.recalculateNearbyObjects = True
 		
 		self.mostRecentAttacker = None
 		self.experience = 0
@@ -43,9 +39,6 @@ class Actor(Object):
 		self.dead = False
 		self.invisible = False
 
-		self.game.addObject(self)
-		self.game._currentLevel.addObject(self)
-		self.game._currentLevel.setHasObjectTrue(x,y)
 
 		self.energy = 0
 
@@ -72,6 +65,9 @@ class Actor(Object):
 		self._nextCommand = None
 
 	def getCommand(self):
+		# recalculate the nearby actors if something has changed since the last recalculation
+		self.recalculateObjects()
+
 		command = self._nextCommand
 
 		if self.state:
@@ -102,10 +98,18 @@ class Actor(Object):
 
 		Object.draw(self)
 
+	def recalculateObjects(self):
+		if self.recalculateNearbyObjects == True:
+			self.nearbyActors = self.getNearbyActors()
+			self.nearbyObjects = self.getNearbyObjects()
+			self.recalculateNearbyObjects = False
+
 	def needsInput(self):
 		if not self.playerControlled:
 			return False
 		else:
+			# This is the best place to call recalculateObjects that allows it to be called before the player has taken a turn
+			self.recalculateObjects()
 			return (self._nextCommand == None)
 
 	def hasTakenTurn(self):
@@ -123,7 +127,7 @@ class Actor(Object):
 		if (self.mortalWound == True):
 			self.hadLastChance = True
 
-		self.nearbyActors = self.getNearbyActors()
+		self.recalculateNearbyObjects = True
 
 
 	def takeDamage(self, damage):
@@ -136,20 +140,22 @@ class Actor(Object):
 		armor = max(0,(random.randint(0,int(defense[0])) - int(damage[1]))) # physicalDefense - armorPenetration
 		physicalDam = max(0,(damage[0] - armor))
 
-		# ==========
-		# !!! look for status effect flags with: if any(isinstance(instance,statusEffect) for instance in self.statusEffects)
-		# ==========
-
 		# ==== Fire ====
 		fireDam = damage[2] - float(damage[2]*defense[1]) # inflicts inflamed
 		if ((fireDam >= 1) and (random.random() <= 0.05) or 
 			any(isinstance(se, statusEffects.Flamable) for se in self.statusEffects) ):
+			for se in self.statusEffects:
+				if (isinstance(se, statusEffects.Flamable)):
+					se.remove()
 			self.addStatusEffect(statusEffects.Flaming,10,False)
 
 		# ==== Frost ====
 		frostDam = damage[3] - float(damage[3]*defense[2]) # inflicts frozen
 		if ((frostDam >= 1) and (random.random() <= 0.05) or 
 			any(isinstance(se, statusEffects.Wet) for se in self.statusEffects) ):
+			for se in self.statusEffects:
+				if (isinstance(se, statusEffects.Wet)):
+					se.remove()
 			self.addStatusEffect(statusEffects.Frozen,10,False)
 
 		# ==== Poison ====
@@ -209,9 +215,6 @@ class Actor(Object):
 				self.game._currentLevel.setHasObjectFalse(self.x,self.y)
 				self.game._currentLevel.removeActor(self)
 
-	def levelUp(self):
-		pass
-
 	def dropLoot(self):
 		# Drop Inventory and Equipment
 		for i in xrange(len(self.equipSlots) -1):
@@ -228,7 +231,7 @@ class Actor(Object):
 		level = self.level
 		if self.drops:
 			for item,odds in self.drops.items():
-				if random.random() <= 1.0/odds:
+				if random.random() <= odds:
 					self.game.itemSpawner.spawn(self.x,self.y,item,level,True)
 
 	def addStatusEffect(self,statusEffect,timer,stacks):
@@ -257,6 +260,21 @@ class Actor(Object):
 		self.equipSlots[item.equipSlot] = item
 		self.stats.addModifier(item,item.modifier)
 
+	def gainXP(self):
+		self.experience += 1
+
+	def gainXPCombat(self,actor):
+		pass
+
+	def gainXPIdentify(self,item):
+		pass
+
+	def gainXPDiscovery(self,item):
+		pass
+
+	def gainXPExplore(self,floor):
+		pass
+
 	def findTarget(self,range = None):
 		targetX = None
 		targetY = None
@@ -278,12 +296,107 @@ class Actor(Object):
 
 		return targetX,targetY
 
+	def saveData(self):
+		data = Object.saveData(self)
+		data['dataType'] = 'Actor'
+		data['class'] = self.__class__
+		data['_spawnKey'] = self._spawnKey
+		data['level'] = self.level
+		data['faction'] = self.faction
+		
+		data['experience'] = self.experience
+		data['surviveMortalWound'] = self.surviveMortalWound
+
+		data['energy'] = self.energy
+
+		data['stats'] = self.stats.statBase
+
+		data['inventorySize'] = self.inventorySize
+
+		data['canEquipArmor'] = self.canEquipArmor
+		data['canEquipWeapons'] = self.canEquipWeapons
+
+		data['playerControlled'] = self.playerControlled
+
+		# ==== Special Variables ====
+		data['inventory'] = []
+		for item in self.inventory:
+			# store index reference in game._objects
+			index = self.game._objects.index(item)
+			data['inventory'].append(index)
+
+		data['spells'] = []
+		for spell in self.spells:
+			spellData = spell.saveData()
+			data['spells'].append(spellData)
+
+		data['equipment'] = [None]*len(self.equipSlots)
+		for i in xrange(len(self.equipSlots)):
+			# store index reference in game._objects
+			if self.equipSlots[i] != None:
+				item = self.equipSlots[i]
+
+				index = self.game._objects.index(item)
+
+				data['equipment'][i] = index
+
+		data['statusEffects'] = []
+		for statusEffect in self.statusEffects:
+			SEdata = statusEffect.saveData()
+			data['statusEffects'].append(SEdata)
+
+		return data
+
+	def loadData(self,data):
+		# After an instance of this object's class has been created, overwrite the base data with specific saved data
+		Object.loadData(self,data)
+		# loading Inventory and equipment are handled elsewhere, since they can only be managed after every game object has been recreated
+		self.level = data['level']
+		self.faction = data['faction']
+		self.experience = data['experience']
+		self.surviveMortalWound = data['surviveMortalWound']
+		self.energy = data['energy']
+		self.stats.statBase = data['stats']
+		self.inventorySize = data['inventorySize']
+		self.canEquipArmor = data['canEquipArmor']
+		self.canEquipWeapons = data['canEquipWeapons']
+		self.playerControlled = data['playerControlled']
+
+		# Spells
+		for spell in data['spells']:
+			key = spell['_spawnKey']
+			s = self.game.spellSpawner.spawn(self,key)
+			self.spells.append(s)
+
+		# Status Effects
+		for SE in data['statusEffects']:
+			SEClass = SE['class']
+			timer = SE['timer']
+			self.addStatusEffect(SEClass,timer,True)
+
+		return True
+
+'''
+====================
+Hero Class
+====================
+'''
+
 class Hero(Actor):
+	def __init__(self, game, x, y, char, name, color, level, faction = None, blocks=True, properNoun = False, alwaysVisible = False, stats = actorStats.Stats("None"), state = None,deathState = None, surviveMortalWound = False, inventorySize = 0, drops = {}, spells = [], canEquipArmor = False, canEquipWeapons = False, playerControlled = False):
+		self.discoveredMonsters = set()
+		self.killedMonsters = set()
+		self.discoveredItems = set()
+		self.floorsVisited = set()
+		Actor.__init__(self, game, x, y, char, name, color, level, faction, blocks, properNoun, alwaysVisible, stats, state ,deathState , surviveMortalWound , inventorySize, drops, spells, canEquipArmor, canEquipWeapons, playerControlled)
+
+
 	def getNearbyActors(self):
 		nearbyActors = []
 		for actor in self.game._currentLevel._actors:
 			if (actor != self) and (libtcod.map_is_in_fov(self.game.map.fov_map, actor.x, actor.y)):
 				nearbyActors.append(actor)
+				self.gainXPDiscovery(actor)
 		return nearbyActors
 
 	def getNearbyObjects(self):
@@ -302,7 +415,6 @@ class Hero(Actor):
 
 			if self.invisible == True:
 				color *= 0.5
-				color = libtcod.pink
 
 			libtcod.console_set_default_foreground(self.game.ui.con, color)
 			libtcod.console_put_char(self.game.ui.con, self.x, self.y, self.char, libtcod.BKGND_NONE)
@@ -329,11 +441,61 @@ class Hero(Actor):
 
 		self.game.ui.reevaluateHeroStatusEffects = True
 
+	def saveData(self):
+		data = Actor.saveData(self)
 
+		data['discoveredMonsters'] = self.discoveredMonsters
+		data['killedMonsters'] = self.killedMonsters
+		data['discoveredItems'] = self.discoveredItems
+		data['floorsVisited'] = self.floorsVisited
+
+		return data
+
+	def loadData(self,data):
+		# After an instance of this object's class has been created, overwrite the base data with specific saved data
+		Actor.loadData(self,data)
+		self.discoveredMonsters = data['discoveredMonsters']
+		self.killedMonsters = data['killedMonsters']
+		self.discoveredItems = data['discoveredItems']
+		self.floorsVisited = data['floorsVisited']
+
+	def gainXPCombat(self,actor):
+		if actor._spawnKey in self.killedMonsters: return
+
+		self.gainXP()
+		self.killedMonsters.add(actor._spawnKey)
+
+	def gainXPIdentify(self,item):
+		if item._spawnKey in self.discoveredItems: return
+
+		self.gainXP()
+		self.discoveredItems.add(item._spawnKey)
+
+	def gainXPDiscovery(self,actor):
+		if actor._spawnKey in self.discoveredMonsters: return
+
+		self.gainXP()
+		self.discoveredMonsters.add(actor._spawnKey)
+
+	def gainXPExplore(self,floor):
+		if floor in self.floorsVisited: return
+
+		self.gainXP()
+		self.floorsVisited.add(floor)
+
+'''
+====================
+Monster Class
+====================
+'''
 
 class Monster(Actor):
 	pass
 
+'''
+====================
+====================
+'''
 
 if __name__ == "__main__":
 
