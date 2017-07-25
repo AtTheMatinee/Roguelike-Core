@@ -13,9 +13,12 @@ class SpellSpawner:
 		self.game = game
 
 		self.spawnMethods = {
+			'Confusion':self.spawnConfusion,
 			'Explode':self.spawnExplode,
+			'Fear':self.spawnFear,
 			'Fireball':self.spawnFireball,
 			'Firebolt':self.spawnFirebolt,
+			'Locate Player':self.spawnLocatePlayer,
 			'Self Heal':self.spawnSelfHeal,
 			'Invisibility':self.spawnInvisibility
 		}
@@ -23,6 +26,7 @@ class SpellSpawner:
 	def spawn(self,caster,key):
 		if key in self.spawnMethods:
 			spell = self.spawnMethods[key](caster)
+			spell._spawnKey = key
 
 			return spell
 
@@ -31,8 +35,16 @@ class SpellSpawner:
 
 	# ==== Spawn Methods ====
 
+	def spawnConfusion(self,caster):
+		spell = Items.spells.Confusion(self.game,"Confusion",caster)
+		return spell
+
 	def spawnExplode(self,caster):
 		spell = Items.spells.Explode(self.game,"Explode",caster)
+		return spell
+
+	def spawnFear(self,caster):
+		spell = Items.spells.Fear(self.game,"Fear",caster)
 		return spell
 
 	def spawnFireball(self,caster):
@@ -41,6 +53,10 @@ class SpellSpawner:
 
 	def spawnFirebolt(self,caster):
 		spell = Items.spells.Firebolt(self.game,"Firebolt",caster)
+		return spell
+
+	def spawnLocatePlayer(self,caster):
+		spell = Items.spells.LocatePlayer(self.game,"Locate Player",caster)
 		return spell
 
 	def spawnSelfHeal(self,caster):

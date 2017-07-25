@@ -13,8 +13,19 @@ class FactionTracker:
 		self._friendly = 3
 
 		self._factions = {
+			"Abominations":
+				{
+				"Abominations":self._friendly,
+				"Ghosts":self._neutral,
+				"Hero": self._hostile,
+				"Snakemen": self._neutral,
+				"Temple Guardians":self._neutral,
+				"Plague Rats": self._neutral,
+				"Mirehounds": self._neutral
+				},
 			"Ghosts":
 				{
+				"Abominations":self._neutral,
 				"Ghosts":self._neutral,
 				"Hero": self._hostile,
 				"Snakemen": self._hostile,
@@ -24,6 +35,7 @@ class FactionTracker:
 				},
 			"Hero":
 				{
+				"Abominations":self._hostile,
 				"Ghosts":self._hostile,
 				"Hero": self._friendly,
 				"Snakemen": self._hostile,
@@ -33,6 +45,7 @@ class FactionTracker:
 				},
 			"Mirehounds":
 				{
+				"Abominations":self._neutral,
 				"Ghosts":self._hostile,
 				"Hero": self._hostile,
 				"Snakemen": self._friendly,
@@ -42,6 +55,7 @@ class FactionTracker:
 				},
 			"Plague Rats":
 				{
+				"Abominations":self._neutral,
 				"Ghosts":self._hostile,
 				"Hero": self._hostile,
 				"Snakemen": self._hostile,
@@ -51,6 +65,7 @@ class FactionTracker:
 				},
 			"Snakemen":
 				{
+				"Abominations":self._neutral,
 				"Ghosts":self._hostile,
 				"Hero": self._hostile,
 				"Snakemen": self._friendly,
@@ -60,6 +75,7 @@ class FactionTracker:
 				},
 			"Temple Guardians":
 				{
+				"Abominations":self._neutral,
 				"Ghosts":self._neutral,
 				"Hero": self._hostile,
 				"Snakemen": self._neutral,

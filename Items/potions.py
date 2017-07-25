@@ -51,9 +51,7 @@ class HealthPotion(Potion):
 
 		self.destroy(actor)
 
-		if self.__class__.identified == False:
-			self.__class__.identified = True
-			actor.game.message("You have identified "+self.getName(True),libtcod.cyan)
+		self.identify(actor)
 
 		return True
 
@@ -70,9 +68,7 @@ class Poison(Potion):
 
 		self.destroy(actor)
 
-		if self.__class__.identified == False:
-			self.__class__.identified = True
-			actor.game.message("You have identified "+self.getName(True),libtcod.cyan)
+		self.identify(actor)
 
 		return True
 
@@ -89,9 +85,7 @@ class Antidote(Potion):
 					se.remove()
 
 			# if it cures poison, identify it
-			if self.__class__.identified == False:
-				self.__class__.identified = True
-				actor.game.message("You have identified "+self.getName(True),libtcod.cyan)
+			self.identify(actor)
 
 		self.destroy(actor)
 
@@ -115,9 +109,7 @@ class Permafrost(Potion):
 		self.destroy(actor)
 
 		# if potion is unidentified, identify it
-		if self.__class__.identified == False:
-			self.__class__.identified = True
-			actor.game.message("You have identified "+self.getName(True),libtcod.cyan)
+		self.identify(actor)
 
 		return True
 
@@ -139,9 +131,7 @@ class Firebrew(Potion):
 		self.destroy(actor)
 
 		# if potion is unidentified, identify it
-		if self.__class__.identified == False:
-			self.__class__.identified = True
-			actor.game.message("You have identified "+self.getName(True),libtcod.cyan)
+		self.identify(actor)
 
 		return True
 		
@@ -156,9 +146,7 @@ class GhostEssence(Potion):
 		self.destroy(actor)
 
 		# if potion is unidentified, identify it
-		if self.__class__.identified == False:
-			self.__class__.identified = True
-			actor.game.message("You have identified "+self.getName(True),libtcod.cyan)
+		self.identify(actor)
 
 		return True
 
@@ -172,8 +160,21 @@ class InvisibilityPotion(Potion):
 
 		self.destroy(actor)
 
-		if self.__class__.identified == False:
-			self.__class__.identified = True
-			actor.game.message("You have identified "+self.getName(True),libtcod.cyan)
+		self.identify(actor)
+
+		return True
+
+class RegenerationPotion(Potion):
+	def __init__(self, game, x, y, char, name, color, level, blocks=False):
+		Potion.__init__(self, game, x, y, char, name, color, level, blocks=False)
+
+		self.potency = 5 + 5*level
+
+	def use(self,actor):
+		actor.addStatusEffect(statusEffects.Regenerating, self.potency, True)
+
+		self.destroy(actor)
+
+		self.identify(actor)
 
 		return True

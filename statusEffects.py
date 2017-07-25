@@ -2,6 +2,8 @@
 statusEffects.py
 '''
 import libtcodpy as libtcod
+import commands
+import states
 '''
 ====================
 Status Effects
@@ -26,9 +28,7 @@ Status Effect Tags
 	Bleeding
 		does 1/10 of actor's health in unblockable damage 
 		per turn for up to 5 turns, stacks
-	Explosive
 	Invisible
-	Undead
 		become flaming when dealt holy damage
 	Cursed
 	Blessed
@@ -50,6 +50,18 @@ class StatusEffect(object):
 	def remove(self):
 		self.actor.removeStatusEffect(self)
 		self.game.message("The status effect has worn off.")
+
+	def saveData(self):
+		data = {
+		'dataType':'StatusEffect',
+		'class':self.__class__,
+		'timer':self.timer
+		}
+
+		return data
+
+	def loadData(self,data):
+		return True
 
 
 
@@ -223,6 +235,54 @@ class Invisible(StatusEffect):
 	def remove(self):
 		self.actor.removeStatusEffect(self)
 		self.game.message(self.actor.getName(True).title()+" is no longer invisible.",libtcod.light_violet)
+
+class Regenerating(StatusEffect):
+	def __init__(self,actor,timer):
+		StatusEffect.__init__(self,actor,timer)
+
+		self.healValue = self.actor.stats.get('healthMax')/20.0
+		self.game.message(self.actor.getName(True).title()+" is regenerating health.",libtcod.violet)
+
+	def effect(self):
+		if self.timer == 0:
+			self.remove()
+			return
+
+		# heal
+		self.actor.heal(self.healValue)
+
+		if self.timer > 0: self.timer -= 1
+
+	def remove(self):
+		self.actor.removeStatusEffect(self)
+		self.game.message(self.actor.getName(True).title()+" is no longer regenerating health.",libtcod.light_violet)
+
+
+class Confused(StatusEffect):
+	def __init__(self,actor,timer):
+		StatusEffect.__init__(self,actor,timer)
+		self.actor.state = states.AIConfused()
+
+	def effect(self):
+		if self.timer == 0:
+			self.remove()
+			self.actor.state = self.actor._defaultState
+			return
+
+		if self.timer > 0: self.timer -= 1
+
+class Afraid(StatusEffect):
+	def __init__(self,actor,timer):
+		StatusEffect.__init__(self,actor,timer)
+		self.actor.state = states.AIAfraid()
+
+	def effect(self):
+		if self.timer == 0:
+			self.remove()
+			self.actor.state = self.actor._defaultState
+			return
+
+		if self.timer > 0: self.timer -= 1
 
 # ==== Buffs ====
 

@@ -23,9 +23,7 @@ FOV_ALGORITHM = 0
 FOV_LIGHT_WALLS = True
 FOV_RADIUS = 10
 
-ROOM_DIFICULTY_BASE = 2 # The base multiplier for the total max difficulty of the monsters in a room,
-# using the formula maxRoomDifficulty = ROOM_DIFICULTY_BASE + ROOM_DIFICULTY_BASE*levelDepth/2
-EMPTY_ROOM_CHANCE = 0.5 # Probability of a room containing 0 monsters
+EMPTY_ROOM_CHANCE = 0.2 # Probability of a room containing 0 monsters
 
 '''
 ====================
@@ -58,9 +56,9 @@ class Map:
 		self._levels.append(newLevel)
 
 		#self.loadLevel(depth)
+		return newLevel
 
 	def loadLevel(self,index):
-		# TODO: Loading Screen
 		level = self._levels[index]
 
 		self.game._currentLevel = level
@@ -75,7 +73,7 @@ class Map:
 				blocksMovement = level.getBlocksMovement(x,y)
 				libtcod.map_set_properties(self.fov_map,x,y,not blocksSight,not blocksMovement)
 
-	def fovRecompute(self,x,y):
+	def fovRecompute(self,x,y,reinitializeFOV = False):
 		libtcod.map_compute_fov(self.fov_map, x, y, FOV_RADIUS, FOV_LIGHT_WALLS, FOV_ALGORITHM)
 
 class Level:
@@ -104,30 +102,31 @@ class Level:
 
 		self.StairsUp = None
 		self.StairsDown = None
+		self.clearStairs = True
 
 		Level._blocksMovement = 1 # bitwise map flag
 		Level._blocksSight = 2 # bitwise map flag
 		Level._hasObject = 4 # bitwise map flag
 		Level._hasBeenExplored = 8 # bitwise map flag
-
+ 
 	def generateLevel(self):
 		# Creates an empty 2D array
-		
-		self.terrain = [[0
-			for y in range(self.mapHeight)]
-				for x in range(self.mapWidth)]
+		if len(self.terrain) == 0:	
+			self.terrain = [[0
+				for y in range(self.mapHeight)]
+					for x in range(self.mapWidth)]
 
-		self.mapType.generateLevel(self, self.mapWidth, self.mapHeight,self.seed)
+			self.mapType.generateLevel(self, self.mapWidth, self.mapHeight,self.seed)
+
 		self.pathMap = libtcod.path_new_using_map(self.map.fov_map,1)
 
 	def populateRoom(self,roomX, roomY, roomWidth, roomHeight, room):
-		maxRoomDifficulty = ROOM_DIFICULTY_BASE + ROOM_DIFICULTY_BASE*self.levelDepth/2
+		maxRoomDifficulty = 3
 
 		if random.random() >= EMPTY_ROOM_CHANCE:
 			# populate monsters
-			difficulty = random.randint(1,maxRoomDifficulty)
+			difficulty = random.randint(0,maxRoomDifficulty)
 			for i in xrange(difficulty):
-				# TODO: Give monsters individual difficulty values
 				x = 0
 				y = 0
 				while x == 0 and y == 0:
@@ -142,9 +141,18 @@ class Level:
 						y = roomY + tempY
 
 				# placeholder Monster Spawn
-				monsterTable = {'Mirehound':4,'Plague Rat':3,'Snakeman':2}#, 'Snakeman Archer':1}
-				self.game.actorSpawner.spawn(x,y,randomChoice.choose(monsterTable))
+				monsterTable = [
+				{'Mirehound':5,'Plague Rat':2,'Snakeman':1,'Snakeman Champion':1},
+				{'Mirehound':4,'Plague Rat':3,'Snakeman':2,'Snakeman Archer':1},
+				{'Mirehound':4,'Plague Rat':2,'Snakeman':2,'Snakeman Archer':2},
+				{'Mirehound':2,'Plague Rat':2,'Snakeman':2,'Snakeman Archer':2},
+				{'Mirehound':2,'Plague Rat':2,'Snakeman':2,'Snakeman Archer':2,'Ghost':1},
+				{'Mirehound':2,'Plague Rat':2,'Snakeman':3,'Snakeman Archer':3,'Ghost':1,'Snakeman Champion':1},
+				{'Mirehound':2,'Plague Rat':2,'Snakeman':2,'Snakeman Archer':3,'Ghost':2,'Snakeman Champion':2}
 
+				]
+				depth = min(self.levelDepth, len(monsterTable)-1)
+				self.game.actorSpawner.spawn(x,y,randomChoice.choose(monsterTable[depth]))
 
 	def placeStairs(self,downStairsX,downStairsY,upStairsX,upStairsY):
 		# place stairs down
@@ -154,6 +162,21 @@ class Level:
 		# place stairs up
 		destination = self.levelDepth - 1
 		self.stairsUp = objects.Stairs(self.game, upStairsX, upStairsY, '<', 'Stairs', libtcod.white, destination)
+
+		if self.clearStairs == True:
+			for actor in self.stairsUp.getNearbyActors():
+				# move actors away from the stairs
+				x = None
+				while x == None:
+					tempX = random.randint(1,self.mapWidth-1)
+					tempY = random.randint(1,self.mapHeight-1)
+					if self.getBlocksMovement(tempX,tempY) == False:
+						x = tempX
+						y = tempY
+				self.setHasObjectFalse(actor.x, actor.y)
+				actor.x = x
+				actor.y = y
+				self.setHasObjectTrue(actor.x, actor.y)
 
 	'''
 	==== Tile Bitwise Operators ====
@@ -266,12 +289,54 @@ class Level:
 	def addActor(self, actor):
 		self._actors.append(actor)
 
+		# give experience for reaching this floor
+		actor.gainXPExplore(self)
+
+
 	def removeActor(self, actor):
 		self._actors.remove(actor)
 
-'''class MonsterList:
-	Boar = 
-	Snakeman = 
-	Grunch = 
-	Rougarou = 
-'''
+	def saveData(self):
+		data = {
+		'terrain': self.terrain,
+		'levelDepth':self.levelDepth
+		}
+
+		data['_objects'] = []
+		for obj in self._objects:
+			# store index reference in game._objects
+			index = self.game._objects.index(obj)
+			data['_objects'].append(index)
+
+
+		data['_items'] = []
+		for item in self._items:
+			# store index reference in game._objects
+			index = self.game._objects.index(item)
+			data['_items'].append(index)
+
+		data['_actors'] = []
+		for actor in self._actors:
+			# store index reference in game._objects
+			index = self.game._objects.index(actor)
+			data['_actors'].append(index)
+
+		if self.StairsUp != None:
+			data['StairsUp'] = self.game._objects.index(self.StairsUp)
+		else:
+			data['StairsUp'] = None
+
+		if self.StairsDown != None:
+			data['StairsDown'] = self.game._objects.index(self.StairsDown)
+		else:
+			data['StairsDown'] = None
+
+		return data
+
+	def loadData(self,data):
+		if self.levelDepth != data['levelDepth']:
+			print "Error: level ",self.levelDepth," was loaded at depth ",data['levelDepth']
+
+		self.terrain = data['terrain']
+
+		# Objects are handled elsewhere, as the levels must be loaded before objects can be created

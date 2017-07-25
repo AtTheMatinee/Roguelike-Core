@@ -51,7 +51,6 @@ class Ammo(Item):
 		
 		return name
 
-
 	def moveToInventory(self,actor):
 		# Special move to inventory method for stacking items
 		if self in self.game._currentLevel._objects:
@@ -67,6 +66,20 @@ class Ammo(Item):
 					return
 
 		actor.inventory.append(self)
+
+	def saveData(self):
+		data = Item.saveData(self)
+		data['number'] = self.number
+		data['damage'] = self.damage
+		return data
+
+	def loadData(self,data):
+		Item.loadData(self,data)
+		self.number = data['number']
+		self.damage = data['damage']
+
+		return True
+
 
 class Bolts(Ammo):
 	pass
@@ -91,3 +104,38 @@ class RangedWeapon(Equipment):
 
 		self.loadedAmmoType = None
 		self.loadedRounds = 0
+
+	def saveData(self):
+		data = Item.saveData(self)
+		data['maxRange'] = self.maxRange
+		data['maxRounds'] = self.maxRounds
+		data['attackSpeed'] = self.attackSpeed
+		data['loadedRounds'] = self.loadedRounds
+
+		if self.loadedAmmoType == None:
+			data['loadedAmmoType'] = None
+		else:
+			data['loadedAmmoType'] = self.loadedAmmoType.saveData()
+
+		return data
+
+	def loadData(self,data):
+		Item.loadData(self,data)
+		self.maxRange = data['maxRange']
+		self.maxRounds = data['maxRounds']
+		self.attackSpeed = data['attackSpeed']
+		self.loadedRounds = data['loadedRounds']
+
+		if data['loadedAmmoType'] != None:
+			x = data['loadedAmmoType']['x']
+			y = data['loadedAmmoType']['y']
+			level = data['loadedAmmoType']['level']
+			key = data['loadedAmmoType']['_spawnKey']
+			ammo = self.game.itemSpawner.spawn(x,y,key,level,False)
+			if ammo != None:
+				ammo.loadData(data['loadedAmmoType'])
+				ammo.number = 0
+				self.game.removeObject(ammo)
+			self.loadedAmmoType = ammo			
+
+		return True

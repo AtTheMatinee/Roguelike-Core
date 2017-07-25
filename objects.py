@@ -15,35 +15,46 @@ import actors
 
 
 class Stairs(Object):
-	def __init__(self, game, x, y, char, name, color, destination):
+	def __init__(self, game, x, y, char, name, color, destination, blocks=False, properNoun = False, alwaysVisible = False):
 		Object.__init__(self, game, x, y, char, name, color, alwaysVisible = True)
-		self.destintion = destination
+		self.destination = destination
 		self.renderFirst()
+
+	def saveData(self):
+		data = Object.saveData(self)
+		data['destination'] = self.destination
+
+		return data
+
+	def loadData(self,data):
+		Object.loadData(self,data)
+		self.destination = data['destination']
+		return True
 
 
 class Door(Object):
-	def __init__(self, game, x, y, char, name, color, blocks=False):
+	def __init__(self, game, x, y, char, name, color, blocks=False, properNoun = False, alwaysVisible = False):
 		Object.__init__(self, game, x, y, char, name, color, blocks)
 		self.renderFirst()
 	pass
 
 
 class Container(Object):
-	def __init__(self, game, x, y, char, name, color, cache = [], blocks=False):
+	def __init__(self, game, x, y, char, name, color, cache = [], blocks=False, properNoun = False, alwaysVisible = False):
 		Object.__init__(self, game, x, y, char, name, color, blocks=False)
 		self.cache = cache
 		self.renderFirst()
 
 
 class Corpse(Container):
-	def __init__(self, game, x, y, char, name, color, blocks=False):
+	def __init__(self, game, x, y, char, name, color, blocks=False, properNoun = False, alwaysVisible = False):
 		Object.__init__(self, game, x, y, char, name, color, blocks=False)
 		self.renderFirst()
 	pass
 
 
 class Pool(Object):
-	def __init__(self, game, x, y, name, color, blocks=False):
+	def __init__(self, game, x, y, name, color, blocks=False, properNoun = False, alwaysVisible = False):
 		char = '~'
 		Object.__init__(self, game, x, y, char, name, color, blocks)
 		self.renderFirst()
@@ -161,7 +172,7 @@ class Explosion(Object):
 
 
 class Cloud(Object):
-	def __init__(self, game, x, y, name, color, volume, blocks=False):
+	def __init__(self, game, x, y, name, color, volume, blocks=False, properNoun = False, alwaysVisible = False):
 		char = ' '
 		Object.__init__(self, game, x, y, char, name, color, blocks)
 		self.volume = volume
@@ -171,6 +182,8 @@ class Cloud(Object):
 		self.diffusionRate = .1 # percent of the gass volume that is dissapated each tick
 		self.minThreshold = 0.3 # minimum value before a cell is removed from the list
 		self.cells = {(self.x,self.y): self.volume}
+
+		self.blocksSight = False
 
 
 	def tick(self):
@@ -202,14 +215,19 @@ class Cloud(Object):
 		tempCells.update(self.cells)
 		for cell in tempCells:
 			if self.cells[cell] <= self.minThreshold:
+				x,y = cell
+				if self.blocksSight == True:
+					self.game._currentLevel.setBlocksSightFalse(x,y)
 				# remove the cell
 				self.cells.pop(cell)
 
-
-		# effect objects within the explosion		
+		# effect objects within the cloud		
 		for obj in self.game._currentLevel._objects:
 			if obj != self and (obj.x,obj.y) in self.cells:
 				self.hitEffect(obj)
+
+		if self.blocksSight == True:
+			self.game.map.initializeFOV(self.game._currentLevel)
 
 	def getNeighboringCells(self,x,y):
 		openCells = set()
@@ -227,6 +245,8 @@ class Cloud(Object):
 	def draw(self):
 		for cell in self.cells:
 			x,y = cell
+			if self.blocksSight == True:
+				self.game._currentLevel.setBlocksSightTrue(x,y)
 
 			color = self.color*self.cells[cell]
 			if libtcod.map_is_in_fov(self.game.map.fov_map,x,y):
@@ -264,7 +284,7 @@ class PoisonCloud(Cloud):
 
 
 class DamageCloud(Cloud):
-	def __init__(self, game, x, y, name, color, volume, damage, blocks=False):
+	def __init__(self, game, x, y, name, color, volume, damage, blocks=False, properNoun = False, alwaysVisible = False):
 		Cloud.__init__(self, game, x, y, name, color, volume, blocks)
 		self.damage = damage
 
@@ -272,10 +292,41 @@ class DamageCloud(Cloud):
 		actor.takeDamage(self.damage)
 
 class SmokeCloud(Cloud):
-	pass
-	# renders any object within the cloud invisible
-	# requires that i first make an invisible status effect
-	# spawn smoke objects that block vision, but dont do anything else
+	def __init__(self, game, x, y, name, color, volume, blocks=False):
+		Cloud.__init__(self, game, x, y, name, color, volume, blocks)
+		self.blocksSight = True
+		# blocks sight within the cloud
+	'''
 	def hitEffect(self,obj):
 		if isinstance(obj,actors.Actor):
 			obj.addStatusEffect(statusEffects.Invisible, 1, True)
+	'''
+
+
+class Trace(Object):
+	# visual indicator of the last known position of an actor's target
+	def __init__(self, game, x, y, char, name, color, tracer, blocks=False, properNoun = False, alwaysVisible = False):
+		Object.__init__(self, game, x, y, char, name, color, alwaysVisible = True)
+		self.tracer = tracer
+		self.renderFirst()
+		self.timer = 10
+
+	def tick(self):
+		self.timer -= 1
+		#print
+		if (self.tracer != None and
+			self.tracer.state != None and
+			self.tracer.state.lastKnownPosition != None):
+
+			x,y = self.tracer.state.lastKnownPosition
+
+			if x == self.x and y == self.y:
+				#print "Flag"
+				if self.tracer.state.trace == self and self.timer > 0:
+					return
+
+		self.game._currentLevel.removeObject(self)
+
+	def draw(self):
+		if self.game.ui.visibleTrace == True:
+			Object.draw(self)

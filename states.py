@@ -5,6 +5,7 @@ import commands
 import libtcodpy as libtcod
 import random
 import objects
+import math
 import items
 import Items
 '''
@@ -22,14 +23,26 @@ class State:
 			command = commands.WaitCommand(actor)
 			return command
 
+	def saveData(self):
+		data = {}
+
+		return data
+
+	def loadData(self,data):
+		return False
+
 class AI(State):
-	def __init__(self, morale, retreatProbability, chargeProbability, meleeProbability, maxDistanceFromTarget, minDistanceFromTarget):
+	def __init__(self, morale, retreatProbability, chargeProbability, meleeProbability, spellProbability, maxDistanceFromTarget, minDistanceFromTarget):
 		self.morale = morale # percentage of health that actor can lose before it flees
 		self.retreatProbability = retreatProbability # probability that actor will retreat instead of attack
 		self.chargeProbability = chargeProbability # probability that actor will charge instead of attack
-		self.meleeProbability = meleeProbability # the probability that the actor will choose melee of they can attack with both melee and ranged
+		self.meleeProbability = meleeProbability # the probability that the actor will choose melee if they can attack with both melee and ranged
+		self.spellProbability = spellProbability # the probability that the actor will cast a spell if they could also attack
 		self.maxDistanceFromTarget = maxDistanceFromTarget # when exceeded, actor will try to get closer
 		self.minDistanceFromTarget = minDistanceFromTarget # when exceeded, actor will try to get farther away
+
+		self.trace = None
+		self.lastKnownPosition = None
 
 		# wonder perameters
 		self.changeDirectionChance = 0.2
@@ -38,6 +51,9 @@ class AI(State):
 		self.dy = 0
 
 	def getAICommand(self,actor):
+		if actor._nextCommand != None:
+			return actor._nextCommand
+
 		target = None
 		fov = actor.game.map.fov_map
 		if libtcod.map_is_in_fov(fov,actor.x,actor.y):
@@ -51,13 +67,21 @@ class AI(State):
 			#elif friendInRange and canTargetNemesis(friend) (attack the friend's nemesis)
 
 		if (target == None):
-			if self.shouldManageEquipment(actor):
+			if self.canLookForTarget(actor) == True:
+				command = self.lookForTarget(actor)
+
+			elif self.shouldCastSpell(actor,None):
+				command = self.castSpell(actor,None)
+
+			elif self.shouldManageEquipment(actor):
 				command = self.manageEquipment(actor)
+
 			else:
 				command = self.wander(actor)
-			# or inventory management
 
 		if (target != None):
+			self.lastKnownPosition = (target.x, target.y)
+			self.trace = None
 			ableToAttack = self.canAttackTarget(actor, target)
 
 			if self.damagePercent(actor) > self.morale:
@@ -97,6 +121,9 @@ class AI(State):
 				(self.canMoveAwayFromTarget(actor, target)) ):
 				command = self.moveAwayFromTarget(actor, target)
 
+			elif self.shouldCastSpell(actor, target):
+				command = self.castSpell(actor, target)
+
 			elif self.shouldManageEquipment(actor):
 				command = self.manageEquipment(actor)
 
@@ -115,7 +142,12 @@ class AI(State):
 			can move away from group center
 			move away from group center
 			enough friendlies in group
+			item on the ground here
+			item on the ground nearby
+			pick up item
+
 		'''
+
 	def canTargetNemesis(self,actor):
 		# returns True if the last thing to attack the actor is still alive
 		if ( (actor.mostRecentAttacker != None) and
@@ -139,6 +171,41 @@ class AI(State):
 		else:
 			return False
 
+	def canLookForTarget(self,actor):
+		if (self.lastKnownPosition != None) and (self.damagePercent(actor) < self.morale):
+			x,y = self.lastKnownPosition
+			if x != actor.x or y != actor.y:
+				if self.trace == None:
+					self.trace = objects.Trace(actor.game, x, y, '@','', libtcod.red, actor)
+				return True
+			else:
+				self.lastKnownPosition = None
+				self.trace = None
+
+		return False
+
+	def lookForTarget(self,actor):
+		traceX,traceY = self.lastKnownPosition
+		bestDX = 0
+		bestDY = 0
+		leastDistance = actor.distance(traceX,traceY)
+		for dx in xrange(-1,2): # -1, 0, 1
+			for dy in xrange(-1,2): # -1, 0, 1
+				x = actor.x + dx
+				y = actor.y + dy
+				if ((actor.game._currentLevel.getBlocksMovement(x,y) == False) and 
+					(actor.game._currentLevel.getHasObject(x,y)) == False):
+
+					distance = math.sqrt( (traceX-x)**2 + (traceY-y)**2 )
+
+					if distance < leastDistance:
+						bestDX = dx
+						bestDY = dy
+						leastDistance = distance
+						
+		command = commands.WalkCommand(actor,bestDX,bestDY)
+		return command
+
 	def damagePercent(self,actor):
 		health = actor.stats.get('healthCurrent')
 		maxHealth = actor.stats.get('healthMax')
@@ -159,43 +226,6 @@ class AI(State):
 				command = commands.WalkCommand(actor,self.dx,self.dy)
 			return command
 
-	def chaseTarget(self,actor,target):
-		# pathfind to the player's location
-		path = actor.game._currentLevel.pathMap
-		libtcod.path_compute(path,actor.x,actor.y,target.x,target.y)
-
-		if libtcod.path_size(path) < 1:
-			command = self.wander(actor)
-			return command
-		else:
-			x,y = libtcod.path_get(path,False)
-
-		command = self.moveTowardLocation(actor,x,y)
-
-		return command
-
-	def moveTowardLocation(self,actor,x,y):
-		dx = 0
-		dy = 0
-
-		# move to the point
-		if actor.x < x: 
-			dx = 1
-		elif actor.x > x:
-			dx = -1
-		if actor.y < y:
-			dy = 1
-		elif actor.y > y:
-			dy = -1
-			
-		if dx == 0 and dy == 0:
-			pass
-
-		# adjust for blocked movement
-
-		command = commands.WalkCommand(actor,dx,dy)
-		return command
-
 	def canAttackTarget(self,actor,target):
 		# Check to see if the target is in melee range of the actor
 		for dx in xrange(-1,2):
@@ -208,6 +238,10 @@ class AI(State):
 			(isinstance(actor.equipSlots[2], Items.rangedWeapons.RangedWeapon) == True) and
 			(actor.equipSlots[2].loadedRounds > 0) and
 			self.LOSToTarget(actor,target) ):
+			return True
+
+		# Check to see if the actor should cast a spell at the target
+		if self.shouldCastSpell(actor,target):
 			return True
 
 		return False
@@ -238,7 +272,6 @@ class AI(State):
 		return command
 
 	def LOSToTarget(self,actor,target):
-		# TODO: LOS to target
 		libtcod.line_init(actor.x, actor.y, target.x, target.y)
 		x = actor.x
 		y = actor.y
@@ -246,7 +279,8 @@ class AI(State):
 		while (not lineX is None) and not (actor.game._currentLevel.getBlocksMovement(lineX,lineY)):
 			x = lineX
 			y = lineY
-			if (actor.game._currentLevel.getHasObject(x,y)):
+			if ((actor.game._currentLevel.getHasObject(x,y)) or
+				(actor.game._currentLevel.getBlocksSight(x,y))):
 				break
 			lineX,lineY = libtcod.line_step()
 
@@ -325,13 +359,20 @@ class AI(State):
 
 	def moveTowardTarget(self,actor,target):
 		# check the 8 tiles surrounding the actor and
-		# move to the one that maximizes the distance 
+		# move to the one that minimizes the distance 
 		# between it and the target
+		xList = [-1,0,1]
+		random.shuffle(xList)
+		yList = [-1,0,1]
+		random.shuffle(yList)
+
 		bestDX = 0
 		bestDY = 0
 		leastDistance = target.distance(actor.x, actor.y)
-		for dx in xrange(-1,2): # -1, 0, 1
-			for dy in xrange(-1,2): # -1, 0, 1
+		for dx in xList:
+		#for dx in xrange(-1,2): # -1, 0, 1
+			for dy in yList:
+			#for dy in xrange(-1,2): # -1, 0, 1
 				x = actor.x + dx
 				y = actor.y + dy
 				if ((actor.game._currentLevel.getBlocksMovement(x,y) == False) and 
@@ -348,7 +389,7 @@ class AI(State):
 	def canRunAwayFromTarget(self,actor,target):
 		# check the 8 tiles surrounding the actor and 
 		# return True if the actor can move to one to  
-		# increase their distance from the target
+		# decrease their distance from the target
 		greatestDistance = target.distance(actor.x, actor.y)
 		for dx in xrange(-1,2): # -1, 0, 1
 			for dy in xrange(-1,2): # -1, 0, 1
@@ -366,11 +407,16 @@ class AI(State):
 		# check the 8 tiles surrounding the actor and
 		# move to the one that maximizes the distance 
 		# between it and the target
+		xList = [-1,0,1]
+		random.shuffle(xList)
+		yList = [-1,0,1]
+		random.shuffle(yList)
+
 		bestDX = 0
 		bestDY = 0
 		greatestDistance = target.distance(actor.x, actor.y)
-		for dx in xrange(-1,2): # -1, 0, 1
-			for dy in xrange(-1,2): # -1, 0, 1
+		for dx in xList: #xrange(-1,2): # -1, 0, 1
+			for dy in yList: #xrange(-1,2): # -1, 0, 1
 				x = actor.x + dx
 				y = actor.y + dy
 				if ((actor.game._currentLevel.getBlocksMovement(x,y) == False) and 
@@ -420,6 +466,22 @@ class AI(State):
 
 		return commands.WaitCommand(actor)
 
+	def shouldCastSpell(self,actor,target):
+		if len(actor.spells) > 0:
+			for spell in actor.spells:
+				if spell.shouldAIUseThis(actor,target) == True:
+					return True
+		return False
+
+	def castSpell(self,actor,target):
+		command = commands.WaitCommand(actor)
+
+		for spell in actor.spells:
+			if spell.shouldAIUseThis(actor,target) == True:
+				command = commands.CastSpellCommand(actor,spell)
+
+		return command
+
 	def wait(self,actor):
 		command = commands.WaitCommand(actor)
 		return command
@@ -427,28 +489,88 @@ class AI(State):
 
 class AIConfused(AI):
 	def __init__(self):
-		self.confusionChance = 0.5
-		self.waitChance = 1.0/3
-		self.timer = random.randint(3,5)
+		self.confusionChance = 0.8
+		self.waitChance = 1.0/8
 
 	def getAICommand(self,actor):
-		if actor._nextCommand == None or (random.ramdom() <= self.confusionChance):
+		if (random.random() <= self.confusionChance):
 			if random.random() <= self.waitChance:
-				command = commands.WaitCommand(actor)
+				actor._nextCommand = commands.WaitCommand(actor)
 			else:
 				dx = random.randint(-1,1)
 				dy = random.randint(-1,1)
-				command = commands.WalkCommand(actor,dx,dy)
-			return command
+				actor._nextCommand = commands.WalkCommand(actor,dx,dy)
 
-		# decrement timer (unless self.timer < 0, then it lasts forever)
-		if self.timer == 0:
-			actor.state = actor._defaultState
-		elif self.timer > 0:
-			self.timer -= 1
+
+		if actor._nextCommand != None:
+			return actor._nextCommand
+
+		elif actor._defaultState != None:
+			command = actor._defaultState.getAICommand(actor)
+			return command
 
 		else: return None
 
+
+class AIAfraid(AI):
+	def __init__(self):
+		pass
+
+	def getAICommand(self,actor):
+
+		target = None
+		fov = actor.game.map.fov_map
+		if libtcod.map_is_in_fov(fov,actor.x,actor.y):
+			if self.canTargetNemesis(actor):
+				target = actor.mostRecentAttacker
+
+			elif (self.hostileToHero(actor) and
+				(self.canTargetHero(actor)) ):
+				target = actor.game.hero
+
+			else:
+				nearbyActors = actor.getNearbyActors()
+				if len(nearbyActors) > 0:
+					target = nearbyActors[0]
+
+		if (target == None):
+			if actor._nextCommand != None:
+				command = actor._nextCommand
+			else:
+				command = self.wait(actor)
+
+		if (target != None):
+			self.lastKnownPosition = (target.x, target.y)
+			self.trace = None
+			ableToAttack = self.canAttackTarget(actor, target)
+
+			if self.canRunAwayFromTarget(actor, target):
+				command = self.runAwayFromTarget(actor, target)
+			
+			elif self.canAttackTarget(actor, target):
+				command = self.attackTarget(actor, target)
+			
+			elif actor._nextCommand != None:
+				command = actor._nextCommand
+			
+			else:
+				command = self.wait(actor)
+
+		return command
+
+
+class Autowalk(AI):
+	pass
+
+
+class AutoExplore(AI):
+	pass
+
+'''
+====================
+Death States
+====================
+'''
 
 class DeathState:
 	def __init__(self,owner):
@@ -456,6 +578,8 @@ class DeathState:
 	
 	def process(self):
 		self.giveExperience(self.owner)
+		self.effect()
+
 		o = self.owner
 		del self.owner
 
@@ -478,9 +602,12 @@ class DeathState:
 		del o
 
 	def giveExperience(self,owner):
-		if ((owner.mostRecentAttacker != None) and 
-			(owner.level > owner.mostRecentAttacker.level)):
-			owner.mostRecentAttacker.experience += 1
+		#import pdb; pdb.set_trace()
+		if (owner.mostRecentAttacker != None):
+			owner.mostRecentAttacker.gainXPCombat(owner)
+
+	def effect(self):
+		pass
 
 class ExplodeOnDeathState(DeathState):
 	pass

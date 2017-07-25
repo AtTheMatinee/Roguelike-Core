@@ -54,6 +54,8 @@ class Spell:
 	def subtractMagicCost(self):
 		# if an actor casts a spell that requires more magic than they have, 
 		# the actor takes damage equal to the magic they lack
+		if self.magicCost == 0: return
+		
 		magic = (self.caster.stats.get("magicCurrent") - self.magicCost)
 
 		if magic < 0:
@@ -63,7 +65,30 @@ class Spell:
 
 		self.caster.stats.setBaseStat("magicCurrent",magic)
 
-	def shouldAIUseThis(self,caster,target):
+	def shouldAIUseThis(self,caster,target = None):
+		return False
+
+	def successProbabilityByLevel(self,caster,target):
+		# compare the level of the two actors and use that to calculate
+		# the probability that a behavior spell will succeed. This returns
+		# a number between 0.0 and 1.0.
+		if caster == None or target == None:
+			return 0.0
+
+		n = (caster.level - target.level)/caster.level
+		prob = 0.5 + (0.5*m)
+
+		return prob
+
+	def saveData(self):
+		data = {
+		'dataType':'Spell',
+		'_spawnKey':self._spawnKey
+		}
+
+		return data
+
+	def loadData(self,data):
 		return False
 
 
@@ -220,6 +245,39 @@ class UpgradeItem(Spell):
 	# upgrades a random stat on an item
 	pass
 
+class LocatePlayer(Spell):
+	def __init__(self, game, name, caster):
+		Spell.__init__(self, game, name, caster)
+
+		self.magicCost = 8
+		self.requiresTarget = False
+
+	def effect(self,x,y,level):
+		success = False
+		if self.caster.state == None: # actor has no AI
+			return success
+
+		hero = self.caster.game.hero
+		self.caster.state.lastKnownPosition = (hero.x,hero.y)
+		success = True
+
+		if success == True:
+			self.subtractMagicCost()
+
+	def shouldAIUseThis(self,caster,target = None):
+		'''
+		The AI shoul only use this spell if they have enough magic,
+		they do not know where to look for the player,
+		and they are not currently engaged in combat.
+		'''
+		if ( (caster.stats.get('magicCurrent') >= self.magicCost) and
+			(caster.state.lastKnownPosition == None) and 
+			(target == None) ):
+			return True
+
+		return False
+
+
 class Explode(ExplosionSpell):
 	def effect(self,x,y,level):
 		physicalDam = 6 + (3*level)
@@ -230,13 +288,21 @@ class Explode(ExplosionSpell):
 
 		ExplosionSpell.effect(self,x,y,level)
 
+	def shouldAIUseThis(self,caster,target = None):
+		'''
+		The AI shoul use this spell if they have less than
+		one third of their health left and their target is
+		within range.
+		'''
+		print "IMPLEMENT EXPLODE SPELL"
+
 class TurnInvisible(Spell):
 	def __init__(self, game, name, caster):
 		Spell.__init__(self, game, name, caster)
 
 		self.requiresTarget = False
 		self.range = 1
-		self.magicCost = 50
+		self.magicCost = 20
 
 	def effect(self,x,y,level):
 		timer = 7 + (3*level)
@@ -246,6 +312,87 @@ class TurnInvisible(Spell):
 		if success == True:
 			self.game.message(self.caster.getName(True).title()+" casts "+self.name+".",libtcod.purple)
 			self.subtractMagicCost()
+
+		return success
+
+class Mimic(Spell):
+	def __init__(self, game, name, caster):
+		Spell.__init__(self, game, name, caster)
+
+		self.requiresTarget = False
+		self.range = 1
+		self.magicCost = 8
+		# Disguise yourself as an item, chest, alter, or some other object 
+
+class Illusion(Spell):
+	def __init__(self, game, name, caster):
+		Spell.__init__(self, game, name, caster)
+
+		self.requiresTarget = True
+		self.range = 10
+		self.magicCost = 8
+
+		# create an object that looks like another object, but that doesn't do anything except take damage
+
+class Fear(Spell):
+	def __init__(self, game, name, caster):
+		Spell.__init__(self, game, name, caster)
+
+		self.requiresTarget = True
+		self.range = 6
+		self.magicCost = 12
+
+	def effect(self,x,y,level):
+		success = False
+
+		if self.caster.chessboardDistance(x,y) > self.range:
+			self.game.message("Target is too far away.")
+			return False
+
+		# See if there is an object at those coordinates
+		target = None
+		for obj in self.game._currentLevel._objects:
+			if obj.x == x and obj.y == y:
+				target = obj
+
+		if target != None:
+			success = True
+			self.game.message(self.caster.getName(True).title()+" casts "+self.name+".",libtcod.purple)
+			self.subtractMagicCost()
+
+			if random.random() <= successProbabilityByLevel(self.caster,target):
+				target.addStatusEffect(statusEffects.Afraid)
+
+		return success
+
+class Confusion(Spell):
+	def __init__(self, game, name, caster):
+		Spell.__init__(self, game, name, caster)
+
+		self.requiresTarget = True
+		self.range = 6
+		self.magicCost = 10
+
+	def effect(self,x,y,level):
+		success = False
+
+		if self.caster.chessboardDistance(x,y) > self.range:
+			self.game.message("Target is too far away.")
+			return False
+
+		# See if there is an object at those coordinates
+		target = None
+		for obj in self.game._currentLevel._objects:
+			if obj.x == x and obj.y == y:
+				target = obj
+
+		if target != None:
+			success = True
+			self.game.message(self.caster.getName(True).title()+" casts "+self.name+".",libtcod.purple)
+			self.subtractMagicCost()
+
+			if random.random() <= successProbabilityByLevel(self.caster,target):
+				target.addStatusEffect(statusEffects.Confused)
 
 		return success
 
@@ -281,7 +428,7 @@ class FireTrap(TrapSpell):
 	# Creates a fire damage floor trap
 	pass
 
-class SelfImmolate(Spell):
+class SelfImmolation(Spell):
 	pass
 
 # ==== Frost ====
@@ -303,6 +450,9 @@ class FrostCloud(CloudSpell):
 	pass
 
 class FrostTrap(TrapSpell):
+	pass
+
+class SelfIgnition(Spell):
 	pass
 
 # ==== Healing ====
@@ -339,6 +489,10 @@ class SelfHeal(Heal):
 	def __init__(self,game,name,caster):
 		Heal.__init__(self,game,name,caster)
 		self.requiresTarget = False
+
+# ==== Poison ====
+# Create line of poisoned mire
+# Create lake of poisoned mire
 
 # ==== Holy ====
 	# Inflict holy damage and Stun

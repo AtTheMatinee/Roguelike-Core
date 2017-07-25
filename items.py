@@ -4,11 +4,14 @@ items.py
 from objectClass import Object
 import actors
 import commands
+import libtcodpy as libtcod
+
 '''
 ====================
-Items
+Item Class
 ====================
 '''
+
 class Item(Object):
 	identified = False
 	unidentifiedName = "Mysterious Item"
@@ -17,7 +20,6 @@ class Item(Object):
 
 		self.level = level
 
-		self.game.addObject(self)
 		self.game._currentLevel.addItem(self)
 
 		self.renderFirst()
@@ -62,6 +64,7 @@ class Item(Object):
 	def use(self,actor):
 		if self in actor.inventory:
 			actor.inventory.remove(self)
+			self.game.removeObject(self)
 			actor.game.message(actor.name +" uses "+self.getName(True))
 		return True
 
@@ -73,6 +76,30 @@ class Item(Object):
 
 	def upgrade(self,level):
 		pass
+
+	def identify(self,actor = None):
+		if self.__class__.identified == False:
+			self.__class__.identified = True
+			self.game.message("You have identified "+self.getName(True),libtcod.cyan)
+			if actor != None: 
+				actor.gainXPIdentify(self)
+
+
+	def saveData(self):
+		data = Object.saveData(self)
+		data['dataType'] = 'Item'
+		data['_spawnKey'] = self._spawnKey
+		data['level'] = self.level
+		data['identified'] = self.__class__.identified
+
+		return data
+
+	def loadData(self,data):
+		Object.loadData(self,data)
+		self.level = data['level']
+		self.__class__.identified = data['identified']
+
+		return True
 
 
 class Equipment(Item):
@@ -125,7 +152,25 @@ class Equipment(Item):
 				# add the new modType
 				self.modifier.update(mod)
 
+	def saveData(self):
+		data = Item.saveData(self)
+		data['canBeUnequipped'] = self.canBeUnequipped
+		data['modifier'] = self.modifier
+
+		return data
+
+	def loadData(self,data):
+		Item.loadData(self,data)
+		self.canBeUnequipped = data['canBeUnequipped']
+		self.modifier = data['modifier']
+		
+		return True
+
 
 class DogWhistle(Item):
 	# Starting item for the Houndmaster; charms dogs
+	pass
+
+class Bait(Item):
+	# attracts nearby monsters by setting their lastKnownPosition to the bait position
 	pass

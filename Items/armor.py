@@ -26,7 +26,8 @@ class Armor(Equipment):
 		'physical defense':1,
 		'poison resistance':1,
 		'bleed resistance':1,
-		'speed':0
+		'speed':0,
+		'magic regen':0
 		}
 
 		self.specialUpgradeOdds = {
@@ -48,6 +49,7 @@ class Armor(Equipment):
 		self.upgradeHealthMax = 2
 		self.upgradeMagicMax = 2
 		self.upgradeSpeed = 1
+		self.upgradeMagicRegen = 0.005
 
 	def upgrade(self, level):
 		upgradeOdds = dict(self.normalUpgradeOdds)
@@ -89,6 +91,9 @@ class Armor(Equipment):
 
 			if choice == 'speed':
 				upgrade = {'add':{'speed':self.upgradeSpeed}}
+
+			if choice == 'magic regen':
+				upgrade = {'add':{'magicRegen':self.upgradeMagicRegen}}
 
 			if upgrade != None:
 				self.addUpgrades(upgrade)
@@ -143,3 +148,15 @@ class QuiltedJacket(Armor):
 		self.upgradePhysicalDefense = [0.5, 0,0,0,0,0,0]
 		self.upgradeHolyResistance = [0,0,0,0,0, 0.05, 0]
 		self.upgradeUnholyResistance = [0,0,0,0,0,0, 0.05]
+
+
+class TempleRobes(Armor):
+	# Holy Robes
+	def __init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False):
+		Armor.__init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False)
+
+class AcoliteRobes(Armor):
+	# Unholy Robes
+	def __init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False):
+		Armor.__init__(self, game, x, y, char, name, color, level, equipSlot, modifier, blocks=False)
+

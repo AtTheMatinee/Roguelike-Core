@@ -23,6 +23,19 @@ class StatsTable:
 		"defense":[0,0,0,0,0,0,0],
 		"critChance":0
 		},
+	"Bloat":
+		{
+		"healthCurrent":10,
+		"healthMax":10,
+		"magicCurrent":0,
+		"magicMax":5,
+		"magicRegen":0.1,
+		"speed":5,
+		"attack":[1,0,0,0,0,0,0,0,0],
+		"attackSpeed":0,
+		"defense":[3,0,0,0,0,0,0],
+		"critChance":0.0
+		},
 	"Gargoyle":
 		{
 		"healthCurrent":20,
@@ -34,7 +47,7 @@ class StatsTable:
 		"attack":[8.0,0,0,0,0,0,0,0,0],
 		"attackSpeed":-4,
 		"defense":[12,0.5,0.5,0.5,0.5,0,0],
-		"critChance":0
+		"critChance":0.08
 		},
 	"Ghost":
 		{
@@ -43,8 +56,8 @@ class StatsTable:
 		"magicCurrent":0,
 		"magicMax":20,
 		"magicRegen":0.5,
-		"speed":6,
-		"attack":[4.0,0,0,0,0,0,0,4,0],
+		"speed":5,
+		"attack":[2.0,0,0,0,0,0,0,4,0],
 		"attackSpeed":0,
 		"defense":[0,0.5,0.5,1,1,-1,-1],
 		"critChance":0
@@ -288,7 +301,10 @@ class Stats:
 			self.setBaseStat(stat,value)
 
 	def getBaseStat(self,stat):
-		return self.statBase[stat]
+		if stat in self.statBase:
+			return self.statBase[stat]
+		else:
+			return None
 
 	def setBaseStat(self,stat,value):
 		self.statBase[stat] = value
