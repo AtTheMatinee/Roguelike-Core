@@ -294,7 +294,13 @@ class Explode(ExplosionSpell):
 		one third of their health left and their target is
 		within range.
 		'''
-		print "IMPLEMENT EXPLODE SPELL"
+		if (caster.stats != None and
+			(caster.stats.get('healthCurrent')<=(caster.stats.get('healthMax')/3)) ):
+			if target == None or target.distanceTo(caster) <= self.range:
+				return True
+				print 'True'
+
+			print "IMPLEMENT EXPLODE SPELL"
 
 class TurnInvisible(Spell):
 	def __init__(self, game, name, caster):

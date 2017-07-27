@@ -142,13 +142,13 @@ class Level:
 
 				# placeholder Monster Spawn
 				monsterTable = [
-				{'Mirehound':5,'Plague Rat':2,'Snakeman':1,'Snakeman Champion':1},
-				{'Mirehound':4,'Plague Rat':3,'Snakeman':2,'Snakeman Archer':1},
-				{'Mirehound':4,'Plague Rat':2,'Snakeman':2,'Snakeman Archer':2},
-				{'Mirehound':2,'Plague Rat':2,'Snakeman':2,'Snakeman Archer':2},
-				{'Mirehound':2,'Plague Rat':2,'Snakeman':2,'Snakeman Archer':2,'Ghost':1},
-				{'Mirehound':2,'Plague Rat':2,'Snakeman':3,'Snakeman Archer':3,'Ghost':1,'Snakeman Champion':1},
-				{'Mirehound':2,'Plague Rat':2,'Snakeman':2,'Snakeman Archer':3,'Ghost':2,'Snakeman Champion':2}
+				{'Bloat':5,'Mirehound':5,'Plague Rat':2,'Snakeman':1,'Snakeman Champion':1},
+				{'Bloat':1,'Mirehound':4,'Plague Rat':3,'Snakeman':2,'Snakeman Archer':1},
+				{'Bloat':2,'Mirehound':4,'Plague Rat':2,'Snakeman':2,'Snakeman Archer':2},
+				{'Bloat':2,'Mirehound':2,'Plague Rat':2,'Snakeman':2,'Snakeman Archer':2},
+				{'Bloat':2,'Mirehound':2,'Plague Rat':2,'Snakeman':2,'Snakeman Archer':2,'Ghost':1},
+				{'Bloat':3,'Mirehound':2,'Plague Rat':2,'Snakeman':3,'Snakeman Archer':3,'Ghost':1,'Snakeman Champion':1},
+				{'Bloat':3,'Mirehound':2,'Plague Rat':2,'Snakeman':2,'Snakeman Archer':3,'Ghost':2,'Snakeman Champion':2}
 
 				]
 				depth = min(self.levelDepth, len(monsterTable)-1)
