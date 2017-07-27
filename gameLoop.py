@@ -162,7 +162,11 @@ class GameLoop:
 			data = obj.saveData()
 			savedObjects.append(data)
 
-		file['_objects'] = savedObjects
+		try:
+			file['_objects'] = savedObjects
+		except Exception as e:
+			print "Error while saving objects"
+			print e
 
 		# ==== Game Level Data ====
 		savedLevels = []
@@ -245,8 +249,9 @@ class GameLoop:
 
 				obj.loadData(objectData)
 
-			except:
+			except Exception as e:
 				print "Error loading ",objectData['class']
+				print e
 				continue
 
 		# ==== Equip Actors ====

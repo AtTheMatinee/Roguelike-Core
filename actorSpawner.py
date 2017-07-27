@@ -91,11 +91,13 @@ class ActorSpawner:
 		bloat = monsters.Bloat(self.game,x,y,'b',"Bloat",libtcod.light_red,level,faction = "Abominations",stats = actorStats.Stats("Bloat"),state = states.AI(1,1,1,0,1,0,0),drops = lootDrops)
 		bloat.deathState = states.DeathState(bloat)
 
+		
 		if new == True:
 			# add starting spells
 			for spell in ['Explode']:
 				s = self.game.spellSpawner.spawn(bloat, spell)
 				bloat.spells.append(s)
+		
 
 		return bloat
 

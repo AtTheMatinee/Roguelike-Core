@@ -478,10 +478,10 @@ class Hero(Actor):
 		self.discoveredMonsters.add(actor._spawnKey)
 
 	def gainXPExplore(self,floor):
-		if floor in self.floorsVisited: return
+		if floor.levelDepth in self.floorsVisited: return
 
 		self.gainXP()
-		self.floorsVisited.add(floor)
+		self.floorsVisited.add(floor.levelDepth)
 
 '''
 ====================

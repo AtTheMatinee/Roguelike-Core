@@ -247,27 +247,36 @@ class AI(State):
 		return False
 
 	def attackTarget(self,actor,target):
-		canMelee = False
-		canRange = False
+		useMelee = False
+		useRange = False
+		useSpell = False
 		# Check to see if the target is in melee range of the actor
 		for dx in xrange(-1,2):
 			for dy in xrange(-1,2):
 				if (actor.x + dx == target.x) and (actor.y + dy == target.y):
-					canMelee = True
+					useMelee = True
 
 		# Check to see if the actor can ranged attack the target
 		if ((actor.equipSlots[2] != None) and
 			(isinstance(actor.equipSlots[2], Items.rangedWeapons.RangedWeapon) == True) and
 			(actor.equipSlots[2].loadedRounds > 0) and
 			self.LOSToTarget(actor,target) ):
-			canRange = True
+			useRange = True
 
-		if ((canMelee == True) and 
-			((canRange == False) or (random.random() < self.meleeProbability))):
-			command = commands.AttackCommand(actor,target)
+		if (self.shouldCastSpell(actor,target)):
+			useSpell = True
+
+		if( (useMelee == True or useRanged == True) and 
+			((useSpell == False) or (random.random() >= self.spellProbability)) ):
+			if ((useMelee == True) and 
+				((useRange == False) or (random.random() < self.meleeProbability))):
+				command = commands.AttackCommand(actor,target)
+
+			else:
+				command = commands.FireRangedWeaponCommand(actor,target)
 
 		else:
-			command = commands.FireRangedWeaponCommand(actor,target)
+			command = self.castSpell(actor,target)
 
 		return command
 
